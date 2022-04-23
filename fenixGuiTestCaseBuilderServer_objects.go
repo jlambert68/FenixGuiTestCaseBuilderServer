@@ -28,15 +28,17 @@ var (
 	lis                                         net.Listener
 )
 
+/*
 var (
-	// Standard gRPC Clientr
+	 //Standard gRPC Clientr
 	remoteFenixTestDataSyncServerConnection *grpc.ClientConn
-	gRpcClientForFenixTestDataSyncServer    fenixGuiTestCaseBuilderServerGrpcApi.FenixTestDataGrpcServicesClient
+	gRpcClientForFenixTestDataSyncServer    fenixGuiTestCaseBuilderServerGrpcApi.FenixTestCaseBuilderServerGrpcServicesClient
 
 	fenixGuiTestCaseBuilderServer_address_to_dial string
 
-	fenixGuiTestCaseBuilderServerClient fenixGuiTestCaseBuilderServerGrpcApi.FenixTestDataGrpcServicesClient
+	fenixGuiTestCaseBuilderServerClient fenixGuiTestCaseBuilderServerGrpcApi.FenixTestCaseBuilderServerGrpcServicesClient
 )
+*/
 
 // Server used for register clients Name, Ip and Por and Clients Test Enviroments and Clients Test Commandst
 type FenixGuiTestCaseBuilderGrpcServicesServer struct {

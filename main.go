@@ -93,6 +93,6 @@ func init() {
 	}
 
 	// Create the Dial up string to Fenix TestData SyncServer
-	fenixGuiTestCaseBuilderServer_address_to_dial = common_config.FenixTestDataSyncServerAddress + ":" + strconv.Itoa(common_config.FenixTestDataSyncServerPort)
+	//fenixGuiTestCaseBuilderServer_address_to_dial = common_config.FenixTestDataSyncServerAddress + ":" + strconv.Itoa(common_config.FenixTestDataSyncServerPort)
 
 }

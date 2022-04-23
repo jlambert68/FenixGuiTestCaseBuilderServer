@@ -12,7 +12,7 @@ require (
 	google.golang.org/grpc v1.46.0
 )
 
-require github.com/jlambert68/FenixGrpcApi v0.0.0-20220423082126-2a99c5ad7ed4
+require github.com/jlambert68/FenixGrpcApi v0.0.0-20220423123743-34348608527c
 
 require (
 	cloud.google.com/go/compute v1.6.0 // indirect

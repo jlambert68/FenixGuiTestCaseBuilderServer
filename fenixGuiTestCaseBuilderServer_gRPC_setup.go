@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-// Set up and start Backend gRPC-server
+// InitGrpcServer - Set up and start Backend gRPC-server
 func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObject_struct) InitGrpcServer() {
 
 	var err error
@@ -59,7 +59,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObject_s
 
 }
 
-// Stop Backend gRPC-server
+// StopGrpcServer - Stop Backend gRPC-server
 func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObject_struct) StopGrpcServer() {
 
 	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{}).Info("Gracefull stop for: registerTaxiHardwareStreamServer")
