@@ -7,21 +7,23 @@ WORKDIR /dockerdev
 COPY go.* ./
 RUN go mod tidy
 
-RUN go build -o /fenixClientServer .
+RUN go build -o /fenixGuiBuilderServer .
 
 
 # Final stage
 FROM debian:buster
 #FROM golang:1.13.8
 
-EXPOSE 5998 4000
+EXPOSE 5997
 #FROM golang:1.13.8
 WORKDIR /
-COPY --from=build-env /fenixClientServer /
+COPY --from=build-env /fenixGuiBuilderServer /
 Add data/ data/
 
 #CMD ["/fenixClientServer"]
-ENTRYPOINT ["/fenixClientServer"]
+ENTRYPOINT ["/fenixGuiBuilderServer"]
+
+
 
 #// docker build -t  fenix-client-server .
 #// docker run -p 5998:5998 -it  fenix-client-server
