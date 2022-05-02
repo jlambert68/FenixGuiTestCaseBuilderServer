@@ -31,12 +31,7 @@ func fenixGuiTestCaseBuilderServerMain() {
 	fenixSyncShared.ConnectToDB()
 
 	// Set up BackendObject
-	fenixGuiTestCaseBuilderServerObject = &fenixGuiTestCaseBuilderServerObject_struct{
-		fenixGuiTestCaseBuilderServer_TestDataClientUuid: fenixSyncShared.MustGetEnvironmentVariable("TestDataClientUuid"),
-		fenixGuiTestCaseBuilderServer_DomainUuid:         fenixSyncShared.MustGetEnvironmentVariable("TestDomainUuid"),
-		fenixGuiTestCaseBuilderServer_DomainName:         fenixSyncShared.MustGetEnvironmentVariable("TestDomainName"),
-		merkleFilterPath:                                 fenixSyncShared.MustGetEnvironmentVariable("MerkleFilterPath"), //TODO Remove all references to HARDCODED merkleFilterPath
-	}
+	fenixGuiTestCaseBuilderServerObject = &fenixGuiTestCaseBuilderServerObject_struct{}
 
 	// Init logger
 	fenixGuiTestCaseBuilderServerObject.InitLogger("")

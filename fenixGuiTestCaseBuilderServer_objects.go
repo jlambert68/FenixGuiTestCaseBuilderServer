@@ -10,37 +10,20 @@ import (
 )
 
 type fenixGuiTestCaseBuilderServerObject_struct struct {
-	logger                                           *logrus.Logger
-	fenixGuiTestCaseBuilderServer_TestDataClientUuid string
-	fenixGuiTestCaseBuilderServer_DomainUuid         string
-	fenixGuiTestCaseBuilderServer_DomainName         string
-	merkleFilterPath                                 string
-	gcpAccessToken                                   *oauth2.Token
+	logger         *logrus.Logger
+	gcpAccessToken *oauth2.Token
 }
 
+// Variable holding everything together
 var fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObject_struct
 
-// Global connection constants
-//var localServerEngineLocalPort int
-
+// gRPC variables
 var (
 	registerfenixGuiTestCaseBuilderServerServer *grpc.Server
 	lis                                         net.Listener
 )
 
-/*
-var (
-	 //Standard gRPC Clientr
-	remoteFenixTestDataSyncServerConnection *grpc.ClientConn
-	gRpcClientForFenixTestDataSyncServer    fenixGuiTestCaseBuilderServerGrpcApi.FenixTestCaseBuilderServerGrpcServicesClient
-
-	fenixGuiTestCaseBuilderServer_address_to_dial string
-
-	fenixGuiTestCaseBuilderServerClient fenixGuiTestCaseBuilderServerGrpcApi.FenixTestCaseBuilderServerGrpcServicesClient
-)
-*/
-
-// Server used for register clients Name, Ip and Por and Clients Test Enviroments and Clients Test Commandst
+// gRPC Server used for register clients Name, Ip and Por and Clients Test Enviroments and Clients Test Commandst
 type FenixGuiTestCaseBuilderGrpcServicesServer struct {
 	fenixGuiTestCaseBuilderServerGrpcApi.UnimplementedFenixTestCaseBuilderServerGrpcServicesServer
 }

@@ -20,15 +20,8 @@ const (
 	GCP
 )
 
-// Client
-var LocationForClientTypeMapping = map[ExecutionLocationTypeType]string{
-	LocalhostNoDocker: "LOCALHOST_NODOCKER",
-	LocalhostDocker:   "LOCALHOST_DOCKER",
-	GCP:               "GCP",
-}
-
-// Fenix Server
-var LocationForFenixTestDataServerTypeMapping = map[ExecutionLocationTypeType]string{
+// FenixGuiBuilderServer
+var LocationForFenixGuiBuilderServerTypeMapping = map[ExecutionLocationTypeType]string{
 	LocalhostNoDocker: "LOCALHOST_NODOCKER",
 	LocalhostDocker:   "LOCALHOST_DOCKER",
 	GCP:               "GCP",
@@ -36,10 +29,10 @@ var LocationForFenixTestDataServerTypeMapping = map[ExecutionLocationTypeType]st
 
 // Address to Fenix TestData Server & Client, will have their values from Environment variables at startup
 var (
-	FenixTestDataSyncServerAddress  string
-	FenixTestDataSyncServerPort     int
-	ClientTestDataSyncServerAddress string
-	ClientTestDataSyncServerPort    int
+	FenixTestDataSyncServerAddress string // TODO remove, but is referenced by code that is not removed yet
+	FenixTestDataSyncServerPort    int    // TODO remove,
+	FenixGuiServerAddress          string
+	FenixGuiServerPort             int
 )
 
 // ***********************************************************************************************************

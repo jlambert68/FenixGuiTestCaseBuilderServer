@@ -20,10 +20,10 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObject_s
 	}).Info("Backend Server tries to start")
 
 	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-		"Id": "ca3593b1-466b-4536-be91-5e038de178f4",
-		"common_config.ClientTestDataSyncServerPort: ": common_config.ClientTestDataSyncServerPort,
+		"Id":                                 "ca3593b1-466b-4536-be91-5e038de178f4",
+		"common_config.FenixGuiServerPort: ": common_config.FenixGuiServerPort,
 	}).Info("Start listening on:")
-	lis, err = net.Listen("tcp", ":"+strconv.Itoa(common_config.ClientTestDataSyncServerPort))
+	lis, err = net.Listen("tcp", ":"+strconv.Itoa(common_config.FenixGuiServerPort))
 
 	if err != nil {
 		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
@@ -32,8 +32,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObject_s
 		}).Error("failed to listen:")
 	} else {
 		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-			"Id": "ba070b9b-5d57-4c0a-ab4c-a76247a50fd3",
-			"common_config.ClientTestDataSyncServerPort: ": common_config.ClientTestDataSyncServerPort,
+			"Id":                                 "ba070b9b-5d57-4c0a-ab4c-a76247a50fd3",
+			"common_config.FenixGuiServerPort: ": common_config.FenixGuiServerPort,
 		}).Info("Success in listening on port:")
 
 	}
@@ -51,8 +51,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObject_s
 	//reflection.Register(registerfenixGuiTestCaseBuilderServerServer)
 
 	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-		"Id": "e843ece9-b707-4c60-b1d8-14464305e68f",
-		"common_config.ClientTestDataSyncServerPort: ": common_config.ClientTestDataSyncServerPort,
+		"Id":                                 "e843ece9-b707-4c60-b1d8-14464305e68f",
+		"common_config.FenixGuiServerPort: ": common_config.FenixGuiServerPort,
 	}).Info("registerfenixGuiTestCaseBuilderServerServer for TestInstruction Backend Server started")
 	registerfenixGuiTestCaseBuilderServerServer.Serve(lis)
 	//}()
@@ -66,7 +66,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObject_s
 	registerfenixGuiTestCaseBuilderServerServer.GracefulStop()
 
 	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-		"common_config.ClientTestDataSyncServerPort: ": common_config.ClientTestDataSyncServerPort,
+		"common_config.FenixGuiServerPort: ": common_config.FenixGuiServerPort,
 	}).Info("Close net.Listing")
 	_ = lis.Close()
 

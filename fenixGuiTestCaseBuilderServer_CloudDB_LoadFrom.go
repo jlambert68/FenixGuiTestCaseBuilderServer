@@ -24,26 +24,23 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObject_s
 	}()
 
 	/* Example
-	SELECT FGB_TI."DomainUuid", FGB_TI."DomainName", FGB_TI."SystemUuid", FGB_TI."SystemName", FGB_TI."TestInstructionUuid", FGB_TI."TestInstructionName", FGB_TI."TestInstructionTypeUuid", FGB_TI."TestInstructionTypeName", FGB_TI."TestInstructionDescription", FGB_TI."TestInstructionMouseOverText", FGB_TI."Deprecated", FGB_TI."Enabled", FGB_TI."MajorVersionNumber", FGB_TI."MinorVersionNumber", FGB_TI."UpdatedTimeStamp"
-	FROM "FenixGuiBuilder"."TestInstructions" FGB_TI;
-
-	    "DomainUuid"                   uuid      not null,
-	    "DomainName"                   varchar   not null,
-	    "TestInstructionUuid"          uuid      not null (Key)
-	    "TestInstructionName"          varchar   not null,
-	    "TestInstructionTypeUuid"      uuid      not null,
-	    "TestInstructionTypeName"      varchar   not null,
-	    "TestInstructionDescription"   varchar   not null,
-	    "TestInstructionMouseOverText" varchar   not null,
-	    "Deprecated"                   boolean   not null,
-	    "Enabled"                      boolean   not null,
-	    "MajorVersionNumber"           integer   not null,
-	    "MinorVersionNumber"           integer   not null,
-	    "UpdatedTimeStamp"             timestamp not null
+	   "DomainUuid"                   uuid      not null,
+	   "DomainName"                   varchar   not null,
+	   "TestInstructionUuid"          uuid      not null (Key)
+	   "TestInstructionName"          varchar   not null,
+	   "TestInstructionTypeUuid"      uuid      not null,
+	   "TestInstructionTypeName"      varchar   not null,
+	   "TestInstructionDescription"   varchar   not null,
+	   "TestInstructionMouseOverText" varchar   not null,
+	   "Deprecated"                   boolean   not null,
+	   "Enabled"                      boolean   not null,
+	   "MajorVersionNumber"           integer   not null,
+	   "MinorVersionNumber"           integer   not null,
+	   "UpdatedTimeStamp"             timestamp not null
 
 	*/
 
-	usedDBSchema := "TestInstructions" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
+	usedDBSchema := "FenixGuiBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "SELECT * "
@@ -104,47 +101,46 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObject_s
 func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObject_struct) loadClientsTestInstructionContainersFromCloudDB(userID string, cloudDBTestInstructionContainerItems *[]*fenixTestCaseBuilderServerGrpcApi.TestInstructionContainerMessage) (err error) {
 
 	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-		"Id": "216ddb15-6413-4051-a6a9-f479e6dd429b",
+		"Id": "f91a7e85-d5df-42f5-80ff-a65b8350467f",
 	}).Debug("Entering: loadClientsTestInstructionContainersFromCloudDB()")
 
 	defer func() {
 		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
 			"Id": "40ccee29-d32e-4674-9a3a-fd4403b55d32",
-		}).Debug("Exiting: loadClientsTestInstructionContainersAndTestInstructionContainersContainersFromCloudDB()")
+		}).Debug("Exiting: loadClientsTestInstructionContainersFromCloudDB()")
 	}()
 
 	/* Example
-	SELECT FGB_TI."DomainUuid", FGB_TI."DomainName", FGB_TI."SystemUuid", FGB_TI."SystemName", FGB_TI."TestInstructionContainerUuid", FGB_TI."TestInstructionContainerName", FGB_TI."TestInstructionContainerTypeUuid", FGB_TI."TestInstructionContainerTypeName", FGB_TI."TestInstructionContainerDescription", FGB_TI."TestInstructionContainerMouseOverText", FGB_TI."Deprecated", FGB_TI."Enabled", FGB_TI."MajorVersionNumber", FGB_TI."MinorVersionNumber", FGB_TI."UpdatedTimeStamp"
-	FROM "FenixGuiBuilder"."TestInstructionContainers" FGB_TI;
 
-	    "DomainUuid"                   uuid      not null,
-	    "DomainName"                   varchar   not null,
-	    "TestInstructionContainerUuid"          uuid      not null (Key)
-	    "TestInstructionContainerName"          varchar   not null,
-	    "TestInstructionContainerTypeUuid"      uuid      not null,
-	    "TestInstructionContainerTypeName"      varchar   not null,
-	    "TestInstructionContainerDescription"   varchar   not null,
-	    "TestInstructionContainerMouseOverText" varchar   not null,
-	    "Deprecated"                   boolean   not null,
-	    "Enabled"                      boolean   not null,
-	    "MajorVersionNumber"           integer   not null,
-	    "MinorVersionNumber"           integer   not null,
-	    "UpdatedTimeStamp"             timestamp not null
+	   "DomainUuid"                            uuid      not null,
+	   "DomainName"                            varchar   not null,
+	   "TestInstructionContainerUuid"          uuid      not null
+	   "TestInstructionContainerName"          varchar   not null,
+	   "TestInstructionContainerTypeUuid"      uuid      not null,
+	   "TestInstructionContainerTypeName"      varchar   not null,
+	   "TestInstructionContainerDescription"   varchar   not null,
+	   "TestInstructionContainerMouseOverText" varchar   not null,
+	   "Deprecated"                            boolean   not null,
+	   "Enabled"                               boolean   not null,
+	   "MajorVersionNumber"                    integer   not null,
+	   "MinorVersionNumber"                    integer   not null,
+	   "UpdatedTimeStamp"                      timestamp not null,
+	   "ChildrenIsParallelProcessed"           boolean   not null
 
 	*/
 
-	usedDBSchema := "TestInstructionContainers" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
+	usedDBSchema := "FenixGuiBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "SELECT * "
-	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"TestInstructionContainers\" FGB_TI;"
+	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"TestInstructionContainers\" FGB_TIC;"
 
 	// Query DB
 	rows, err := fenixSyncShared.DbPool.Query(context.Background(), sqlToExecute)
 
 	if err != nil {
 		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-			"Id":           "2f130d7e-f8aa-466f-b29d-0fb63608c1a6",
+			"Id":           "b54c3ae1-9d96-4f00-9bc3-2c1a1712b91a",
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
 		}).Error("Something went wrong when executing SQL")
@@ -176,6 +172,9 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObject_s
 		if err != nil {
 			return err
 		}
+
+		// TODO Load children
+		cloudDBTestInstructionContainerItem.TestInstructionContainerChildren = nil
 
 		// Add values to the object that is pointed to by variable in function
 		*cloudDBTestInstructionContainerItems = append(*cloudDBTestInstructionContainerItems, &cloudDBTestInstructionContainerItem)
