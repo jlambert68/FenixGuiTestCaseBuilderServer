@@ -5,6 +5,8 @@ import (
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"time"
 )
 
 // ****************************************************************************************************************
@@ -61,6 +63,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObject_s
 
 	// Variables to used when extract data from result set
 	var cloudDBTestInstructionItem fenixTestCaseBuilderServerGrpcApi.TestInstructionMessage
+	var tempTimeStamp time.Time
 
 	// Extract data from DB result set
 	for rows.Next() {
@@ -77,10 +80,20 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObject_s
 			&cloudDBTestInstructionItem.Enabled,
 			&cloudDBTestInstructionItem.MajorVersionNumber,
 			&cloudDBTestInstructionItem.MinorVersionNumber,
-			&cloudDBTestInstructionItem.UpdatedTimeStamp,
+			&tempTimeStamp,
 		)
 
+		// Convert TimeStamp into proto-format for TimeStamp
+		cloudDBTestInstructionItem.UpdatedTimeStamp = timestamppb.New(tempTimeStamp)
+
 		if err != nil {
+			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+				"Id":                         "e7925b78-327c-40ad-9144-ae4a8a6f35f5",
+				"Error":                      err,
+				"sqlToExecute":               sqlToExecute,
+				"cloudDBTestInstructionItem": cloudDBTestInstructionItem,
+			}).Error("Something went wrong when processing result from database")
+
 			return err
 		}
 
@@ -149,10 +162,15 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObject_s
 	}
 
 	// Variables to used when extract data from result set
-	var cloudDBTestInstructionContainerItem fenixTestCaseBuilderServerGrpcApi.TestInstructionContainerMessage
+	var tempTimeStamp time.Time
+	var childrenIsParallelProcessed bool
 
 	// Extract data from DB result set
 	for rows.Next() {
+
+		// Define for every loop because otherwise the same object is referenced in array
+		var cloudDBTestInstructionContainerItem fenixTestCaseBuilderServerGrpcApi.TestInstructionContainerMessage
+
 		err := rows.Scan(
 			&cloudDBTestInstructionContainerItem.DomainUuid,
 			&cloudDBTestInstructionContainerItem.DomainName,
@@ -166,8 +184,23 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObject_s
 			&cloudDBTestInstructionContainerItem.Enabled,
 			&cloudDBTestInstructionContainerItem.MajorVersionNumber,
 			&cloudDBTestInstructionContainerItem.MinorVersionNumber,
-			&cloudDBTestInstructionContainerItem.UpdatedTimeStamp,
+			&tempTimeStamp,
+			&childrenIsParallelProcessed,
 		)
+
+		// Convert TimeStamp into proto-format for TimeStamp
+		cloudDBTestInstructionContainerItem.UpdatedTimeStamp = timestamppb.New(tempTimeStamp)
+
+		// Convert 'childrenIsParallelProcessed' into Proto-message-format
+		if childrenIsParallelProcessed == true {
+			// Children executed in Parallel
+			cloudDBTestInstructionContainerItem.TestInstructionContainerExecutionType = fenixTestCaseBuilderServerGrpcApi.TestInstructionContainerExecutionTypeEnum_PARALLELLED_PROCESSED
+
+		} else {
+			// Children executed in Serial
+			cloudDBTestInstructionContainerItem.TestInstructionContainerExecutionType = fenixTestCaseBuilderServerGrpcApi.TestInstructionContainerExecutionTypeEnum_SERIAL_PROCESSED
+
+		}
 
 		if err != nil {
 			return err
