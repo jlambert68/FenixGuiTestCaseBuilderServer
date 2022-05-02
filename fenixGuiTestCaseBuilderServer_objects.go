@@ -9,13 +9,13 @@ import (
 	//	ecpb "github.com/jlambert68/FenixGrpcApi/Client/fenixGuiTestCaseBuilderServerGrpcApi/echo/go_grpc_api"
 )
 
-type fenixGuiTestCaseBuilderServerObject_struct struct {
+type fenixGuiTestCaseBuilderServerObjectStruct struct {
 	logger         *logrus.Logger
 	gcpAccessToken *oauth2.Token
 }
 
 // Variable holding everything together
-var fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObject_struct
+var fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct
 
 // gRPC variables
 var (

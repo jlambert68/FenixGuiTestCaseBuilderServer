@@ -31,7 +31,7 @@ func fenixGuiTestCaseBuilderServerMain() {
 	fenixSyncShared.ConnectToDB()
 
 	// Set up BackendObject
-	fenixGuiTestCaseBuilderServerObject = &fenixGuiTestCaseBuilderServerObject_struct{}
+	fenixGuiTestCaseBuilderServerObject = &fenixGuiTestCaseBuilderServerObjectStruct{}
 
 	// Init logger
 	fenixGuiTestCaseBuilderServerObject.InitLogger("")

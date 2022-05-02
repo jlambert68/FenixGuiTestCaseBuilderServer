@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObject_struct) InitLogger(filename string) {
+func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) InitLogger(filename string) {
 	fenixGuiTestCaseBuilderServerObject.logger = logrus.StandardLogger()
 
 	switch common_config.LoggingLevel {
