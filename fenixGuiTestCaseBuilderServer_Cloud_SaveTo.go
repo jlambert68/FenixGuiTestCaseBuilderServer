@@ -116,7 +116,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	*/
 	// Create Delete Statement for removing users all pinned TestInstructions and TestInstructionsContainers
 	sqlToExecute = sqlToExecute + "DELETE FROM \"" + usedDBSchema + "\".\"PinnedTestInstructionsAndPreCreatedTestInstructionContainers\" "
-	sqlToExecute = sqlToExecute + "WHERE .\"ClientId.\" = '" + currentUserUuid + "'; "
+	sqlToExecute = sqlToExecute + "WHERE \"UserId\" = '" + currentUserUuid + "'; "
 
 	// Create Insert Statement for users pinned TestInstructions
 	// Data to be inserted in the DB-table
@@ -137,14 +137,13 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	// Create Insert Statement for users pinned TestInstructionContainers
 	// Data to be inserted in the DB-table
-	dataRowsToBeInsertedMultiType = nil
 
 	for _, pinnedTestInstructionContainerMessage := range pinnedTestInstructionsAndTestContainersMessage.PinnedTestInstructionContainerMessages {
 
 		dataRowToBeInsertedMultiType = nil
 
 		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, currentUserUuid)
-		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, pinnedTestInstructionContainerMessage.TestInstructionContainerName)
+		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, pinnedTestInstructionContainerMessage.TestInstructionContainerUuid)
 		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, pinnedTestInstructionContainerMessage.TestInstructionContainerName)
 		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, 2) // 2 = TestInstructionContainerType
 		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, currentDataTimeStamp)

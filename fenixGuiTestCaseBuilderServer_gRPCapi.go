@@ -144,7 +144,7 @@ func (s *FenixGuiTestCaseBuilderGrpcServicesServer) GetPinnedTestInstructionsAnd
 	var cloudDBTestInstructionContainerItems []*fenixTestCaseBuilderServerGrpcApi.TestInstructionContainerMessage
 
 	// Get users TestInstruction-data from CloudDB
-	err := fenixGuiTestCaseBuilderServerObject.loadClientsTestInstructionsFromCloudDB(userID, &cloudDBTestInstructionItems)
+	err := fenixGuiTestCaseBuilderServerObject.loadPinnedClientsTestInstructionsFromCloudDB(userID, &cloudDBTestInstructionItems)
 	if err != nil {
 		// Something went wrong so return an error to caller
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.TestInstructionsAndTestContainersMessage{
@@ -152,7 +152,7 @@ func (s *FenixGuiTestCaseBuilderGrpcServicesServer) GetPinnedTestInstructionsAnd
 			TestInstructionContainerMessages: nil,
 			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
 				AckNack:    false,
-				Comments:   "Got some Error when retrieving TestInstructions from database",
+				Comments:   "Got some Error when retrieving Pinned TestInstructions from database",
 				ErrorCodes: []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_UNSPECIFIED},
 			},
 		}
@@ -162,7 +162,7 @@ func (s *FenixGuiTestCaseBuilderGrpcServicesServer) GetPinnedTestInstructionsAnd
 	}
 
 	// Get users TestInstructionContainer-data from CloudDB
-	err = fenixGuiTestCaseBuilderServerObject.loadClientsTestInstructionContainersFromCloudDB(userID, &cloudDBTestInstructionContainerItems)
+	err = fenixGuiTestCaseBuilderServerObject.loadPinnedClientsTestInstructionContainersFromCloudDB(userID, &cloudDBTestInstructionContainerItems)
 	if err != nil {
 		// Something went wrong so return an error to caller
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.TestInstructionsAndTestContainersMessage{
@@ -170,7 +170,7 @@ func (s *FenixGuiTestCaseBuilderGrpcServicesServer) GetPinnedTestInstructionsAnd
 			TestInstructionContainerMessages: nil,
 			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
 				AckNack:    false,
-				Comments:   "Got some Error when retrieving TestInstructionContainers from database",
+				Comments:   "Got some Error when retrieving Pinned TestInstructionContainers from database",
 				ErrorCodes: []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_UNSPECIFIED},
 			},
 		}
