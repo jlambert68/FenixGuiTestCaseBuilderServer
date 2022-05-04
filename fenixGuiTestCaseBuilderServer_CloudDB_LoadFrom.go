@@ -252,9 +252,9 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	usedDBSchema := "FenixGuiBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "SELECT * "
-	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"TestInstructions\" FGB_TI"
-	sqlToExecute = sqlToExecute + "WHERE FGB_TI.\"TestInstructionUuid\" = IN (SELECT PTIC.\"PinnedUuid\" "
+	sqlToExecute = sqlToExecute + "SELECT FGB_TI.* "
+	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"TestInstructions\" FGB_TI "
+	sqlToExecute = sqlToExecute + "WHERE FGB_TI.\"TestInstructionUuid\" IN (SELECT FGB_PTIC.\"PinnedUuid\" "
 	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"PinnedTestInstructionsAndPreCreatedTestInstructionContainers\" FGB_PTIC "
 	sqlToExecute = sqlToExecute + "WHERE FGB_PTIC.\"UserId\" = '" + userID + "' AND FGB_PTIC.\"PinnedType\" = 1);"
 
@@ -355,9 +355,9 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	usedDBSchema := "FenixGuiBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "SELECT * "
-	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"TestInstructionContainers\" FGB_TIC"
-	sqlToExecute = sqlToExecute + "WHERE FGB_TIC.\"TestInstructionContainerUuid\" = IN (SELECT PTIC.\"PinnedUuid\" "
+	sqlToExecute = sqlToExecute + "SELECT FGB_TIC.* "
+	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"TestInstructionContainers\" FGB_TIC "
+	sqlToExecute = sqlToExecute + "WHERE FGB_TIC.\"TestInstructionContainerUuid\" IN (SELECT FGB_PTIC.\"PinnedUuid\" "
 	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"PinnedTestInstructionsAndPreCreatedTestInstructionContainers\" FGB_PTIC "
 	sqlToExecute = sqlToExecute + "WHERE FGB_PTIC.\"UserId\" = '" + userID + "' AND FGB_PTIC.\"PinnedType\" = 2);"
 
