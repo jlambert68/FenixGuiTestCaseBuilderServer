@@ -14,11 +14,11 @@ RUN go build -o /fenixGuiBuilderServer .
 FROM debian:buster
 #FROM golang:1.13.8
 
-EXPOSE 5997
+EXPOSE 6670
 #FROM golang:1.13.8
 WORKDIR /
 COPY --from=build-env /fenixGuiBuilderServer /
-Add data/ data/
+#Add data/ data/
 
 #CMD ["/fenixClientServer"]
 ENTRYPOINT ["/fenixGuiBuilderServer"]
