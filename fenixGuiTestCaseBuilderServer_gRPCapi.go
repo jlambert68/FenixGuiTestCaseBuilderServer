@@ -18,7 +18,7 @@ func (s *FenixGuiTestCaseBuilderGrpcServicesServer) AreYouAlive(ctx context.Cont
 		"id": "9c7f0c3d-7e9f-4c91-934e-8d7a22926d84",
 	}).Debug("Outgoing 'gRPC - AreYouAlive'")
 
-	return &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{AckNack: true, Comments: "I'am alive, from Client"}, nil
+	return &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{AckNack: true, Comments: "I'am alive. Greetings to Fang and Shazeen!"}, nil
 }
 
 // GetTestInstructionsAndTestContainers - *********************************************************************
