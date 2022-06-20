@@ -12,6 +12,7 @@ import (
 // ****************************************************************************************************************
 // Load data from CloudDB
 //
+/*
 // Load TestInstructions and pre-created TestInstructionContainers for Client
 func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadClientsTestInstructionsFromCloudDB(userID string, cloudDBTestInstructionItems *[]*fenixTestCaseBuilderServerGrpcApi.TestInstructionMessage) (err error) {
 
@@ -40,7 +41,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	   "MinorVersionNumber"           integer   not null,
 	   "UpdatedTimeStamp"             timestamp not null
 
-	*/
+	//* /
 
 	usedDBSchema := "FenixGuiBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 
@@ -99,6 +100,284 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 		// Add values to the object that is pointed to by variable in function
 		*cloudDBTestInstructionItems = append(*cloudDBTestInstructionItems, &cloudDBTestInstructionItem)
+
+	}
+
+	// No errors occurred
+	return nil
+
+}
+*/
+// Load TestInstructions and pre-created TestInstructionContainers for Client
+func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadClientsImmatureTestInstructionsFromCloudDB(userID string, cloudDBImmatureTestInstructionItems *[]*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage) (err error) {
+
+	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		"Id": "38fbd4e2-cfe8-405c-84ce-1667c2292c58",
+	}).Debug("Entering: loadClientsImmatureTestInstructionsFromCloudDB()")
+
+	defer func() {
+		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			"Id": "6acee974-1280-48f5-9c4f-886aeff58863",
+		}).Debug("Exiting: loadClientsImmatureTestInstructionsFromCloudDB()")
+	}()
+
+	var (
+		basicTestInstructionInformation            fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage
+		basicTestInstructionInformationSQLCount    int64
+		immatureTestInstructionInformation         fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage
+		immatureTestInstructionInformationSQLCount int64
+		immatureSubTestCaseModel                   fenixTestCaseBuilderServerGrpcApi.ImmatureElementModelMessage
+		immatureSubTestCaseModelSQLCount           int64
+	)
+
+	ImmatureTestInstructionMessageMap := make(map[string]fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage)
+
+	/* Example
+	   "DomainUuid"                   uuid      not null,
+	   "DomainName"                   varchar   not null,
+	   "TestInstructionUuid"          uuid      not null (Key)
+	   "TestInstructionName"          varchar   not null,
+	   "TestInstructionTypeUuid"      uuid      not null,
+	   "TestInstructionTypeName"      varchar   not null,
+	   "TestInstructionDescription"   varchar   not null,
+	   "TestInstructionMouseOverText" varchar   not null,
+	   "Deprecated"                   boolean   not null,
+	   "Enabled"                      boolean   not null,
+	   "MajorVersionNumber"           integer   not null,
+	   "MinorVersionNumber"           integer   not null,
+	   "UpdatedTimeStamp"             timestamp not null
+
+	*/
+
+	usedDBSchema := "FenixGuiBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
+
+	// **** BasicTestInstructionInformation ****
+	sqlToExecute := ""
+	sqlToExecute = sqlToExecute + "SELECT * "
+	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"BasicTestInstructionInformation\" BTII_TI"
+	sqlToExecute = sqlToExecute + "ORDER BY \"TestInstructionUuid\" ASC;"
+
+	// Query DB
+	rows, err := fenixSyncShared.DbPool.Query(context.Background(), sqlToExecute)
+
+	if err != nil {
+		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			"Id":           "2f130d7e-f8aa-466f-b29d-0fb63608c1a6",
+			"Error":        err,
+			"sqlToExecute": sqlToExecute,
+		}).Error("Something went wrong when executing SQL")
+
+		return err
+	}
+
+	// Variables to used when extract data from result set
+	//var basicTestInstructionInformation fenixTestCaseBuilderServerGrpcApi.TestInstructionMessage
+	var tempTimeStamp time.Time
+
+	// Get number of rows for 'basicTestInstructionInformation'
+	basicTestInstructionInformationSQLCount = rows.CommandTag().RowsAffected()
+
+	// Extract data from DB result set
+	for rows.Next() {
+
+		// Initiate a new variable to store the data
+
+		err := rows.Scan(
+			// NonEditableInformation
+			&basicTestInstructionInformation.NonEditableInformation.DomainUuid,
+			&basicTestInstructionInformation.NonEditableInformation.DomainName,
+			&basicTestInstructionInformation.NonEditableInformation.TestInstructionUuid,
+			&basicTestInstructionInformation.NonEditableInformation.TestInstructionName,
+			&basicTestInstructionInformation.NonEditableInformation.TestInstructionTypeUuid,
+			&basicTestInstructionInformation.NonEditableInformation.TestInstructionTypeName,
+			&basicTestInstructionInformation.NonEditableInformation.Deprecated,
+			&basicTestInstructionInformation.NonEditableInformation.MajorVersionNumber,
+			&basicTestInstructionInformation.NonEditableInformation.MinorVersionNumber,
+			&tempTimeStamp,
+			&basicTestInstructionInformation.NonEditableInformation.TestInstructionColor,
+			&basicTestInstructionInformation.NonEditableInformation.TCRuleDeletion,
+			&basicTestInstructionInformation.NonEditableInformation.TCRuleSwap,
+
+			// EditableInformation
+			&basicTestInstructionInformation.EditableInformation.TestInstructionDescription,
+			&basicTestInstructionInformation.EditableInformation.TestInstructionMouseOverText,
+
+			// InvisibleBasicInformation
+			&basicTestInstructionInformation.InvisibleBasicInformation.Enabled,
+		)
+
+		if err != nil {
+			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+				"Id":           "e7925b78-327c-40ad-9144-ae4a8a6f35f5",
+				"Error":        err,
+				"sqlToExecute": sqlToExecute,
+			}).Error("Something went wrong when processing result from database")
+
+			return err
+		}
+
+		// Convert TimeStamp into proto-format for TimeStamp
+		basicTestInstructionInformation.NonEditableInformation.UpdatedTimeStamp = timestamppb.New(tempTimeStamp)
+
+		// Add 'basicTestInstructionInformation' to map
+		testInstructionUuid := basicTestInstructionInformation.NonEditableInformation.TestInstructionUuid
+		immatureTestInstructionMessage, existsInMap := ImmatureTestInstructionMessageMap[testInstructionUuid]
+		// testInstructionUuid shouldn't exist in map. If so then there is a problem
+		if existsInMap == true {
+			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+				"Id":                  "4713a8c8-c9d0-4315-9341-27365d64cdc8",
+				"testInstructionUuid": testInstructionUuid,
+				"sqlToExecute":        sqlToExecute,
+			}).Fatal("TestInstructionUuid shouldn't exist in map. If so then there is a problem")
+
+		}
+		// Create 'immatureTestInstructionMessage' and add 'BasicTestInstructionInformation'
+		immatureTestInstructionMessage = fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage{BasicTestInstructionInformation: &basicTestInstructionInformation}
+		ImmatureTestInstructionMessageMap[testInstructionUuid] = immatureTestInstructionMessage
+
+	}
+
+	// **** immatureTestInstructionInformation ****
+	sqlToExecute = ""
+	sqlToExecute = sqlToExecute + "SELECT * "
+	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"ImmatureTestInstructionInformation\" ITII_TI"
+	sqlToExecute = sqlToExecute + "ORDER BY \"TestInstructionUuid\" ASC,  \"DropZoneUuid\" ASC, \"TestInstructionAttributeGuid\" ASC; "
+
+	// Query DB
+	rows, err = fenixSyncShared.DbPool.Query(context.Background(), sqlToExecute)
+
+	if err != nil {
+		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			"Id":           "b3ef4fec-9097-46c4-8ff6-85a758967e46",
+			"Error":        err,
+			"sqlToExecute": sqlToExecute,
+		}).Error("Something went wrong when executing SQL")
+
+		return err
+	}
+
+	// Get number of rows for 'immatureTestInstructionInformation'
+	immatureTestInstructionInformationSQLCount = rows.CommandTag().RowsAffected()
+
+	// Temp variables used when extracting data
+	var domainUuid string
+	var domainName string
+	var testInstructionUuid string
+	var testInstructionName string
+
+	var (
+		previousAvailableDropZone fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage
+		availableDropZone fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage
+		availableDropZones []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage
+		firstAvailableDropZone = true
+		)
+
+	var (
+		previousDropZonePreSetTestInstructionAttribute fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
+		dropZonePreSetTestInstructionAttribute fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
+		dropZonePreSetTestInstructionAttributes []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
+		firstDropZonePreSetTestInstructionAttribute bool
+	)
+
+	var firstImmatureElementUuid string
+
+	// Extract data from DB result set
+	for rows.Next() {
+
+		// Initiate a new variable to store the data
+
+
+		err := rows.Scan(
+			// temp-data which is not stored in object
+			&domainUuid,
+			&domainName,
+			&testInstructionUuid,
+			&testInstructionName,
+
+			// DropZone-data
+			&availableDropZone.DropZoneUuid,
+			&availableDropZone.DropZoneName,
+			&availableDropZone.DropZoneDescription,
+			&availableDropZone.DropZoneMouseOver,
+			&availableDropZone.DropZoneColor,
+
+			// DropZoneAttributes-data
+			&dropZonePreSetTestInstructionAttribute.TestInstructionAttributeType,
+			&dropZonePreSetTestInstructionAttribute.TestInstructionAttributeGuid,
+			&dropZonePreSetTestInstructionAttribute.TestInstructionAttributeName,
+			&dropZonePreSetTestInstructionAttribute.AttributeValueAsString,
+			&dropZonePreSetTestInstructionAttribute.AttributeValueUuid,
+
+			// Reference to first element in element-model
+			&firstImmatureElementUuid,
+		)
+
+		if err != nil {
+			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+				"Id":           "9f0618f2-ca04-41e9-aeef-60cd1874f6b7",
+				"Error":        err,
+				"sqlToExecute": sqlToExecute,
+			}).Error("Something went wrong when processing result from database")
+
+			return err
+		}
+
+		if firstAvailableDropZone == true {
+			// When first DropZone
+			firstAvailableDropZone = false
+			firstDropZonePreSetTestInstructionAttribute = true
+			previousAvailableDropZone = availableDropZone
+			previousDropZonePreSetTestInstructionAttribute = dropZonePreSetTestInstructionAttribute
+			availableDropZones = append(availableDropZones, availableDropZone)
+			dropZonePreSetTestInstructionAttributes = append(dropZonePreSetTestInstructionAttributes, dropZonePreSetTestInstructionAttribute)
+
+		} else if availableDropZone.DropZoneUuid == previousAvailableDropZone.DropZoneUuid &&
+			dropZonePreSetTestInstructionAttribute.TestInstructionAttributeGuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeGuid {
+			// When same 'availableDropZone' but new 'dropZonePreSetTestInstructionAttribute'
+			previousDropZonePreSetTestInstructionAttribute = dropZonePreSetTestInstructionAttribute
+			dropZonePreSetTestInstructionAttributes = append(dropZonePreSetTestInstructionAttributes, dropZonePreSetTestInstructionAttribute)
+
+		} else if availableDropZone.DropZoneUuid == previousAvailableDropZone.DropZoneUuid &&
+			dropZonePreSetTestInstructionAttribute.TestInstructionAttributeGuid == previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeGuid {
+			// When same 'availableDropZone' and same 'dropZonePreSetTestInstructionAttribute' --> Should bot happen
+			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+				"Id":                  "b33a9a8a-f611-4096-9b29-0a1d0b9d81d0",
+				"availableDropZone.DropZoneUuid": availableDropZone.DropZoneUuid,
+				"dropZonePreSetTestInstructionAttribute.TestInstructionAttributeGuid":        dropZonePreSetTestInstructionAttribute.TestInstructionAttributeGuid,
+			}).Fatal("Same 'availableDropZone' and same 'dropZonePreSetTestInstructionAttribute' --> Should bot happen")
+
+			fel på denna
+		} else if availableDropZone.DropZoneUuid != previousAvailableDropZone.DropZoneUuid &&
+			dropZonePreSetTestInstructionAttribute.TestInstructionAttributeGuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeGuid {
+			// When new 'availableDropZone' and new 'dropZonePreSetTestInstructionAttribute'
+			previousAvailableDropZone = availableDropZone
+			previousDropZonePreSetTestInstructionAttribute = dropZonePreSetTestInstructionAttribute
+			availableDropZones = append(availableDropZones, availableDropZone)
+			dropZonePreSetTestInstructionAttributes = append(dropZonePreSetTestInstructionAttributes, dropZonePreSetTestInstructionAttribute)
+
+
+		}
+			previousAvailableDropZone = availableDropZone
+
+
+
+
+
+		// Add 'basicTestInstructionInformation' to map
+		testInstructionUuid := basicTestInstructionInformation.NonEditableInformation.TestInstructionUuid
+		immatureTestInstructionMessage, existsInMap := ImmatureTestInstructionMessageMap[testInstructionUuid]
+		// testInstructionUuid shouldn't exist in map. If so then there is a problem
+		if existsInMap == true {
+			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+				"Id":                  "4713a8c8-c9d0-4315-9341-27365d64cdc8",
+				"testInstructionUuid": testInstructionUuid,
+				"sqlToExecute":        sqlToExecute,
+			}).Fatal("TestInstructionUuid shouldn't exist in map. If so then there is a problem")
+
+		}
+		// Create 'immatureTestInstructionMessage' and add 'BasicTestInstructionInformation'
+		immatureTestInstructionMessage = fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage{BasicTestInstructionInformation: &basicTestInstructionInformation}
+		ImmatureTestInstructionMessageMap[testInstructionUuid] = immatureTestInstructionMessage
 
 	}
 

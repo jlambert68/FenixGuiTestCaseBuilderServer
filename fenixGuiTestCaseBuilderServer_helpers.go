@@ -57,7 +57,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	appendedCtx = grpcMetadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+fenixGuiTestCaseBuilderServerObject.gcpAccessToken.AccessToken)
 
 	return appendedCtx, true, ""
-
+	getHighestFenixTestDataProtoFileVersion
 }
 
 // ********************************************************************************************************************

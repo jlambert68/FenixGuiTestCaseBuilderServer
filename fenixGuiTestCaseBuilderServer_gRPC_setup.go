@@ -44,17 +44,17 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		"Id": "b0ccffb5-4367-464c-a3bc-460cafed16cb",
 	}).Info("Starting Backend gRPC Server")
 
-	registerfenixGuiTestCaseBuilderServerServer = grpc.NewServer()
-	fenixGuiTestCaseBuilderServerGrpcApi.RegisterFenixTestCaseBuilderServerGrpcServicesServer(registerfenixGuiTestCaseBuilderServerServer, &FenixGuiTestCaseBuilderGrpcServicesServer{})
+	registerFenixTestCaseBuilderServerGrpcServicesServer = grpc.NewServer()
+	fenixGuiTestCaseBuilderServerGrpcApi.RegisterFenixTestCaseBuilderServerGrpcServicesServer(registerFenixTestCaseBuilderServerGrpcServicesServer, &fenixTestCaseBuilderServerGrpcServicesServer{})
 
 	// Register RouteGuide on the same server.
-	//reflection.Register(registerfenixGuiTestCaseBuilderServerServer)
+	//reflection.Register(registerFenixTestCaseBuilderServerGrpcServicesServer)
 
 	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
 		"Id":                                 "e843ece9-b707-4c60-b1d8-14464305e68f",
 		"common_config.FenixGuiServerPort: ": common_config.FenixGuiServerPort,
-	}).Info("registerfenixGuiTestCaseBuilderServerServer for TestInstruction Backend Server started")
-	registerfenixGuiTestCaseBuilderServerServer.Serve(lis)
+	}).Info("registerFenixTestCaseBuilderServerGrpcServicesServer for TestInstruction Backend Server started")
+	registerFenixTestCaseBuilderServerGrpcServicesServer.Serve(lis)
 	//}()
 
 }
@@ -63,7 +63,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) StopGrpcServer() {
 
 	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{}).Info("Gracefull stop for: registerTaxiHardwareStreamServer")
-	registerfenixGuiTestCaseBuilderServerServer.GracefulStop()
+	registerFenixTestCaseBuilderServerGrpcServicesServer.GracefulStop()
 
 	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
 		"common_config.FenixGuiServerPort: ": common_config.FenixGuiServerPort,
