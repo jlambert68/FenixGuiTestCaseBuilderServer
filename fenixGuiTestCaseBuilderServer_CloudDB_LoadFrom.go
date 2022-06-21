@@ -305,9 +305,6 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		dropZonePreSetTestInstructionAttributes                                                []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
 	)
 
-	var immatureElementModelMessage fenixTestCaseBuilderServerGrpcApi.ImmatureElementModelMessage
-	var immatureElementModelElement fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage
-
 	var firstImmatureElementUuid string
 
 	var dataStateChange uint8
@@ -546,32 +543,39 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	immatureTestInstructionInformationSQLCount = rows.CommandTag().RowsAffected()
 
 	// Create map to store ImmatureTestInstructionInformationMessages
-	immatureTestInstructionInformationMessagesMap := make(map[string]fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage)
+	//immatureTestInstructionInformationMessagesMap := make(map[string]fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage)
 
 	// Temp variables used when extracting data
-	var domainUuid, previousDomainUuid string
-	var domainName string
-	var testInstructionUuid, previousTestInstructionUuid string
-	var testInstructionName string
-	var tempTestInstructionAttributeType string
-	// First Row in TestData
-	var firstRowInSQLRespons bool
+		var tempImmatureElementModelDomainUuid, previousTempImmatureDomainUuid string
+		var tempImmatureElementModelDomainName string
+		var tempTestCaseModelElementTypeAsString string
+	var previousOriginalElementUuid string
+		//var testInstructionUuid, previousTestInstructionUuid string
+		//var testInstructionName string
+		//var tempTestInstructionAttributeType string
+		// First Row in TestData
+		//var firstRowInSQLRespons bool
 	firstRowInSQLRespons = true
 
 
 	var (
-		availableDropZone, previousAvailableDropZone fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage
-		availableDropZones                           []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage
+		//availableDropZone, previousAvailableDropZone fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage
+		//availableDropZones                           []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage
 	)
 
 	var (
-		dropZonePreSetTestInstructionAttribute, previousDropZonePreSetTestInstructionAttribute fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
-		dropZonePreSetTestInstructionAttributes                                                []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
+		//dropZonePreSetTestInstructionAttribute, previousDropZonePreSetTestInstructionAttribute fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
+		//dropZonePreSetTestInstructionAttributes                                                []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
 	)
 
-	var firstImmatureElementUuid string
 
-	var dataStateChange uint8
+	var immatureElementModelMessage fenixTestCaseBuilderServerGrpcApi.ImmatureElementModelMessage
+	var immatureElementModelElement fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage
+	var immatureElementModelElements []*fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage
+
+	//var firstImmatureElementUuid string
+
+	//var dataStateChange uint8
 
 	// Clear previous variables
 	previousDomainUuid = ""
@@ -584,24 +588,116 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		availableDropZone = fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage{}
 		dropZonePreSetTestInstructionAttribute = fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
 
-		err := rows.Scan(
+		err = rows.Scan(
 
-			// temp-data which is not stored in object
-			&domainUuid,
-			&domainName,
+		// temp-data which is not stored in object
+			&tempImmatureElementModelDomainUuid,
+			&tempImmatureElementModelDomainName,
 
 		// ImmatureElementModel
-		&tempImmatureElementModelDomainUuid,
-		&tempImmatureElementModelDomainName,
+
 		&immatureElementModelElement.OriginalElementUuid,
 		&immatureElementModelElement.OriginalElementName,
 		&immatureElementModelElement.PreviousElementUuid,
 		&immatureElementModelElement.NextElementUuid,
 		&immatureElementModelElement.FirstChildElementUuid,
 		&immatureElementModelElement.ParentElementUuid,
-		&tempTestCaseModelElementType, //&immatureElementModelElement.TestCaseModelElementType,
+		&tempTestCaseModelElementTypeAsString,
 
-		&immatureElementModelMessage.FirstImmatureElementUuid,
+		&immatureElementModelMessage.FirstImmatureElementUuid)
+	}
+
+	// Convert 'tempTestCaseModelElementTypeAsString' into gRPC-type
+	immatureElementModelElement.TestCaseModelElementType = fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementTypeEnum(fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementTypeEnum_value[tempTestCaseModelElementTypeAsString])
+
+	// Handle the correct order of building together the full object
+	dataStateChange = 0
+
+	//TODO fixa nedan
+	fixa nedan
+
+	// All UUIDs are changed and this is the first row [dataStateChange=1]
+	dataStateChangeFound :=
+		firstRowInSQLRespons == true &&
+			tempImmatureElementModelDomainUuid != previousTempImmatureDomainUuid &&
+			immatureElementModelElement.OriginalElementUuid != previousOriginalElementUuid
+	if dataStateChangeFound == true {
+		dataStateChange = 1
+	}
+
+	// All UUIDs are changed and this is the first row [dataStateChange=1]
+	dataStateChangeFound =
+		firstRowInSQLRespons == true &&
+			tempImmatureElementModelDomainUuid != previousTempImmatureDomainUuid &&
+			immatureElementModelElement.OriginalElementUuid != previousOriginalElementUuid
+	if dataStateChangeFound == true {
+		dataStateChange = 1
+	}
+
+
+	// All UUIDs are changed and this is not the first row [dataStateChange=2]
+	dataStateChangeFound =
+		firstRowInSQLRespons == false &&
+			domainUuid != previousDomainUuid &&
+			testInstructionUuid != previousTestInstructionUuid &&
+			availableDropZone.DropZoneUuid != previousAvailableDropZone.DropZoneUuid &&
+			dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid
+	if dataStateChangeFound == true {
+		dataStateChange = 2
+	}
+
+
+	// Only TestInstructionUuid, AvailableDropZoneUuid and DropZonePreSetTestInstructionAttributeUuid are changed and this is not the first row [dataStateChange=5]
+	dataStateChangeFound =
+		firstRowInSQLRespons == false &&
+			domainUuid == previousDomainUuid &&
+			testInstructionUuid != previousTestInstructionUuid &&
+			availableDropZone.DropZoneUuid != previousAvailableDropZone.DropZoneUuid &&
+			dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid
+	if dataStateChangeFound == true {
+		dataStateChange = 5
+	}
+
+	// Act on which 'dataStateChange' that was achieved
+	switch dataStateChange {
+
+	// All UUIDs are changed and this is not the first row [dataStateChange=2]
+	// Only TestInstructionUuid, AvailableDropZoneUuid and DropZonePreSetTestInstructionAttributeUuid are changed and this is not the first row [dataStateChange=5]
+case 2, 5:
+	// New DropZone so add the previous DropZone-attributes to the DropZone-array
+	dropZonePreSetTestInstructionAttributes = append(dropZonePreSetTestInstructionAttributes, &previousDropZonePreSetTestInstructionAttribute)
+
+	// Add attributes to previousDropZone
+	previousAvailableDropZone.DropZonePreSetTestInstructionAttributes = dropZonePreSetTestInstructionAttributes
+
+	// Add previousAvailableDropZone to array of DropZone
+	availableDropZones = append(availableDropZones, &previousAvailableDropZone)
+
+	// Add the availableDropZones to the ImmatureTestInstructionInformationMessage-map
+	immatureTestInstructionInformation.AvailableDropZones = availableDropZones
+	immatureTestInstructionInformationMessagesMap[previousTestInstructionUuid] = immatureTestInstructionInformation
+
+	// Create fresh versions of variables
+	immatureTestInstructionInformation = fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage{}
+	availableDropZones = []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage{}
+	dropZonePreSetTestInstructionAttributes = []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+
+	// Only DropZonePreSetTestInstructionAttributeUuid is changed and this is not the first row [dataStateChange=3]
+	case 3:
+	// Add the DropZone attribute to the array for attributes
+	dropZonePreSetTestInstructionAttributes = append(dropZonePreSetTestInstructionAttributes, &previousDropZonePreSetTestInstructionAttribute)
+
+		// Something is wrong in the ordering of the testdata or the testdata itself
+	default:
+		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			"Id":                                     "e464567a-79ab-49e7-9519-ce187b34458d",
+			"domainUuid":                             domainUuid,
+			"previousDomainUuid":                     previousDomainUuid,
+			"testInstructionUuid":                    testInstructionUuid,
+			"previousTestInstructionUuid":            previousTestInstructionUuid,
+
+		}).Fatal("Something is wrong in the ordering of the testdata or the testdata itself  --> Should bot happen")
+
 	}
 
 	fmt.Println(basicTestInstructionInformationSQLCount)
