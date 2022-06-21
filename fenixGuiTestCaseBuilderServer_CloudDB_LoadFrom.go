@@ -152,11 +152,11 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	usedDBSchema := "FenixGuiBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 
-	// **** BasicTestInstructionInformation ****
+	// **** BasicTestInstructionInformation **** **** BasicTestInstructionInformation **** **** BasicTestInstructionInformation ****
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "SELECT * "
-	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"BasicTestInstructionInformation\" BTII_TI "
-	sqlToExecute = sqlToExecute + "ORDER BY \"TestInstructionUuid\" ASC;"
+	sqlToExecute = sqlToExecute + "SELECT BTI.* "
+	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"BasicTestInstructionInformation\" BTI "
+	sqlToExecute = sqlToExecute + "ORDER BY BTI.\"DomainUuid\" ASC,  BTI.\"TestInstructionTypeUuid\" ASC, BTI.\"TestInstructionUuid\" ASC; "
 
 	// Query DB
 	rows, err := fenixSyncShared.DbPool.Query(context.Background(), sqlToExecute)
@@ -178,9 +178,10 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	// Get number of rows for 'basicTestInstructionInformation'
 	basicTestInstructionInformationSQLCount = rows.CommandTag().RowsAffected()
 	var (
-		nonEditableInformation    fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_NonEditableBasicInformationMessage
-		editableInformation       fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_EditableBasicInformationMessage
-		invisibleBasicInformation fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_InvisibleBasicInformationMessage
+		nonEditableInformation      fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_NonEditableBasicInformationMessage
+		editableInformation         fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_EditableBasicInformationMessage
+		invisibleBasicInformation   fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_InvisibleBasicInformationMessage
+		immatureElementModelMessage fenixTestCaseBuilderServerGrpcApi.ImmatureElementModelMessage
 	)
 
 	// Extract data from DB result set
@@ -213,6 +214,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 			// InvisibleBasicInformation
 			&invisibleBasicInformation.Enabled,
+
 		)
 
 		if err != nil {
@@ -248,19 +250,21 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			InvisibleBasicInformation: &invisibleBasicInformation,
 		}
 
-		// Create 'immatureTestInstructionMessage' and add 'BasicTestInstructionInformation'
-		immatureTestInstructionMessage = fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage{BasicTestInstructionInformation: &basicTestInstructionInformation}
+		// Create 'immatureTestInstructionMessage' and add 'BasicTestInstructionInformation' and a small part of 'ImmatureSubTestCaseModel'
+		immatureTestInstructionMessage = fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage{
+			BasicTestInstructionInformation: &basicTestInstructionInformation,
+			ImmatureSubTestCaseModel:        &immatureElementModelMessage}
 
 		// Save immatureTestInstructionMessage in map
 		ImmatureTestInstructionMessageMap[testInstructionUuid] = immatureTestInstructionMessage
 
 	}
 
-	// **** immatureTestInstructionInformation ****
+	// **** immatureTestInstructionInformation **** **** immatureTestInstructionInformation **** **** immatureTestInstructionInformation ****
 	sqlToExecute = ""
 	sqlToExecute = sqlToExecute + "SELECT * "
-	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"ImmatureTestInstructionInformation\" ITII_TI "
-	sqlToExecute = sqlToExecute + "ORDER BY \"TestInstructionUuid\" ASC,  \"DropZoneUuid\" ASC, \"TestInstructionAttributeGuid\" ASC; "
+	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"ImmatureTestInstructionInformation\" ITII "
+	sqlToExecute = sqlToExecute + "ORDER BY ITII.\"DomainUuid\" ASC, ITII.\"TestInstructionUuid\" ASC,  ITII.\"DropZoneUuid\" ASC, ITII.\"TestInstructionAttributeGuid\" ASC; "
 
 	// Query DB
 	rows, err = fenixSyncShared.DbPool.Query(context.Background(), sqlToExecute)
@@ -300,6 +304,9 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		dropZonePreSetTestInstructionAttribute, previousDropZonePreSetTestInstructionAttribute fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
 		dropZonePreSetTestInstructionAttributes                                                []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
 	)
+
+	var immatureElementModelMessage fenixTestCaseBuilderServerGrpcApi.ImmatureElementModelMessage
+	var immatureElementModelElement fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage
 
 	var firstImmatureElementUuid string
 
@@ -513,6 +520,90 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	// Store the information back in the map
 	ImmatureTestInstructionMessageMap[testInstructionUuid] = immatureTestInstructionMessage
 
+	// ***************************************************************************************************
+
+	// **** ImmatureElementModelMessage **** **** ImmatureElementModelMessage **** **** ImmatureElementModelMessage ****
+
+	sqlToExecute = ""
+	sqlToExecute = sqlToExecute + "SELECT IEM.* "
+	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"ImmatureElementModelMessage\" IEM "
+	sqlToExecute = sqlToExecute + "ORDER BY BTI.\"DomainUuid\" ASC, BTI.\"TestInstructionUuid\" ASC; "
+
+	// Query DB
+	rows, err = fenixSyncShared.DbPool.Query(context.Background(), sqlToExecute)
+
+	if err != nil {
+		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			"Id":           "b3ef4fec-9097-46c4-8ff6-85a758967e46",
+			"Error":        err,
+			"sqlToExecute": sqlToExecute,
+		}).Error("Something went wrong when executing SQL")
+
+		return err
+	}
+
+	// Get number of rows for 'immatureTestInstructionInformation'
+	immatureTestInstructionInformationSQLCount = rows.CommandTag().RowsAffected()
+
+	// Create map to store ImmatureTestInstructionInformationMessages
+	immatureTestInstructionInformationMessagesMap := make(map[string]fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage)
+
+	// Temp variables used when extracting data
+	var domainUuid, previousDomainUuid string
+	var domainName string
+	var testInstructionUuid, previousTestInstructionUuid string
+	var testInstructionName string
+	var tempTestInstructionAttributeType string
+	// First Row in TestData
+	var firstRowInSQLRespons bool
+	firstRowInSQLRespons = true
+
+
+	var (
+		availableDropZone, previousAvailableDropZone fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage
+		availableDropZones                           []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage
+	)
+
+	var (
+		dropZonePreSetTestInstructionAttribute, previousDropZonePreSetTestInstructionAttribute fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
+		dropZonePreSetTestInstructionAttributes                                                []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
+	)
+
+	var firstImmatureElementUuid string
+
+	var dataStateChange uint8
+
+	// Clear previous variables
+	previousDomainUuid = ""
+	previousTestInstructionUuid = ""
+
+	// Extract data from DB result set
+	for rows.Next() {
+
+		// Initiate a new variable to store the data
+		availableDropZone = fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage{}
+		dropZonePreSetTestInstructionAttribute = fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+
+		err := rows.Scan(
+
+			// temp-data which is not stored in object
+			&domainUuid,
+			&domainName,
+
+		// ImmatureElementModel
+		&tempImmatureElementModelDomainUuid,
+		&tempImmatureElementModelDomainName,
+		&immatureElementModelElement.OriginalElementUuid,
+		&immatureElementModelElement.OriginalElementName,
+		&immatureElementModelElement.PreviousElementUuid,
+		&immatureElementModelElement.NextElementUuid,
+		&immatureElementModelElement.FirstChildElementUuid,
+		&immatureElementModelElement.ParentElementUuid,
+		&tempTestCaseModelElementType, //&immatureElementModelElement.TestCaseModelElementType,
+
+		&immatureElementModelMessage.FirstImmatureElementUuid,
+	}
+
 	fmt.Println(basicTestInstructionInformationSQLCount)
 	fmt.Println(immatureTestInstructionInformationSQLCount)
 
@@ -520,6 +611,16 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	return nil
 
 }
+
+/*
+	immatureElementModelElement        fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage
+	tempImmatureElementModelDomainUuid string
+	tempImmatureElementModelDomainName string
+	tempTestCaseModelElementType       string
+
+
+
+*/
 
 /*
 // ****************************************************************************************************************
