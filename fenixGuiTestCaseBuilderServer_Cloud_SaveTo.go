@@ -1,14 +1,12 @@
 package main
 
+/*
 import (
-	"context"
 	"fmt"
-	"github.com/jackc/pgx/v4"
-	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
-	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/sirupsen/logrus"
 )
-
+*/
+/*
 // Prepare to Save Pinned TestInstructions and TestInstructionContainers to CloudDB
 func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) prepareSaveMerkleHashMerkleTreeAndTestDataRowsToCloudDB(pinnedTestInstructionsAndTestContainersMessage *fenixTestCaseBuilderServerGrpcApi.PinnedTestInstructionsAndTestContainersMessage) (returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse) {
 
@@ -113,7 +111,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		    "PinnedName" uuid      not null,
 		    "PinnedType" int      not null,
 		    "TimeStamp"  timestamp not null,
-	*/
+
 	// Create Delete Statement for removing users all pinned TestInstructions and TestInstructionsContainers
 	sqlToExecute = sqlToExecute + "DELETE FROM \"" + usedDBSchema + "\".\"PinnedTestInstructionsAndPreCreatedTestInstructionContainers\" "
 	sqlToExecute = sqlToExecute + "WHERE \"UserId\" = '" + currentUserUuid + "'; "
@@ -255,3 +253,4 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	return sqlInsertValuesString
 }
+*/
