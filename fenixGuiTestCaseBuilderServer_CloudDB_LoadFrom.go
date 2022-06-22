@@ -342,7 +342,6 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			&dropZonePreSetTestInstructionAttribute.AttributeValueUuid,
 
 			// Reference to first element in element-model
-			fixa med denna
 			&firstImmatureElementUuid,
 		)
 
@@ -513,6 +512,9 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	// Immature part to 'immatureTestInstructionMessage'
 	immatureTestInstructionMessage.ImmatureTestInstructionInformation = &immatureTestInstructionInformation
+
+	// Add 'firstImmatureElementUuid'
+	immatureTestInstructionMessage.ImmatureSubTestCaseModel.FirstImmatureElementUuid = firstImmatureElementUuid
 
 	// Store the information back in the map
 	ImmatureTestInstructionMessageMap[testInstructionUuid] = immatureTestInstructionMessage
