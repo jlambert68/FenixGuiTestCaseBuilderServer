@@ -342,6 +342,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			&dropZonePreSetTestInstructionAttribute.AttributeValueUuid,
 
 			// Reference to first element in element-model
+			fixa med denna
 			&firstImmatureElementUuid,
 		)
 
@@ -522,7 +523,9 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	sqlToExecute = ""
 	sqlToExecute = sqlToExecute + "SELECT IEM.* "
-	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"ImmatureElementModelMessage\" IEM "
+	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"BasicTestInstructionInformation\" BTI, "
+	sqlToExecute = sqlToExecute + "\"" + usedDBSchema + "\".\"ImmatureElementModelMessage\" IEM "
+	sqlToExecute = sqlToExecute + "WHERE BTI.\"TestInstructionUuid\" = IEM.\"ImmatureElementUuid\" "
 	sqlToExecute = sqlToExecute + "ORDER BY BTI.\"DomainUuid\" ASC, BTI.\"TestInstructionUuid\" ASC; "
 
 	// Query DB
@@ -548,7 +551,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	var tempImmatureElementModelDomainUuid, previousTempImmatureDomainUuid string
 	var tempImmatureElementModelDomainName string
 	var tempTestCaseModelElementTypeAsString string
-	var previousOriginalElementUuid string
+	//var previousOriginalElementUuid string
 	//var testInstructionUuid, previousTestInstructionUuid string
 	//var testInstructionName string
 	//var tempTestInstructionAttributeType string
@@ -566,7 +569,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	//dropZonePreSetTestInstructionAttributes                                                []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
 	)
 
-	var immatureElementModelMessage fenixTestCaseBuilderServerGrpcApi.ImmatureElementModelMessage
+	//var immatureElementModelMessage fenixTestCaseBuilderServerGrpcApi.ImmatureElementModelMessage
 	var immatureElementModelElement, previousImmatureElementModelElement fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage
 	var immatureElementModelElements []*fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage
 
@@ -582,8 +585,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	for rows.Next() {
 
 		// Initiate a new variable to store the data
-		availableDropZone = fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage{}
-		dropZonePreSetTestInstructionAttribute = fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+		immatureElementModelElement = fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage{}
 
 		err = rows.Scan(
 
@@ -599,99 +601,123 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			&immatureElementModelElement.NextElementUuid,
 			&immatureElementModelElement.FirstChildElementUuid,
 			&immatureElementModelElement.ParentElementUuid,
-			&tempTestCaseModelElementTypeAsString,
+			&tempTestCaseModelElementTypeAsString)
 
-			&immatureElementModelMessage.FirstImmatureElementUuid)
-	}
-
-	// Convert 'tempTestCaseModelElementTypeAsString' into gRPC-type
-	immatureElementModelElement.TestCaseModelElementType = fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementTypeEnum(fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementTypeEnum_value[tempTestCaseModelElementTypeAsString])
-
-	// Handle the correct order of building together the full object
-	dataStateChange = 0
-
-	// All UUIDs are changed and this is the first row [dataStateChange=1]
-	dataStateChangeFound :=
-		firstRowInSQLRespons == true &&
-			tempImmatureElementModelDomainUuid != previousTempImmatureDomainUuid &&
-			immatureElementModelElement.OriginalElementUuid != previousImmatureElementModelElement.OriginalElementUuid
-	if dataStateChangeFound == true {
-		dataStateChange = 1
-	}
-
-	// All UUIDs are changed and this is not the first row [dataStateChange=2]
-	dataStateChangeFound =
-		firstRowInSQLRespons == false &&
-			tempImmatureElementModelDomainUuid != previousTempImmatureDomainUuid &&
-			immatureElementModelElement.OriginalElementUuid != previousImmatureElementModelElement.OriginalElementUuid
-	if dataStateChangeFound == true {
-		dataStateChange = 2
-	}
-
-	// Only immatureElementModelElement.OriginalElementUuid is changed and this is not the first row [dataStateChange=3]
-	dataStateChangeFound =
-		firstRowInSQLRespons == false &&
-			domainUuid == previousDomainUuid &&
-			tempImmatureElementModelDomainUuid == previousTempImmatureDomainUuid &&
-			immatureElementModelElement.OriginalElementUuid != previousImmatureElementModelElement.OriginalElementUuid
-	if dataStateChangeFound == true {
-		dataStateChange = 3
-	}
-
-	// Act on which 'dataStateChange' that was achieved
-	switch dataStateChange {
-
-	// All UUIDs are changed and this is the first row [dataStateChange=1]
-	case 1:
-
-		// All UUIDs are changed and this is not the first row [dataStateChange=2]
-		// Only immatureElementModelElement.OriginalElementUuid is changed and this is not the first row [dataStateChange=3]
-	case 2, 5:
-		// New ElementModelElement so add the previous ElementModelElement to the ElementModelElements-array
-		immatureElementModelElements = append(immatureElementModelElements, &previousImmatureElementModelElement)
-
-		// Add immatureElementModelElements to 'immatureTestInstructionMessage.ImmatureSubTestCaseModel' which can be found in map
-		immatureTestInstructionMessage, existsInMap = ImmatureTestInstructionMessageMap[previousImmatureElementModelElement.OriginalElementUuid]
-		// testInstructionUuid shouldn exist in map. If not so then there is a problem
-		if existsInMap == false {
+		if err != nil {
 			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-				"Id":                  "c2d2448e-9e86-4947-a5f5-7787a72e7ef8",
-				"previousImmatureElementModelElement.OriginalElementUuid": previousImmatureElementModelElement.OriginalElementUuid,
-			}).Fatal("TestInstructionUuid should exist in map. If not then there is a problem")
+				"Id":           "808377e2-70ec-4894-bb17-7d92321caaa2",
+				"Error":        err,
+				"sqlToExecute": sqlToExecute,
+			}).Error("Something went wrong when processing result from database")
+
+			return err
 		}
 
-		immatureElementModelMessage.TestCaseModelElements = immatureElementModelElements
-		immatureTestInstructionMessage.ImmatureSubTestCaseModel = &immatureElementModelMessage
+		// Convert 'tempTestCaseModelElementTypeAsString' into gRPC-type
+		immatureElementModelElement.TestCaseModelElementType = fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementTypeEnum(fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementTypeEnum_value[tempTestCaseModelElementTypeAsString])
 
+		// Handle the correct order of building together the full object
+		dataStateChange = 0
 
-		// Add previousAvailableDropZone to array of DropZone
-		availableDropZones = append(availableDropZones, &previousAvailableDropZone)
+		// All UUIDs are changed and this is the first row [dataStateChange=1]
+		dataStateChangeFound :=
+			firstRowInSQLRespons == true &&
+				tempImmatureElementModelDomainUuid != previousTempImmatureDomainUuid &&
+				immatureElementModelElement.OriginalElementUuid != previousImmatureElementModelElement.OriginalElementUuid
+		if dataStateChangeFound == true {
+			dataStateChange = 1
+		}
 
-		// Add the availableDropZones to the ImmatureTestInstructionInformationMessage-map
-		immatureTestInstructionInformation.AvailableDropZones = availableDropZones
-		immatureTestInstructionInformationMessagesMap[previousTestInstructionUuid] = immatureTestInstructionInformation
-fortsätt nedan
-		// Create fresh versions of variables
-		immatureTestInstructionInformation = fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage{}
-		availableDropZones = []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage{}
-		dropZonePreSetTestInstructionAttributes = []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+		// All UUIDs are changed and this is not the first row [dataStateChange=2]
+		dataStateChangeFound =
+			firstRowInSQLRespons == false &&
+				tempImmatureElementModelDomainUuid != previousTempImmatureDomainUuid &&
+				immatureElementModelElement.OriginalElementUuid != previousImmatureElementModelElement.OriginalElementUuid
+		if dataStateChangeFound == true {
+			dataStateChange = 2
+		}
 
-	// Only immatureElementModelElement.OriginalElementUuid is changed and this is not the first row [dataStateChange=3]
-	case 3:
-		// Add the DropZone attribute to the array for attributes
-		dropZonePreSetTestInstructionAttributes = append(dropZonePreSetTestInstructionAttributes, &previousDropZonePreSetTestInstructionAttribute)
+		// Only immatureElementModelElement.OriginalElementUuid is changed and this is not the first row [dataStateChange=3]
+		dataStateChangeFound =
+			firstRowInSQLRespons == false &&
+				domainUuid == previousDomainUuid &&
+				tempImmatureElementModelDomainUuid == previousTempImmatureDomainUuid &&
+				immatureElementModelElement.OriginalElementUuid != previousImmatureElementModelElement.OriginalElementUuid
+		if dataStateChangeFound == true {
+			dataStateChange = 3
+		}
 
-		// Something is wrong in the ordering of the testdata or the testdata itself
-	default:
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-			"Id":                          "e464567a-79ab-49e7-9519-ce187b34458d",
-			"domainUuid":                  domainUuid,
-			"previousDomainUuid":          previousDomainUuid,
-			"testInstructionUuid":         testInstructionUuid,
-			"previousTestInstructionUuid": previousTestInstructionUuid,
-		}).Fatal("Something is wrong in the ordering of the testdata or the testdata itself  --> Should bot happen")
+		// Act on which 'dataStateChange' that was achieved
+		switch dataStateChange {
+
+		// All UUIDs are changed and this is the first row [dataStateChange=1]
+		case 1:
+
+			// All UUIDs are changed and this is not the first row [dataStateChange=2]
+			// Only immatureElementModelElement.OriginalElementUuid is changed and this is not the first row [dataStateChange=3]
+		case 2, 5:
+			// New ElementModelElement so add the previous ElementModelElement to the ElementModelElements-array
+			immatureElementModelElements = append(immatureElementModelElements, &previousImmatureElementModelElement)
+
+			// Add immatureElementModelElements to 'immatureTestInstructionMessage.ImmatureSubTestCaseModel' which can be found in map
+			immatureTestInstructionMessage, existsInMap = ImmatureTestInstructionMessageMap[previousImmatureElementModelElement.OriginalElementUuid]
+			// testInstructionUuid shouldn exist in map. If not so then there is a problem
+			if existsInMap == false {
+				fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+					"Id": "c2d2448e-9e86-4947-a5f5-7787a72e7ef8",
+					"previousImmatureElementModelElement.OriginalElementUuid": previousImmatureElementModelElement.OriginalElementUuid,
+				}).Fatal("TestInstructionUuid should exist in map. If not then there is a problem")
+			}
+
+			immatureElementModelMessage.TestCaseModelElements = immatureElementModelElements
+			immatureTestInstructionMessage.ImmatureSubTestCaseModel = &immatureElementModelMessage
+
+			// Create fresh versions of variables
+			immatureElementModelMessage = fenixTestCaseBuilderServerGrpcApi.ImmatureElementModelMessage{}
+
+		// Only immatureElementModelElement.OriginalElementUuid is changed and this is not the first row [dataStateChange=3]
+		case 3:
+			// New ElementModelElement so add the previous ElementModelElement to the ElementModelElements-array
+			immatureElementModelElements = append(immatureElementModelElements, &previousImmatureElementModelElement)
+
+			// Something is wrong in the ordering of the testdata or the testdata itself
+		default:
+			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+				"Id":                          "e464567a-79ab-49e7-9519-ce187b34458d",
+				"domainUuid":                  domainUuid,
+				"previousDomainUuid":          previousDomainUuid,
+				"testInstructionUuid":         testInstructionUuid,
+				"previousTestInstructionUuid": previousTestInstructionUuid,
+			}).Fatal("Something is wrong in the ordering of the testdata or the testdata itself  --> Should bot happen")
+
+			// Move actual values into previous-variables
+			previousImmatureElementModelElement = immatureElementModelElement
+
+		}
+
+		// Move previous values to current
+		previousImmatureElementModelElement = immatureElementModelElement
+		previousTempImmatureDomainUuid = tempImmatureElementModelDomainUuid
 
 	}
+	// Handle last row from database
+
+	// New ElementModelElement so add the previous ElementModelElement to the ElementModelElements-array
+	immatureElementModelElements = append(immatureElementModelElements, &immatureElementModelElement)
+
+	// Add immatureElementModelElements to 'immatureTestInstructionMessage.ImmatureSubTestCaseModel' which can be found in map
+	immatureTestInstructionMessage, existsInMap = ImmatureTestInstructionMessageMap[immatureElementModelElement.OriginalElementUuid]
+	// testInstructionUuid shouldn exist in map. If not so then there is a problem
+	if existsInMap == false {
+		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			"Id": "c2d2448e-9e86-4947-a5f5-7787a72e7ef8",
+			"immatureElementModelElement.OriginalElementUuid": immatureElementModelElement.OriginalElementUuid,
+		}).Fatal("TestInstructionUuid should exist in map. If not then there is a problem")
+	}
+
+	immatureElementModelMessage.TestCaseModelElements = immatureElementModelElements
+	immatureTestInstructionMessage.ImmatureSubTestCaseModel = &immatureElementModelMessage
+	ImmatureTestInstructionMessageMap[immatureElementModelElement.OriginalElementUuid] = immatureTestInstructionMessage
 
 	fmt.Println(basicTestInstructionInformationSQLCount)
 	fmt.Println(immatureTestInstructionInformationSQLCount)
