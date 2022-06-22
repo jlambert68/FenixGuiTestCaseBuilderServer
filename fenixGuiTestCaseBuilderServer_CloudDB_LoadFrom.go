@@ -110,7 +110,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 }
 */
 // Load TestInstructions and pre-created TestInstructionContainers for Client
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadClientsImmatureTestInstructionsFromCloudDB(userID string, cloudDBImmatureTestInstructionItems *[]*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage) (err error) {
+func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadClientsImmatureTestInstructionsFromCloudDB(userID string) (cloudDBImmatureTestInstructionItems []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage, err error) {
 
 	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
 		"Id": "38fbd4e2-cfe8-405c-84ce-1667c2292c58",
@@ -168,7 +168,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			"sqlToExecute": sqlToExecute,
 		}).Error("Something went wrong when executing SQL")
 
-		return err
+		return nil, err
 	}
 
 	// Variables to used when extract data from result set
@@ -223,7 +223,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 				"sqlToExecute": sqlToExecute,
 			}).Error("Something went wrong when processing result from database")
 
-			return err
+			return nil, err
 		}
 
 		// Convert TimeStamp into proto-format for TimeStamp
@@ -275,7 +275,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			"sqlToExecute": sqlToExecute,
 		}).Error("Something went wrong when executing SQL")
 
-		return err
+		return nil, err
 	}
 
 	// Get number of rows for 'immatureTestInstructionInformation'
@@ -352,7 +352,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 				"sqlToExecute": sqlToExecute,
 			}).Error("Something went wrong when processing result from database")
 
-			return err
+			return nil, err
 		}
 
 		// Convert 'tempTestInstructionAttributeType' into gRPC-type
@@ -540,7 +540,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			"sqlToExecute": sqlToExecute,
 		}).Error("Something went wrong when executing SQL")
 
-		return err
+		return nil, err
 	}
 
 	// Get number of rows for 'immatureTestInstructionInformation'
@@ -612,7 +612,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 				"sqlToExecute": sqlToExecute,
 			}).Error("Something went wrong when processing result from database")
 
-			return err
+			return nil, err
 		}
 
 		// Convert 'tempTestCaseModelElementTypeAsString' into gRPC-type
@@ -721,11 +721,20 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	immatureTestInstructionMessage.ImmatureSubTestCaseModel = &immatureElementModelMessage
 	ImmatureTestInstructionMessageMap[immatureElementModelElement.OriginalElementUuid] = immatureTestInstructionMessage
 
+	// Loop all ImmatureTestInstructionMessage and create gRPC-response
+	var allImmatureTestInstructionMessage []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage
+
+	for _, value := range ImmatureTestInstructionMessageMap { // Order not specified
+		allImmatureTestInstructionMessage = append(allImmatureTestInstructionMessage, &value)
+	}
+
+	cloudDBImmatureTestInstructionItems = allImmatureTestInstructionMessage
+
 	fmt.Println(basicTestInstructionInformationSQLCount)
 	fmt.Println(immatureTestInstructionInformationSQLCount)
 
 	// No errors occurred
-	return nil
+	return cloudDBImmatureTestInstructionItems, nil
 
 }
 

@@ -69,7 +69,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableTestInstr
 	var cloudDBImmatureTestInstructionContainerItems []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage
 
 	// Get users ImmatureTestInstruction-data from CloudDB
-	err := fenixGuiTestCaseBuilderServerObject.loadClientsImmatureTestInstructionsFromCloudDB(userID, &cloudDBImmatureTestInstructionItems)
+	cloudDBImmatureTestInstructionItems, err := fenixGuiTestCaseBuilderServerObject.loadClientsImmatureTestInstructionsFromCloudDB(userID)
 	if err != nil {
 		// Something went wrong so return an error to caller
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestContainersResponseMessage{
