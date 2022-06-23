@@ -34,10 +34,10 @@ import (
 
 // GetTestInstructionsAndTestContainers - *********************************************************************
 // The TestCase Builder asks for all TestInstructions and Pre-defined TestInstructionContainer that the user can add to a TestCase
-func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableTestInstructionsAndTestContainers(ctx context.Context, userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (*fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestContainersResponseMessage, error) {
+func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableTestInstructionsAndTestInstructionContainers(ctx context.Context, userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (*fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage, error) {
 
 	// Define the response message
-	var responseMessage *fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestContainersResponseMessage
+	var responseMessage *fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage
 
 	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
 		"id": "a55f9c82-1d74-44a5-8662-058b8bc9e48f",
@@ -51,7 +51,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableTestInstr
 	returnMessage := fenixGuiTestCaseBuilderServerObject.isClientUsingCorrectTestDataProtoFileVersion("666", userIdentificationMessage.ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 		// Not correct proto-file version is used
-		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestContainersResponseMessage{
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
 			ImmatureTestInstructions:          nil,
 			ImmatureTestInstructionContainers: nil,
 			AckNackResponse:                   returnMessage,
@@ -72,7 +72,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableTestInstr
 	cloudDBImmatureTestInstructionItems, err := fenixGuiTestCaseBuilderServerObject.loadClientsImmatureTestInstructionsFromCloudDB(userID)
 	if err != nil {
 		// Something went wrong so return an error to caller
-		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestContainersResponseMessage{
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
 			ImmatureTestInstructions:          nil,
 			ImmatureTestInstructionContainers: nil,
 			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
@@ -87,10 +87,10 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableTestInstr
 	}
 
 	// Get users ImmatureTestInstructionContainer-data from CloudDB
-	//err = fenixGuiTestCaseBuilderServerObject.loadClientsTestInstructionContainersFromCloudDB(userID, //&cloudDBImmatureTestInstructionContainerItems)
+	cloudDBImmatureTestInstructionContainerItems, err = fenixGuiTestCaseBuilderServerObject.loadClientsImmatureTestInstructionContainersFromCloudDB(userID)
 	if err != nil {
 		// Something went wrong so return an error to caller
-		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestContainersResponseMessage{
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
 			ImmatureTestInstructions:          nil,
 			ImmatureTestInstructionContainers: nil,
 			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
@@ -105,7 +105,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableTestInstr
 	}
 
 	// Create the response to caller
-	responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestContainersResponseMessage{
+	responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
 		ImmatureTestInstructions:          cloudDBImmatureTestInstructionItems,
 		ImmatureTestInstructionContainers: cloudDBImmatureTestInstructionContainerItems,
 		AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{

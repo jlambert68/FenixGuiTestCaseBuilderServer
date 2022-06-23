@@ -5,6 +5,7 @@ import (
 	fenixGuiTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"net"
 	"strconv"
 )
@@ -48,7 +49,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	fenixGuiTestCaseBuilderServerGrpcApi.RegisterFenixTestCaseBuilderServerGrpcServicesServer(registerFenixTestCaseBuilderServerGrpcServicesServer, &fenixTestCaseBuilderServerGrpcServicesServer{})
 
 	// Register RouteGuide on the same server.
-	//reflection.Register(registerFenixTestCaseBuilderServerGrpcServicesServer)
+	reflection.Register(registerFenixTestCaseBuilderServerGrpcServicesServer)
 
 	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
 		"Id":                                 "e843ece9-b707-4c60-b1d8-14464305e68f",
