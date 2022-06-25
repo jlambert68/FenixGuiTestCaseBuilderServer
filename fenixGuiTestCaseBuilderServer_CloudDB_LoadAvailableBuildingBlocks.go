@@ -664,14 +664,31 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		}).Debug("Exiting: loadClientsImmatureTestInstructionContainersFromCloudDB()")
 	}()
 
-	immatureTestInstructionContainerMessageMap := make(map[string]fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage)
+	immatureTestInstructionContainerMessageMap := make(map[string]*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage)
 
-	fenixGuiTestCaseBuilderServerObject.processTestInstructionContainersBasicTestInstructionContainerInformation(&immatureTestInstructionContainerMessageMap)
+	err = fenixGuiTestCaseBuilderServerObject.processTestInstructionContainersBasicTestInstructionContainerInformation(immatureTestInstructionContainerMessageMap)
+	if err != nil {
+		return nil, err
+	}
 
-	// ***************************************************************************************************
+	err = fenixGuiTestCaseBuilderServerObject.processTestInstructionContainersImmatureTestInstructionContainerInformation(immatureTestInstructionContainerMessageMap)
+	if err != nil {
+		return nil, err
+	}
 
-	fmt.Println(basicTestInstructionContainerInformationSQLCount)
-	fmt.Println(immatureTestInstructionContainerInformationSQLCount)
+	err = fenixGuiTestCaseBuilderServerObject.processTestInstructionContainersImmatureElementModel(immatureTestInstructionContainerMessageMap)
+	if err != nil {
+		return nil, err
+	}
+
+	// Loop all ImmatureTestInstructionContainerMessage and create gRPC-response
+	var allImmatureTestInstructionContainerMessage []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage
+
+	for _, value := range immatureTestInstructionContainerMessageMap { // Order not specified
+		allImmatureTestInstructionContainerMessage = append(allImmatureTestInstructionContainerMessage, value)
+	}
+
+	cloudDBImmatureTestInstructionContainerItems = allImmatureTestInstructionContainerMessage
 
 	// No errors occurred
 	return cloudDBImmatureTestInstructionContainerItems, nil
