@@ -207,12 +207,12 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	var (
 		availableDropZone, previousAvailableDropZone fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage
-		availableDropZones                           []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage
+		availableDropZones                           []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage
 	)
 
 	var (
 		dropZonePreSetTestInstructionAttribute, previousDropZonePreSetTestInstructionAttribute fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
-		dropZonePreSetTestInstructionAttributes                                                []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
+		dropZonePreSetTestInstructionAttributes                                                []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
 	)
 
 	var firstImmatureElementUuid string
@@ -335,23 +335,31 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 		// All UUIDs are changed and this is the first row [dataStateChange=1]
 		case 1:
-			newDropZonePreSetTestInstructionAttributes := []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+			newDropZonePreSetTestInstructionAttributes := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
 			dropZonePreSetTestInstructionAttributes = newDropZonePreSetTestInstructionAttributes
 
-			newAvailableDropZones := []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage{}
+			newAvailableDropZones := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage{}
 			availableDropZones = newAvailableDropZones
 
 		// All UUIDs are changed and this is not the first row [dataStateChange=2]
 		// Only TestInstructionContainerUuid, AvailableDropZoneUuid and DropZonePreSetTestInstructionAttributeUuid are changed and this is not the first row [dataStateChange=5]
 		case 2, 5:
 			// New DropZone so add the previous DropZone-attributes to the DropZone-array
-			dropZonePreSetTestInstructionAttributes = append(dropZonePreSetTestInstructionAttributes, &previousDropZonePreSetTestInstructionAttribute)
+			dropZonePreSetTestInstructionAttributes = append(dropZonePreSetTestInstructionAttributes, previousDropZonePreSetTestInstructionAttribute)
+
+			// Convert to pointer object instead before storing in map
+			var dropZonePreSetTestInstructionAttributesToStore []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
+			for _, tempDropZonePreSetTestInstructionAttributeToStore := range dropZonePreSetTestInstructionAttributes {
+				newAdropZonePreSetTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+				newAdropZonePreSetTestInstructionAttribute = tempDropZonePreSetTestInstructionAttributeToStore
+				dropZonePreSetTestInstructionAttributesToStore = append(dropZonePreSetTestInstructionAttributesToStore, &newAdropZonePreSetTestInstructionAttribute)
+			}
 
 			// Add attributes to previousDropZone
-			previousAvailableDropZone.DropZonePreSetTestInstructionAttributes = dropZonePreSetTestInstructionAttributes
+			previousAvailableDropZone.DropZonePreSetTestInstructionAttributes = dropZonePreSetTestInstructionAttributesToStore
 
 			// Add previousAvailableDropZone to array of DropZone
-			availableDropZones = append(availableDropZones, &previousAvailableDropZone)
+			availableDropZones = append(availableDropZones, previousAvailableDropZone)
 
 			// Add the availableDropZones to the ImmatureTestInstructionInformationMessage-map
 			immatureTestInstructionContainerMessage, existsInMap := immatureTestInstructionContainerMessageMap[previousTestInstructionContainerUuid]
@@ -364,37 +372,53 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 				}).Fatal("TestInstructionContainerUuid should exist in map. If not so then there is a problem")
 			}
 
-			immatureTestInstructionContainerMessage.ImmatureTestInstructionContainerInformation.AvailableDropZones = availableDropZones
+			// Convert to pointer object instead before storing in map
+			var availableDropZoneMessageToStore []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage
+			for _, tempAvailableDropZones := range availableDropZones {
+				newAvailableDropZone := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage{}
+				newAvailableDropZone = tempAvailableDropZones
+				availableDropZoneMessageToStore = append(availableDropZoneMessageToStore, &newAvailableDropZone)
+			}
+
+			immatureTestInstructionContainerMessage.ImmatureTestInstructionContainerInformation.AvailableDropZones = availableDropZoneMessageToStore
 			immatureTestInstructionContainerMessageMap[previousTestInstructionContainerUuid] = immatureTestInstructionContainerMessage
 
 			// Create fresh versions of variables
 			newAvailableDropZone := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage{}
 			availableDropZone = newAvailableDropZone
 
-			newAailableDropZones := []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage{}
+			newAailableDropZones := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage{}
 			availableDropZones = newAailableDropZones
 
 			newDropZonePreSetTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
 			dropZonePreSetTestInstructionAttribute = newDropZonePreSetTestInstructionAttribute
 
-			newDropZonePreSetTestInstructionAttributes := []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+			newDropZonePreSetTestInstructionAttributes := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
 			dropZonePreSetTestInstructionAttributes = newDropZonePreSetTestInstructionAttributes
 
 		// Only DropZonePreSetTestInstructionAttributeUuid is changed and this is not the first row [dataStateChange=3]
 		case 3:
 			// Add the DropZone attribute to the array for attributes
-			dropZonePreSetTestInstructionAttributes = append(dropZonePreSetTestInstructionAttributes, &previousDropZonePreSetTestInstructionAttribute)
+			dropZonePreSetTestInstructionAttributes = append(dropZonePreSetTestInstructionAttributes, previousDropZonePreSetTestInstructionAttribute)
 
 		// Only AvailableDropZoneUuid and DropZonePreSetTestInstructionAttributeUuid are changed and this is not the first row [dataStateChange=4]
 		case 4:
 			// New DropZone so add the previous DropZone-attributes to the DropZone-array
-			dropZonePreSetTestInstructionAttributes = append(dropZonePreSetTestInstructionAttributes, &previousDropZonePreSetTestInstructionAttribute)
+			dropZonePreSetTestInstructionAttributes = append(dropZonePreSetTestInstructionAttributes, previousDropZonePreSetTestInstructionAttribute)
+
+			// Convert to pointer object instead before storing in map
+			var dropZonePreSetTestInstructionAttributesToStore []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
+			for _, tempDropZonePreSetTestInstructionAttributeToStore := range dropZonePreSetTestInstructionAttributes {
+				newAdropZonePreSetTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+				newAdropZonePreSetTestInstructionAttribute = tempDropZonePreSetTestInstructionAttributeToStore
+				dropZonePreSetTestInstructionAttributesToStore = append(dropZonePreSetTestInstructionAttributesToStore, &newAdropZonePreSetTestInstructionAttribute)
+			}
 
 			// Add attributes to previousDropZone
-			previousAvailableDropZone.DropZonePreSetTestInstructionAttributes = dropZonePreSetTestInstructionAttributes
+			previousAvailableDropZone.DropZonePreSetTestInstructionAttributes = dropZonePreSetTestInstructionAttributesToStore
 
 			// Add previousAvailableDropZone to array of DropZone
-			availableDropZones = append(availableDropZones, &previousAvailableDropZone)
+			availableDropZones = append(availableDropZones, previousAvailableDropZone)
 
 			// Create fresh versions of variables
 			newAvailableDropZone := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage{}
@@ -403,7 +427,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			newDropZonePreSetTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
 			dropZonePreSetTestInstructionAttribute = newDropZonePreSetTestInstructionAttribute
 
-			newDropZonePreSetTestInstructionAttributes := []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+			newDropZonePreSetTestInstructionAttributes := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
 			dropZonePreSetTestInstructionAttributes = newDropZonePreSetTestInstructionAttributes
 
 			// Something is wrong in the ordering of the testdata or the testdata itself
@@ -435,13 +459,21 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	// Handle last row from database
 	// Add the previous DropZone-attributes to the DropZone-array
-	dropZonePreSetTestInstructionAttributes = append(dropZonePreSetTestInstructionAttributes, &previousDropZonePreSetTestInstructionAttribute)
+	dropZonePreSetTestInstructionAttributes = append(dropZonePreSetTestInstructionAttributes, previousDropZonePreSetTestInstructionAttribute)
+
+	// Convert to pointer object instead before storing in map
+	var dropZonePreSetTestInstructionAttributesToStore []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
+	for _, tempDropZonePreSetTestInstructionAttributeToStore := range dropZonePreSetTestInstructionAttributes {
+		newAdropZonePreSetTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+		newAdropZonePreSetTestInstructionAttribute = tempDropZonePreSetTestInstructionAttributeToStore
+		dropZonePreSetTestInstructionAttributesToStore = append(dropZonePreSetTestInstructionAttributesToStore, &newAdropZonePreSetTestInstructionAttribute)
+	}
 
 	// Add attributes to previousDropZone
-	previousAvailableDropZone.DropZonePreSetTestInstructionAttributes = dropZonePreSetTestInstructionAttributes
+	previousAvailableDropZone.DropZonePreSetTestInstructionAttributes = dropZonePreSetTestInstructionAttributesToStore
 
 	// Add previousAvailableDropZone to array of DropZone
-	availableDropZones = append(availableDropZones, &availableDropZone)
+	availableDropZones = append(availableDropZones, availableDropZone)
 
 	// Add 'basicTestInstructionContainerInformation' to map
 	immatureTestInstructionContainerMessage, existsInMap := immatureTestInstructionContainerMessageMap[testInstructionContainerUuid]
@@ -452,8 +484,16 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		}).Fatal("TestInstructionUuid should exist in map. If not then there is a problem")
 	}
 
+	// Convert to pointer object instead before storing in map
+	var availableDropZoneMessageToStore []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage
+	for _, tempAvailableDropZones := range availableDropZones {
+		newAvailableDropZone := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage{}
+		newAvailableDropZone = tempAvailableDropZones
+		availableDropZoneMessageToStore = append(availableDropZoneMessageToStore, &newAvailableDropZone)
+	}
+
 	// Store the result back in the map
-	immatureTestInstructionContainerMessage.ImmatureTestInstructionContainerInformation.AvailableDropZones = availableDropZones
+	immatureTestInstructionContainerMessage.ImmatureTestInstructionContainerInformation.AvailableDropZones = availableDropZoneMessageToStore
 	immatureTestInstructionContainerMessageMap[previousTestInstructionContainerUuid] = immatureTestInstructionContainerMessage
 
 	return err
@@ -515,7 +555,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	//var immatureElementModelMessage fenixTestCaseBuilderServerGrpcApi.ImmatureElementModelMessage
 	var immatureElementModelElement fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage
 	var previousImmatureElementModelElement fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage
-	var immatureElementModelElements []*fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage
+	var immatureElementModelElements []fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage
 
 	//var firstImmatureElementUuid string
 
@@ -525,10 +565,16 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	//previousDomainUuid := ""
 	//previousTestInstructionContainerUuid := ""
 
+	// Initiate a new variable to store the data
+	newImmatureElementModelElement := fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage{}
+	immatureElementModelElement = newImmatureElementModelElement
+
+	previousImmatureElementModelElement = fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage{}
+
 	// Extract data from DB result set
 	for rows.Next() {
 
-		// Initiate a new variable to store the data
+		// Initiate new fresh variable
 		newImmatureElementModelElement := fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage{}
 		immatureElementModelElement = newImmatureElementModelElement
 
@@ -578,7 +624,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 		// All UUIDs are changed and this is not the first row [dataStateChange=2]
 		dataStateChangeFound =
-			firstRowInSQLRespons == false &&
+			dataStateChange == 0 &&
+				firstRowInSQLRespons == false &&
 				tempImmatureElementModelDomainUuid != previousTempImmatureDomainUuid &&
 				immatureElementModelElement.OriginalElementUuid != previousImmatureElementModelElement.OriginalElementUuid
 		if dataStateChangeFound == true {
@@ -587,11 +634,22 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 		// A new Element model Element , but it belongs to same 'OriginalElementUuid' as previous Element, and this is not the first row [dataStateChange=3]
 		dataStateChangeFound =
-			firstRowInSQLRespons == false &&
+			dataStateChange == 0 &&
+				firstRowInSQLRespons == false &&
 				tempImmatureElementModelDomainUuid == previousTempImmatureDomainUuid &&
 				immatureElementModelElement.OriginalElementUuid == previousImmatureElementModelElement.OriginalElementUuid
 		if dataStateChangeFound == true {
 			dataStateChange = 3
+		}
+
+		// A new Element model Element and this is not the first row [dataStateChange=4]
+		dataStateChangeFound =
+			dataStateChange == 0 &&
+				firstRowInSQLRespons == false &&
+				tempImmatureElementModelDomainUuid == previousTempImmatureDomainUuid &&
+				immatureElementModelElement.OriginalElementUuid != previousImmatureElementModelElement.OriginalElementUuid
+		if dataStateChangeFound == true {
+			dataStateChange = 4
 		}
 
 		// A new Element model Element and this is not the first row [dataStateChange=4]
@@ -607,15 +665,18 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		switch dataStateChange {
 
 		// All UUIDs are changed and this is the first row [dataStateChange=1]
+
 		case 1:
 
-			newImmatureElementModelElements := []*fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage{}
+			newImmatureElementModelElements := []fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage{}
 			immatureElementModelElements = newImmatureElementModelElements
 
 			// All UUIDs are changed and this is not the first row [dataStateChange=2]
-		case 2:
+			// A new Element model Element and this is not the first row [dataStateChange=4]
 
-			immatureElementModelElements = append(immatureElementModelElements, &previousImmatureElementModelElement)
+		case 2, 4:
+
+			immatureElementModelElements = append(immatureElementModelElements, previousImmatureElementModelElement)
 
 			// Add immatureElementModelElements to 'immatureTestInstructionContainerMessage' which can be found in map
 			immatureTestInstructionContainerMessage, existsInMap := immatureTestInstructionContainerMessageMap[previousImmatureElementModelElement.OriginalElementUuid]
@@ -626,18 +687,25 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 				}).Fatal("OriginalElementUuid should exist in map. If not then there is a problem")
 			}
 
-			immatureTestInstructionContainerMessage.ImmatureSubTestCaseModel.TestCaseModelElements = immatureElementModelElements
+			// Convert to pointer object instead before storing in map
+			var immatureElementModelElementsToStore []*fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage
+			for _, tempImmatureElementModelElement := range immatureElementModelElements {
+				newImmatureElementModelElement := fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage{}
+				newImmatureElementModelElement = tempImmatureElementModelElement
+				immatureElementModelElementsToStore = append(immatureElementModelElementsToStore, &newImmatureElementModelElement)
+			}
+
+			immatureTestInstructionContainerMessage.ImmatureSubTestCaseModel.TestCaseModelElements = immatureElementModelElementsToStore
 			immatureTestInstructionContainerMessageMap[previousImmatureElementModelElement.OriginalElementUuid] = immatureTestInstructionContainerMessage
 
 			// Create fresh versions of variables
-			newIimmatureElementModelElements := []*fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage{}
+			newIimmatureElementModelElements := []fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage{}
 			immatureElementModelElements = newIimmatureElementModelElements
 
 			// A new Element model Element , but it belongs to same 'OriginalElementUuid' as previous Element, and this is not the first row [dataStateChange=3]
-			// A new Element model Element and this is not the first row [dataStateChange=4]
-		case 3, 4:
+		case 3:
 
-			immatureElementModelElements = append(immatureElementModelElements, &previousImmatureElementModelElement)
+			immatureElementModelElements = append(immatureElementModelElements, previousImmatureElementModelElement)
 
 			// Something is wrong in the ordering of the testdata or the testdata itself
 		default:
@@ -660,7 +728,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	// Handle last row from database
 
 	// New ElementModelElement so add the previous ElementModelElement to the ElementModelElements-array
-	immatureElementModelElements = append(immatureElementModelElements, &immatureElementModelElement)
+	immatureElementModelElements = append(immatureElementModelElements, immatureElementModelElement)
 
 	// Add immatureElementModelElements to 'immatureTestInstructionContainerMessage' which can be found in map
 	immatureTestInstructionContainerMessage, existsInMap := immatureTestInstructionContainerMessageMap[immatureElementModelElement.OriginalElementUuid]
@@ -671,7 +739,15 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		}).Fatal("OriginalElementUuid should exist in map. If not then there is a problem")
 	}
 
-	immatureTestInstructionContainerMessage.ImmatureSubTestCaseModel.TestCaseModelElements = immatureElementModelElements
+	// Convert to pointer object instead before storing in map
+	var immatureElementModelElementsToStore []*fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage
+	for _, tempImmatureElementModelElement := range immatureElementModelElements {
+		newImmatureElementModelElement := fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage{}
+		newImmatureElementModelElement = tempImmatureElementModelElement
+		immatureElementModelElementsToStore = append(immatureElementModelElementsToStore, &newImmatureElementModelElement)
+	}
+
+	immatureTestInstructionContainerMessage.ImmatureSubTestCaseModel.TestCaseModelElements = immatureElementModelElementsToStore
 	immatureTestInstructionContainerMessageMap[immatureElementModelElement.OriginalElementUuid] = immatureTestInstructionContainerMessage
 
 	return nil
