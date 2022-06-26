@@ -1,13 +1,8 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
-	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/protobuf/types/known/timestamppb"
-	"time"
 )
 
 // ****************************************************************************************************************
@@ -15,6 +10,8 @@ import (
 //
 
 // Load TestInstructions for Client
+
+/*
 func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadClientsImmatureTestInstructionsFromCloudDB(userID string) (cloudDBImmatureTestInstructionItems []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage, err error) {
 
 	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
@@ -53,7 +50,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	   "MinorVersionNumber"           integer   not null,
 	   "UpdatedTimeStamp"             timestamp not null
 
-	*/
+
 
 	usedDBSchema := "FenixGuiBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 
@@ -645,6 +642,51 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	fmt.Println(basicTestInstructionInformationSQLCount)
 	fmt.Println(immatureTestInstructionInformationSQLCount)
+
+	// No errors occurred
+	return cloudDBImmatureTestInstructionItems, nil
+
+}
+
+*/
+// Load TestInstructions for Client
+func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadClientsImmatureTestInstructionsFromCloudDB(userID string) (cloudDBImmatureTestInstructionItems []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage, err error) {
+
+	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		"Id": "273dceef-7982-4e7d-98db-c132342e530b",
+	}).Debug("Entering: loadClientsImmatureTestInstructionsFromCloudDB()")
+
+	defer func() {
+		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			"Id": "0894a272-3e91-407a-b5a4-1b70f8e00e6b",
+		}).Debug("Exiting: loadClientsImmatureTestInstructionsFromCloudDB()")
+	}()
+
+	immatureTestInstructionMessageMap := make(map[string]*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage)
+
+	err = fenixGuiTestCaseBuilderServerObject.processTestInstructionsBasicTestInstructionInformation(immatureTestInstructionMessageMap)
+	if err != nil {
+		return nil, err
+	}
+
+	err = fenixGuiTestCaseBuilderServerObject.processTestInstructionsImmatureTestInstructionInformation(immatureTestInstructionMessageMap)
+	if err != nil {
+		return nil, err
+	}
+
+	err = fenixGuiTestCaseBuilderServerObject.processTestInstructionsImmatureElementModel(immatureTestInstructionMessageMap)
+	if err != nil {
+		return nil, err
+	}
+
+	// Loop all ImmatureTestInstructionMessage and create gRPC-response
+	var allImmatureTestInstructionMessage []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage
+
+	for _, value := range immatureTestInstructionMessageMap { // Order not specified
+		allImmatureTestInstructionMessage = append(allImmatureTestInstructionMessage, value)
+	}
+
+	cloudDBImmatureTestInstructionItems = allImmatureTestInstructionMessage
 
 	// No errors occurred
 	return cloudDBImmatureTestInstructionItems, nil

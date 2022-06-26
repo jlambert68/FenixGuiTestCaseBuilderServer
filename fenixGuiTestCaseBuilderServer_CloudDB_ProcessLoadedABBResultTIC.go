@@ -470,7 +470,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	}
 
 	// Add attributes to previousDropZone
-	previousAvailableDropZone.DropZonePreSetTestInstructionAttributes = dropZonePreSetTestInstructionAttributesToStore
+	availableDropZone.DropZonePreSetTestInstructionAttributes = dropZonePreSetTestInstructionAttributesToStore
 
 	// Add previousAvailableDropZone to array of DropZone
 	availableDropZones = append(availableDropZones, availableDropZone)
@@ -494,7 +494,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	// Store the result back in the map
 	immatureTestInstructionContainerMessage.ImmatureTestInstructionContainerInformation.AvailableDropZones = availableDropZoneMessageToStore
-	immatureTestInstructionContainerMessageMap[previousTestInstructionContainerUuid] = immatureTestInstructionContainerMessage
+	immatureTestInstructionContainerMessageMap[testInstructionContainerUuid] = immatureTestInstructionContainerMessage
 
 	return err
 }
