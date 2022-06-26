@@ -736,3 +736,35 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	return cloudDBImmatureTestInstructionContainerItems, nil
 
 }
+
+// Load Pinned TestInstructions for Client
+func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadClientsPinnedTestInstructionsFromCloudDB(userID string) (availablePinnedPreCreatedTestInstructionContainerMessage []*fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionMessage, err error) {
+
+	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		"Id": "9901525f-a271-4f4f-a798-fea7fdf29dfb",
+	}).Debug("Entering: loadClientsPinnedTestInstructionsFromCloudDB()")
+
+	defer func() {
+		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			"Id": "0f7be73c-4065-4d4a-ae02-40a4d93fc2a3",
+		}).Debug("Exiting: loadClientsPinnedTestInstructionsFromCloudDB()")
+	}()
+
+	return nil, err
+}
+
+// Load Pinned TestInstructionContainers for Client
+func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadClientsPinnedTestInstructionContainersFromCloudDB(userID string) (availablePinnedPreCreatedTestInstructionContainerContainerMessage []*fenixTestCaseBuilderServerGrpcApi.AvailablePinnedPreCreatedTestInstructionContainerMessage, err error) {
+
+	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		"Id": "b57867af-62b5-4d0d-917d-92ecda70c390",
+	}).Debug("Entering: loadClientsPinnedTestInstructionContainersFromCloudDB()")
+
+	defer func() {
+		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			"Id": "67d7812e-94a6-4b14-b3af-e15ca683d49e",
+		}).Debug("Exiting: loadClientsPinnedTestInstructionContainersFromCloudDB()")
+	}()
+
+	return nil, err
+}
