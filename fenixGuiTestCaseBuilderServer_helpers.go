@@ -91,9 +91,10 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 		// Create Return message
 		returnMessage = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-			AckNack:    false,
-			Comments:   "Wrong proto file used. Expected: '" + protoFileExpected.String() + "', but got: '" + protoFileUsed.String() + "'",
-			ErrorCodes: errorCodes,
+			AckNack:                      false,
+			Comments:                     "Wrong proto file used. Expected: '" + protoFileExpected.String() + "', but got: '" + protoFileUsed.String() + "'",
+			ErrorCodes:                   errorCodes,
+			ProtoFileVersionUsedByClient: protoFileExpected,
 		}
 
 		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{

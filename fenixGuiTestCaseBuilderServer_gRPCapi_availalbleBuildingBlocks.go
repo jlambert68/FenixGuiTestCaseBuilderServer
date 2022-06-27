@@ -76,9 +76,10 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableTestInstr
 			ImmatureTestInstructions:          nil,
 			ImmatureTestInstructionContainers: nil,
 			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-				AckNack:    false,
-				Comments:   "Got some Error when retrieving ImmatureTestInstructions from database",
-				ErrorCodes: []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
+				AckNack:                      false,
+				Comments:                     "Got some Error when retrieving ImmatureTestInstructions from database",
+				ErrorCodes:                   []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
+				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
 			},
 		}
 
@@ -94,9 +95,10 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableTestInstr
 			ImmatureTestInstructions:          nil,
 			ImmatureTestInstructionContainers: nil,
 			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-				AckNack:    false,
-				Comments:   "Got some Error when retrieving ImmatureTestInstructionContainers from database",
-				ErrorCodes: []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
+				AckNack:                      false,
+				Comments:                     "Got some Error when retrieving ImmatureTestInstructionContainers from database",
+				ErrorCodes:                   []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
+				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
 			},
 		}
 
@@ -109,9 +111,10 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableTestInstr
 		ImmatureTestInstructions:          cloudDBImmatureTestInstructionItems,
 		ImmatureTestInstructionContainers: cloudDBImmatureTestInstructionContainerItems,
 		AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-			AckNack:    true,
-			Comments:   "",
-			ErrorCodes: nil,
+			AckNack:                      true,
+			Comments:                     "",
+			ErrorCodes:                   nil,
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
 		},
 	}
 
@@ -126,12 +129,12 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailablePinnedTes
 	var responseMessage *fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage
 
 	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-		"id": "a55f9c82-1d74-44a5-8662-058b8bc9e48f",
-	}).Debug("Incoming 'gRPC - ListAllAvailableTestInstructionsAndTestContainers'")
+		"id": "5a72e9c7-602e-4a16-a551-961f96fac457",
+	}).Debug("Incoming 'gRPC - ListAllAvailablePinnedTestInstructionsAndTestInstructionContainers'")
 
 	defer fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-		"id": "27fb45fe-3266-41aa-a6af-958513977e28",
-	}).Debug("Outgoing 'gRPC - ListAllAvailableTestInstructionsAndTestContainers'")
+		"id": "28a7d2e7-ebdc-4e98-a5e9-08491f1ff181",
+	}).Debug("Outgoing 'gRPC - ListAllAvailablePinnedTestInstructionsAndTestInstructionContainers'")
 
 	// Check if Client is using correct proto files version
 	returnMessage := fenixGuiTestCaseBuilderServerObject.isClientUsingCorrectTestDataProtoFileVersion("666", userIdentificationMessage.ProtoFileVersionUsedByClient)
@@ -154,17 +157,18 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailablePinnedTes
 	var cloudDBPinnedTestInstructionMessages []*fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionMessage
 	var cloudDBPinnedPreCreatedTestInstructionContainerMessages []*fenixTestCaseBuilderServerGrpcApi.AvailablePinnedPreCreatedTestInstructionContainerMessage
 
-	// Get users ImmatureTestInstruction-data from CloudDB
-	cloudDBImmatureTestInstructionItems, err := fenixGuiTestCaseBuilderServerObject.loadClientsPinnedTestInstructionsFromCloudDB(userID)
+	// Get users PinnedTestInstruction-data from CloudDB
+	cloudDBPinnedTestInstructionMessages, err := fenixGuiTestCaseBuilderServerObject.loadClientsPinnedTestInstructionsFromCloudDB(userID)
 	if err != nil {
 		// Something went wrong so return an error to caller
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
 			AvailablePinnedTestInstructions:                    nil,
 			AvailablePinnedPreCreatedTestInstructionContainers: nil,
 			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-				AckNack:    false,
-				Comments:   "Got some Error when retrieving PinnedTestInstructionMessages from database",
-				ErrorCodes: []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
+				AckNack:                      false,
+				Comments:                     "Got some Error when retrieving PinnedTestInstructions from database",
+				ErrorCodes:                   []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
+				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
 			},
 		}
 
@@ -172,17 +176,18 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailablePinnedTes
 		return responseMessage, nil
 	}
 
-	// Get users ImmatureTestInstructionContainer-data from CloudDB
-	cloudDBImmatureTestInstructionContainerItems, err = fenixGuiTestCaseBuilderServerObject.loadClientsImmatureTestInstructionContainersFromCloudDB(userID)
+	// Get users PinnedPreCreatedTestInstructionContainer-data from CloudDB
+	cloudDBPinnedPreCreatedTestInstructionContainerMessages, err = fenixGuiTestCaseBuilderServerObject.loadClientsPinnedTestInstructionContainersFromCloudDB(userID)
 	if err != nil {
 		// Something went wrong so return an error to caller
-		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
-			ImmatureTestInstructions:          nil,
-			ImmatureTestInstructionContainers: nil,
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
+			AvailablePinnedTestInstructions:                    nil,
+			AvailablePinnedPreCreatedTestInstructionContainers: nil,
 			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-				AckNack:    false,
-				Comments:   "Got some Error when retrieving ImmatureTestInstructionContainers from database",
-				ErrorCodes: []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
+				AckNack:                      false,
+				Comments:                     "Got some Error when retrieving PinnedPreCreatedTestInstructionContainers from database",
+				ErrorCodes:                   []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
+				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
 			},
 		}
 
@@ -191,13 +196,14 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailablePinnedTes
 	}
 
 	// Create the response to caller
-	responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
-		ImmatureTestInstructions:          cloudDBImmatureTestInstructionItems,
-		ImmatureTestInstructionContainers: cloudDBImmatureTestInstructionContainerItems,
+	responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
+		AvailablePinnedTestInstructions:                    cloudDBPinnedTestInstructionMessages,
+		AvailablePinnedPreCreatedTestInstructionContainers: cloudDBPinnedPreCreatedTestInstructionContainerMessages,
 		AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-			AckNack:    true,
-			Comments:   "",
-			ErrorCodes: nil,
+			AckNack:                      true,
+			Comments:                     "",
+			ErrorCodes:                   nil,
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
 		},
 	}
 

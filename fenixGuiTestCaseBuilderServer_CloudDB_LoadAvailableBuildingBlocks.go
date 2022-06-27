@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
+	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/sirupsen/logrus"
+	"time"
 )
 
 // ****************************************************************************************************************
@@ -750,21 +753,157 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		}).Debug("Exiting: loadClientsPinnedTestInstructionsFromCloudDB()")
 	}()
 
-	return nil, err
+	/*
+		SELECT PTITIC.*
+		FROM "FenixGuiBuilder"."PinnedTestInstructionsAndPreCreatedTestInstructionContainers" PTITIC
+		WHERE PTITIC."PinnedType" = 1;
+	*/
+
+	usedDBSchema := "FenixGuiBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
+
+	sqlToExecute := ""
+	sqlToExecute = sqlToExecute + "SELECT PTITIC.* "
+	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"PinnedTestInstructionsAndPreCreatedTestInstructionContainers\" PTITIC "
+	sqlToExecute = sqlToExecute + "WHERE PTITIC.\"PinnedType\" = 1 AND " // 1 = TestInstructions
+	sqlToExecute = sqlToExecute + "PTITIC.\"UserId\" = '" + userID + "' "
+	sqlToExecute = sqlToExecute + "ORDER BY PTITIC.\"PinnedUuid\" ASC; "
+
+	// Query DB
+	rows, err := fenixSyncShared.DbPool.Query(context.Background(), sqlToExecute)
+
+	if err != nil {
+		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			"Id":           "6be84b22-613f-4d93-afe8-e8ee22826e7b",
+			"Error":        err,
+			"sqlToExecute": sqlToExecute,
+		}).Error("Something went wrong when processing result from database")
+
+		return nil, err
+	}
+
+	var tempUserId string
+	var tempPinnedType int
+	var tempTimeStamp time.Time
+	var availablePinnedTestInstructionMessages []fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionMessage
+
+	// Extract data from DB result set
+	for rows.Next() {
+
+		// Initiate new fresh variable
+		newAvailablePinnedTestInstructionMessage := fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionMessage{}
+
+		err = rows.Scan(
+
+			&tempUserId,
+			&newAvailablePinnedTestInstructionMessage.TestInstructionUuid,
+			&newAvailablePinnedTestInstructionMessage.TestInstructionName,
+			&tempPinnedType,
+			&tempTimeStamp,
+		)
+
+		if err != nil {
+			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+				"Id":           "e1d695b7-ec8a-4692-9e9a-416869923e82",
+				"Error":        err,
+				"sqlToExecute": sqlToExecute,
+			}).Error("Something went wrong when processing result from database")
+
+			return nil, err
+		}
+
+		// append PinnedTestInstruction to array
+		availablePinnedTestInstructionMessages = append(availablePinnedTestInstructionMessages, newAvailablePinnedTestInstructionMessage)
+
+	}
+
+	// Convert to pointer-array that fits gRPC api
+	var availablePinnedTestInstructionToSendOvergRPC []*fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionMessage
+	for _, tempAvailablePinnedTestInstructionMessage := range availablePinnedTestInstructionMessages {
+		newAvailablePinnedTestInstructionMessage := fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionMessage{}
+		newAvailablePinnedTestInstructionMessage = tempAvailablePinnedTestInstructionMessage
+		availablePinnedTestInstructionToSendOvergRPC = append(availablePinnedTestInstructionToSendOvergRPC, &newAvailablePinnedTestInstructionMessage)
+	}
+
+	return availablePinnedTestInstructionToSendOvergRPC, err
 }
 
 // Load Pinned TestInstructionContainers for Client
 func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadClientsPinnedTestInstructionContainersFromCloudDB(userID string) (availablePinnedPreCreatedTestInstructionContainerContainerMessage []*fenixTestCaseBuilderServerGrpcApi.AvailablePinnedPreCreatedTestInstructionContainerMessage, err error) {
 
 	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-		"Id": "b57867af-62b5-4d0d-917d-92ecda70c390",
+		"Id": "c2decb25-9f53-44c0-be49-88ac5c9cde5d",
 	}).Debug("Entering: loadClientsPinnedTestInstructionContainersFromCloudDB()")
 
 	defer func() {
 		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-			"Id": "67d7812e-94a6-4b14-b3af-e15ca683d49e",
+			"Id": "a9863d2a-4f59-4eef-a939-117bcddea3c4",
 		}).Debug("Exiting: loadClientsPinnedTestInstructionContainersFromCloudDB()")
 	}()
 
-	return nil, err
+	usedDBSchema := "FenixGuiBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
+
+	sqlToExecute := ""
+	sqlToExecute = sqlToExecute + "SELECT PTITIC.* "
+	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"PinnedTestInstructionsAndPreCreatedTestInstructionContainers\" PTITIC "
+	sqlToExecute = sqlToExecute + "WHERE PTITIC.\"PinnedType\" = 2 AND " // 2 = TestInstructionContainers
+	sqlToExecute = sqlToExecute + "PTITIC.\"UserId\" = '" + userID + "' "
+	sqlToExecute = sqlToExecute + "ORDER BY PTITIC.\"PinnedUuid\" ASC; "
+
+	// Query DB
+	rows, err := fenixSyncShared.DbPool.Query(context.Background(), sqlToExecute)
+
+	if err != nil {
+		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			"Id":           "6be84b22-613f-4d93-afe8-e8ee22826e7b",
+			"Error":        err,
+			"sqlToExecute": sqlToExecute,
+		}).Error("Something went wrong when processing result from database")
+
+		return nil, err
+	}
+
+	var tempUserId string
+	var tempPinnedType int
+	var tempTimeStamp time.Time
+	var availablePinnedTestInstructionContainerMessages []fenixTestCaseBuilderServerGrpcApi.AvailablePinnedPreCreatedTestInstructionContainerMessage
+
+	// Extract data from DB result set
+	for rows.Next() {
+
+		// Initiate new fresh variable
+		newAvailablePinnedTestInstructionContainerMessage := fenixTestCaseBuilderServerGrpcApi.AvailablePinnedPreCreatedTestInstructionContainerMessage{}
+
+		err = rows.Scan(
+
+			&tempUserId,
+			&newAvailablePinnedTestInstructionContainerMessage.TestInstructionContainerUuid,
+			&newAvailablePinnedTestInstructionContainerMessage.TestInstructionContainerName,
+			&tempPinnedType,
+			&tempTimeStamp,
+		)
+
+		if err != nil {
+			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+				"Id":           "e1d695b7-ec8a-4692-9e9a-416869923e82",
+				"Error":        err,
+				"sqlToExecute": sqlToExecute,
+			}).Error("Something went wrong when processing result from database")
+
+			return nil, err
+		}
+
+		// append PinnedTestInstructionContainer to array
+		availablePinnedTestInstructionContainerMessages = append(availablePinnedTestInstructionContainerMessages, newAvailablePinnedTestInstructionContainerMessage)
+
+	}
+
+	// Convert to pointer-array that fits gRPC api
+	var availablePinnedTestInstructionContainerToSendOvergRPC []*fenixTestCaseBuilderServerGrpcApi.AvailablePinnedPreCreatedTestInstructionContainerMessage
+	for _, tempAvailablePinnedTestInstructionContainerMessage := range availablePinnedTestInstructionContainerMessages {
+		newAvailablePinnedTestInstructionContainerMessage := fenixTestCaseBuilderServerGrpcApi.AvailablePinnedPreCreatedTestInstructionContainerMessage{}
+		newAvailablePinnedTestInstructionContainerMessage = tempAvailablePinnedTestInstructionContainerMessage
+		availablePinnedTestInstructionContainerToSendOvergRPC = append(availablePinnedTestInstructionContainerToSendOvergRPC, &newAvailablePinnedTestInstructionContainerMessage)
+	}
+
+	return availablePinnedTestInstructionContainerToSendOvergRPC, err
 }
