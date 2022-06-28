@@ -212,7 +212,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailablePinnedTes
 
 // SavePinnedTestInstructionsAndTestContainers - *********************************************************************
 // The TestCase Builder sends all TestInstructions and Pre-defined TestInstructionContainer that the user has pinned in the GUI
-func (s *fenixTestCaseBuilderServerGrpcServicesServer) SavePinnedTestInstructionsAndTestContainers(ctx context.Context, pinnedTestInstructionsAndTestContainersMessage *fenixTestCaseBuilderServerGrpcApi.SavePinnedTestInstructionsAndPreCreatedTestInstructionContainersMessage) (*fenixTestCaseBuilderServerGrpcApi.AckNackResponse, error) {
+func (s *fenixTestCaseBuilderServerGrpcServicesServer) SaveAllPinnedTestInstructionsAndTestInstructionContainers(ctx context.Context, pinnedTestInstructionsAndTestContainersMessage *fenixTestCaseBuilderServerGrpcApi.SavePinnedTestInstructionsAndPreCreatedTestInstructionContainersMessage) (*fenixTestCaseBuilderServerGrpcApi.AckNackResponse, error) {
 
 	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
 		"id": "a93fb1bd-1a5b-4417-80c3-082d34267c06",
