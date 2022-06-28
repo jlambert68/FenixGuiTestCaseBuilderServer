@@ -209,3 +209,34 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailablePinnedTes
 
 	return responseMessage, nil
 }
+
+// SavePinnedTestInstructionsAndTestContainers - *********************************************************************
+// The TestCase Builder sends all TestInstructions and Pre-defined TestInstructionContainer that the user has pinned in the GUI
+func (s *fenixTestCaseBuilderServerGrpcServicesServer) SavePinnedTestInstructionsAndTestContainers(ctx context.Context, pinnedTestInstructionsAndTestContainersMessage *fenixTestCaseBuilderServerGrpcApi.SavePinnedTestInstructionsAndPreCreatedTestInstructionContainersMessage) (*fenixTestCaseBuilderServerGrpcApi.AckNackResponse, error) {
+
+	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		"id": "a93fb1bd-1a5b-4417-80c3-082d34267c06",
+	}).Debug("Incoming 'gRPC - SavePinnedTestInstructionsAndTestContainers'")
+
+	defer fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		"id": "981ad10a-2bfb-4a39-9b4d-35cac0d7481a",
+	}).Debug("Outgoing 'gRPC - SavePinnedTestInstructionsAndTestContainers'")
+
+	// Check if Client is using correct proto files version
+	returnMessage := fenixGuiTestCaseBuilderServerObject.isClientUsingCorrectTestDataProtoFileVersion(pinnedTestInstructionsAndTestContainersMessage.UserId, pinnedTestInstructionsAndTestContainersMessage.ProtoFileVersionUsedByClient)
+	if returnMessage != nil {
+		// Not correct proto-file version is used
+		// Exiting
+		return returnMessage, nil
+	}
+
+	// Save Pinned TestInstructions and pre-created TestInstructionContainers to Cloud DB
+	returnMessage = fenixGuiTestCaseBuilderServerObject.prepareSaveMerkleHashMerkleTreeAndTestDataRowsToCloudDB(pinnedTestInstructionsAndTestContainersMessage)
+	if returnMessage != nil {
+		// Something went wrong when saving to database
+		// Exiting
+		return returnMessage, nil
+	}
+
+	return &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{AckNack: true, Comments: ""}, nil
+}

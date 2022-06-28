@@ -1,14 +1,16 @@
 package main
 
-/*
 import (
+	"context"
 	"fmt"
+	"github.com/jackc/pgx/v4"
+	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
+	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/sirupsen/logrus"
 )
-*/
-/*
+
 // Prepare to Save Pinned TestInstructions and TestInstructionContainers to CloudDB
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) prepareSaveMerkleHashMerkleTreeAndTestDataRowsToCloudDB(pinnedTestInstructionsAndTestContainersMessage *fenixTestCaseBuilderServerGrpcApi.PinnedTestInstructionsAndTestContainersMessage) (returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse) {
+func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) prepareSaveMerkleHashMerkleTreeAndTestDataRowsToCloudDB(pinnedTestInstructionsAndTestContainersMessage *fenixTestCaseBuilderServerGrpcApi.SavePinnedTestInstructionsAndPreCreatedTestInstructionContainersMessage) (returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse) {
 
 	// Begin SQL Transaction
 	txn, err := fenixSyncShared.DbPool.Begin(context.Background())
@@ -48,11 +50,13 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		// Stop process in and outgoing messages
 		// TODO implement stopping gRPC-api
 		// fenixGuiTestCaseBuilderServerObject.stateProcessIncomingAndOutgoingMessage = true
+		/*
+			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+				"id": "348629ad-c358-4043-81ca-ff5f73b579c5",
+			}).Error("Stop process for in- and outgoing messages")
 
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-			"id": "348629ad-c358-4043-81ca-ff5f73b579c5",
-		}).Error("Stop process for in- and outgoing messages")
 
+		*/
 		// Rollback any SQL transactions
 		txn.Rollback(context.Background())
 
@@ -65,9 +69,10 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 		// Create Return message
 		returnMessage = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-			AckNack:    false,
-			Comments:   "Problem when saving to database",
-			ErrorCodes: errorCodes,
+			AckNack:                      false,
+			Comments:                     "Problem when saving to database",
+			ErrorCodes:                   errorCodes,
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
 		}
 
 		return returnMessage
@@ -78,7 +83,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 }
 
 // Save Pinned TestInstructions and TestInstructionContainers to CloudDB
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) savePinnedTestInstructionsAndTestContainersToCloudDB(dbTransaction pgx.Tx, pinnedTestInstructionsAndTestContainersMessage *fenixTestCaseBuilderServerGrpcApi.PinnedTestInstructionsAndTestContainersMessage) (err error) {
+func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) savePinnedTestInstructionsAndTestContainersToCloudDB(dbTransaction pgx.Tx, pinnedTestInstructionsAndTestContainersMessage *fenixTestCaseBuilderServerGrpcApi.SavePinnedTestInstructionsAndPreCreatedTestInstructionContainersMessage) (err error) {
 
 	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
 		"Id": "9d4e401a-edbf-4a45-bd34-8d3c13eeaffb",
@@ -111,7 +116,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		    "PinnedName" uuid      not null,
 		    "PinnedType" int      not null,
 		    "TimeStamp"  timestamp not null,
-
+	*/
 	// Create Delete Statement for removing users all pinned TestInstructions and TestInstructionsContainers
 	sqlToExecute = sqlToExecute + "DELETE FROM \"" + usedDBSchema + "\".\"PinnedTestInstructionsAndPreCreatedTestInstructionContainers\" "
 	sqlToExecute = sqlToExecute + "WHERE \"UserId\" = '" + currentUserUuid + "'; "
@@ -120,7 +125,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	// Data to be inserted in the DB-table
 	dataRowsToBeInsertedMultiType = nil
 
-	for _, pinnedTestInstructionMessage := range pinnedTestInstructionsAndTestContainersMessage.PinnedTestInstructionMessages {
+	for _, pinnedTestInstructionMessage := range pinnedTestInstructionsAndTestContainersMessage.AvailablePinnedTestInstructions {
 
 		dataRowToBeInsertedMultiType = nil
 
@@ -136,7 +141,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	// Create Insert Statement for users pinned TestInstructionContainers
 	// Data to be inserted in the DB-table
 
-	for _, pinnedTestInstructionContainerMessage := range pinnedTestInstructionsAndTestContainersMessage.PinnedTestInstructionContainerMessages {
+	for _, pinnedTestInstructionContainerMessage := range pinnedTestInstructionsAndTestContainersMessage.AvailablePinnedPreCreatedTestInstructionContainers {
 
 		dataRowToBeInsertedMultiType = nil
 
@@ -253,4 +258,3 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	return sqlInsertValuesString
 }
-*/
