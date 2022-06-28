@@ -238,5 +238,10 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) SaveAllPinnedTestInstruct
 		return returnMessage, nil
 	}
 
-	return &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{AckNack: true, Comments: ""}, nil
+	return &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+		AckNack:                      true,
+		Comments:                     "",
+		ErrorCodes:                   nil,
+		ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+	}, nil
 }

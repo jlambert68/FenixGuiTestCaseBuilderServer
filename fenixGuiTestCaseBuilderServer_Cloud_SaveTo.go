@@ -29,9 +29,10 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 		// Create Return message
 		returnMessage = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-			AckNack:    false,
-			Comments:   "Problem when saving to database",
-			ErrorCodes: errorCodes,
+			AckNack:                      false,
+			Comments:                     "Problem when saving to database",
+			ErrorCodes:                   errorCodes,
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
 		}
 
 		return returnMessage
