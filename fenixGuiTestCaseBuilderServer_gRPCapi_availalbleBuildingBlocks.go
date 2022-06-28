@@ -231,7 +231,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) SavePinnedTestInstruction
 	}
 
 	// Save Pinned TestInstructions and pre-created TestInstructionContainers to Cloud DB
-	returnMessage = fenixGuiTestCaseBuilderServerObject.prepareSaveMerkleHashMerkleTreeAndTestDataRowsToCloudDB(pinnedTestInstructionsAndTestContainersMessage)
+	returnMessage = fenixGuiTestCaseBuilderServerObject.prepareSavePinnedTestInstructionsAndPinnedTestInstructionContainersToCloudDB(pinnedTestInstructionsAndTestContainersMessage)
 	if returnMessage != nil {
 		// Something went wrong when saving to database
 		// Exiting
