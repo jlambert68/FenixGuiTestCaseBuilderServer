@@ -907,3 +907,40 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	return availablePinnedTestInstructionContainerToSendOvergRPC, err
 }
+
+// Load TestInstructions for Client
+func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadAvailableBondsFromCloudDB() (cloudDBAvailableBondsItems []*fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage_ImmatureBondMessage, err error) {
+
+	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		"Id": "4b7058fe-c46d-4ab8-8612-895c8e1102a1",
+	}).Debug("Entering: loadAvailableBondsFromCloudDB()")
+
+	defer func() {
+		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			"Id": "665cecf6-a2cc-4c3a-bcb7-9ac1170bd8d3",
+		}).Debug("Exiting: loadAvailableBondsFromCloudDB()")
+	}()
+
+	//availableBondsAttributes := []fenixTestCaseBuilderServerGrpcApi.BasicBondInformationMessage_VisibleBondAttributesMessage
+
+	availableBondsAttributes, err := fenixGuiTestCaseBuilderServerObject.processVisibleBondAttributesInformation()
+	if err != nil {
+		return nil, err
+	}
+
+	// Loop all ImmatureTestInstructionMessage and create gRPC-response
+	for _, visibleBondAttributesMessage := range availableBondsAttributes {
+
+		basicBondInformationMessage := fenixTestCaseBuilderServerGrpcApi.BasicBondInformationMessage{
+			VisibleBondAttributes: &visibleBondAttributesMessage}
+
+		immatureBondsMessage_ImmatureBondMessage_B0_BOND := fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage_ImmatureBondMessage{
+			BasicBondInformation: &basicBondInformationMessage}
+
+		cloudDBAvailableBondsItems = append(cloudDBAvailableBondsItems, &immatureBondsMessage_ImmatureBondMessage_B0_BOND)
+	}
+
+	// No errors occurred
+	return cloudDBAvailableBondsItems, nil
+
+}

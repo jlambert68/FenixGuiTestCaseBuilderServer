@@ -553,9 +553,9 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	)
 
 	//var immatureElementModelMessage fenixTestCaseBuilderServerGrpcApi.ImmatureElementModelMessage
-	var immatureElementModelElement fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage
-	var previousImmatureElementModelElement fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage
-	var immatureElementModelElements []fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage
+	var immatureElementModelElement fenixTestCaseBuilderServerGrpcApi.ImmatureTestCaseModelElementMessage
+	var previousImmatureElementModelElement fenixTestCaseBuilderServerGrpcApi.ImmatureTestCaseModelElementMessage
+	var immatureElementModelElements []fenixTestCaseBuilderServerGrpcApi.ImmatureTestCaseModelElementMessage
 
 	//var firstImmatureElementUuid string
 
@@ -566,16 +566,16 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	//previousTestInstructionUuid := ""
 
 	// Initiate a new variable to store the data
-	newImmatureElementModelElement := fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage{}
+	newImmatureElementModelElement := fenixTestCaseBuilderServerGrpcApi.ImmatureTestCaseModelElementMessage{}
 	immatureElementModelElement = newImmatureElementModelElement
 
-	previousImmatureElementModelElement = fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage{}
+	previousImmatureElementModelElement = fenixTestCaseBuilderServerGrpcApi.ImmatureTestCaseModelElementMessage{}
 
 	// Extract data from DB result set
 	for rows.Next() {
 
 		// Initiate new fresh variable
-		newImmatureElementModelElement := fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage{}
+		newImmatureElementModelElement := fenixTestCaseBuilderServerGrpcApi.ImmatureTestCaseModelElementMessage{}
 		immatureElementModelElement = newImmatureElementModelElement
 
 		err = rows.Scan(
@@ -593,7 +593,6 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			&immatureElementModelElement.FirstChildElementUuid,
 			&immatureElementModelElement.ParentElementUuid,
 			&tempTestCaseModelElementTypeAsString,
-			&immatureElementModelElement.CurrentElementModelElement,
 		)
 
 		if err != nil {
@@ -668,7 +667,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 		case 1:
 
-			newImmatureElementModelElements := []fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage{}
+			newImmatureElementModelElements := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestCaseModelElementMessage{}
 			immatureElementModelElements = newImmatureElementModelElements
 
 			// All UUIDs are changed and this is not the first row [dataStateChange=2]
@@ -688,9 +687,9 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			}
 
 			// Convert to pointer object instead before storing in map
-			var immatureElementModelElementsToStore []*fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage
+			var immatureElementModelElementsToStore []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestCaseModelElementMessage
 			for _, tempImmatureElementModelElement := range immatureElementModelElements {
-				newImmatureElementModelElement := fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage{}
+				newImmatureElementModelElement := fenixTestCaseBuilderServerGrpcApi.ImmatureTestCaseModelElementMessage{}
 				newImmatureElementModelElement = tempImmatureElementModelElement
 				immatureElementModelElementsToStore = append(immatureElementModelElementsToStore, &newImmatureElementModelElement)
 			}
@@ -699,7 +698,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			immatureTestInstructionMessageMap[previousImmatureElementModelElement.OriginalElementUuid] = immatureTestInstructionMessage
 
 			// Create fresh versions of variables
-			newIimmatureElementModelElements := []fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage{}
+			newIimmatureElementModelElements := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestCaseModelElementMessage{}
 			immatureElementModelElements = newIimmatureElementModelElements
 
 			// A new Element model Element , but it belongs to same 'OriginalElementUuid' as previous Element, and this is not the first row [dataStateChange=3]
@@ -740,9 +739,9 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	}
 
 	// Convert to pointer object instead before storing in map
-	var immatureElementModelElementsToStore []*fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage
+	var immatureElementModelElementsToStore []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestCaseModelElementMessage
 	for _, tempImmatureElementModelElement := range immatureElementModelElements {
-		newImmatureElementModelElement := fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementMessage{}
+		newImmatureElementModelElement := fenixTestCaseBuilderServerGrpcApi.ImmatureTestCaseModelElementMessage{}
 		newImmatureElementModelElement = tempImmatureElementModelElement
 		immatureElementModelElementsToStore = append(immatureElementModelElementsToStore, &newImmatureElementModelElement)
 	}

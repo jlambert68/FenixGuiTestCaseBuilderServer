@@ -245,3 +245,69 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) SaveAllPinnedTestInstruct
 		ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
 	}, nil
 }
+
+// ListAllAvailableTestInstructionsAndTestInstructionContainers - *********************************************************************
+// The TestCase Builder asks for all TestInstructions and Pre-defined TestInstructionContainer that the user can add to a TestCase
+func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableBonds(ctx context.Context, userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (*fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage, error) {
+
+	// Define the response message
+	var responseMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage
+
+	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		"id": "ffb95b37-9ab0-4933-a53c-b7676a12c8f2",
+	}).Debug("Incoming 'gRPC - ListAllAvailableBonds'")
+
+	defer fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		"id": "b46215a0-6620-428d-bee9-9fa4c5e4e98b",
+	}).Debug("Outgoing 'gRPC - ListAllAvailableBonds'")
+
+	// Check if Client is using correct proto files version
+	returnMessage := fenixGuiTestCaseBuilderServerObject.isClientUsingCorrectTestDataProtoFileVersion(userIdentificationMessage.UserId, userIdentificationMessage.ProtoFileVersionUsedByClient)
+	if returnMessage != nil {
+		// Not correct proto-file version is used
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage{
+			ImmatureBonds:   nil,
+			AckNackResponse: returnMessage,
+		}
+
+		// Exiting
+		return responseMessage, nil
+	}
+
+	// Current user
+	userID := userIdentificationMessage.UserId
+
+	// Define variables to store data from DB in
+	var cloudDBAvailableBonds []*fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage_ImmatureBondMessage
+
+	// Get users ImmatureTestInstruction-data from CloudDB
+	cloudDBAvailableBonds, err := fenixGuiTestCaseBuilderServerObject.loadAvailableBondsFromCloudDB()
+	if err != nil {
+		// Something went wrong so return an error to caller
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage{
+			ImmatureBonds: nil,
+			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+				AckNack:                      false,
+				Comments:                     "Got some Error when retrieving Available Bonds from database",
+				ErrorCodes:                   []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
+				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+			},
+		}
+
+		// Exiting
+		return responseMessage, nil
+	}
+
+	// Create the response to caller
+	responseMessage = &fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage{
+		ImmatureBonds: cloudDBAvailableBonds,
+		AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+			AckNack:                      true,
+			Comments:                     "",
+			ErrorCodes:                   nil,
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+		},
+	}
+
+	return responseMessage, nil
+}

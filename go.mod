@@ -13,7 +13,8 @@ require (
 )
 
 require (
-	github.com/jlambert68/FenixGrpcApi v0.0.0-20220623083118-0f2560fb5551
+	github.com/jackc/pgx/v4 v4.15.0
+	github.com/jlambert68/FenixGrpcApi v0.0.0-20220801175231-51073a9215ec
 	google.golang.org/protobuf v1.28.0
 )
 
@@ -28,7 +29,6 @@ require (
 	github.com/jackc/pgproto3/v2 v2.2.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
 	github.com/jackc/pgtype v1.10.0 // indirect
-	github.com/jackc/pgx/v4 v4.15.0 // indirect
 	github.com/jackc/puddle v1.2.1 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
