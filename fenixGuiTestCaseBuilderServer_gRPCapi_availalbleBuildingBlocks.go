@@ -274,9 +274,6 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableBonds(ctx
 		return responseMessage, nil
 	}
 
-	// Current user
-	userID := userIdentificationMessage.UserId
-
 	// Define variables to store data from DB in
 	var cloudDBAvailableBonds []*fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage_ImmatureBondMessage
 
