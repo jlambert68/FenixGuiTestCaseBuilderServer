@@ -35,6 +35,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	// Variables to used when extract data from result set
 	var tempTimeStamp time.Time
 	var tempTestCaseModelElementTypeGrpcMappingId int
+	var tempTestCaseModelElementTypeAsString string
 
 	// Extract data from DB result set
 	for rows.Next() {
@@ -56,8 +57,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			&bondAttributes.ShowBondAttributes,
 			&bondAttributes.TCRuleDeletion,
 			&bondAttributes.TCRuleSwap,
-			tempTimeStamp,
-			&bondAttributes.TestCaseModelElementType,
+			&tempTimeStamp,
+			&tempTestCaseModelElementTypeAsString, //&bondAttributes.TestCaseModelElementType,
 			&tempTestCaseModelElementTypeGrpcMappingId,
 		)
 
@@ -73,6 +74,9 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 		// Convert TimeStamp into proto-format for TimeStamp
 		bondAttributes.UpdatedTimeStamp = timestamppb.New(tempTimeStamp)
+
+		// Convert 'tempTestCaseModelElementTypeAsString' into gRPC-type
+		bondAttributes.TestCaseModelElementType = fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementTypeEnum(fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementTypeEnum_value[tempTestCaseModelElementTypeAsString])
 
 		// Add BondAttribute to BondsAttributes
 		bondsAttributes = append(bondsAttributes, bondAttributes)
