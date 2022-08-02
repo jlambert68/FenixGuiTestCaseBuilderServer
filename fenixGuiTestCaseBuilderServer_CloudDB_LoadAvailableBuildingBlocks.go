@@ -928,11 +928,30 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		return nil, err
 	}
 
-	// Loop all ImmatureTestInstructionMessage and create gRPC-response
+	// Loop all Bonds-messages and create gRPC-response
 	for _, visibleBondAttributesMessage := range availableBondsAttributes {
 
+		// Deep copy of values
+		tempBondAttributesMessage := fenixTestCaseBuilderServerGrpcApi.BasicBondInformationMessage_VisibleBondAttributesMessage{
+			BondUuid:                 visibleBondAttributesMessage.BondUuid,
+			BondName:                 visibleBondAttributesMessage.BondName,
+			BondDescription:          visibleBondAttributesMessage.BondDescription,
+			BondMouseOverText:        visibleBondAttributesMessage.BondMouseOverText,
+			Deprecated:               visibleBondAttributesMessage.Deprecated,
+			Enabled:                  visibleBondAttributesMessage.Enabled,
+			Visible:                  visibleBondAttributesMessage.Visible,
+			BondColor:                visibleBondAttributesMessage.BondColor,
+			CanBeDeleted:             visibleBondAttributesMessage.CanBeDeleted,
+			CanBeSwappedOut:          visibleBondAttributesMessage.CanBeSwappedOut,
+			UpdatedTimeStamp:         visibleBondAttributesMessage.UpdatedTimeStamp,
+			TestCaseModelElementType: visibleBondAttributesMessage.TestCaseModelElementType,
+			ShowBondAttributes:       visibleBondAttributesMessage.ShowBondAttributes,
+			TCRuleDeletion:           visibleBondAttributesMessage.TCRuleDeletion,
+			TCRuleSwap:               visibleBondAttributesMessage.TCRuleSwap,
+		}
+
 		basicBondInformationMessage := fenixTestCaseBuilderServerGrpcApi.BasicBondInformationMessage{
-			VisibleBondAttributes: &visibleBondAttributesMessage}
+			VisibleBondAttributes: &tempBondAttributesMessage}
 
 		immatureBondsMessage_ImmatureBondMessage_B0_BOND := fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage_ImmatureBondMessage{
 			BasicBondInformation: &basicBondInformationMessage}
