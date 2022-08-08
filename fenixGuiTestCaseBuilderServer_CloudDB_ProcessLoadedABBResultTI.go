@@ -479,7 +479,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	immatureTestInstructionMessage, existsInMap := immatureTestInstructionMessageMap[testInstructionUuid]
 	if existsInMap == false {
 		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-			"Id":                  "8630d2e6-261b-4dab-a499-71463346c5a3",
+			"Id":                  "0f59327f-84a9-47bd-bfe2-337c3402ab0c",
 			"testInstructionUuid": testInstructionUuid,
 		}).Fatal("TestInstructionUuid should exist in map. If not then there is a problem")
 	}
@@ -508,8 +508,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	sqlToExecute = sqlToExecute + "SELECT IEM.* "
 	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"BasicTestInstructionInformation\" BTII, "
 	sqlToExecute = sqlToExecute + "\"" + usedDBSchema + "\".\"ImmatureElementModelMessage\" IEM "
-	sqlToExecute = sqlToExecute + "WHERE BTII.\"TestInstructionUuid\" = IEM.\"ImmatureElementUuid\" "
-	sqlToExecute = sqlToExecute + "ORDER BY IEM.\"DomainUuid\" ASC, IEM.\"ImmatureElementUuid\" ASC; " //, IEM.\"CurrentElementModelElement\" ASC; "
+	sqlToExecute = sqlToExecute + "WHERE BTII.\"TestInstructionUuid\" = IEM.\"TopImmatureElementUuid\" "
+	sqlToExecute = sqlToExecute + "ORDER BY IEM.\"DomainUuid\" ASC, IEM.\"TopImmatureElementUuid\" ASC, IEM.\"IsTopElement\" DESC; " //, IEM.\"CurrentElementModelElement\" ASC; "
 
 	// Query DB
 	rows, err := fenixSyncShared.DbPool.Query(context.Background(), sqlToExecute)
@@ -534,6 +534,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	var tempImmatureElementModelDomainUuid, previousTempImmatureDomainUuid string
 	var tempImmatureElementModelDomainName string
 	var tempTestCaseModelElementTypeAsString string
+	var tempIsTopElement bool
+	var tempTopElementUuid string
 	//var previousOriginalElementUuid string
 	//var testInstructionUuid, previousTestInstructionUuid string
 	//var testInstructionName string
@@ -586,18 +588,21 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 			// ImmatureElementModel
 
-			&immatureElementModelElement.OriginalElementUuid,
+			&immatureElementModelElement.ImmatureElementUuid,
 			&immatureElementModelElement.OriginalElementName,
 			&immatureElementModelElement.PreviousElementUuid,
 			&immatureElementModelElement.NextElementUuid,
 			&immatureElementModelElement.FirstChildElementUuid,
 			&immatureElementModelElement.ParentElementUuid,
 			&tempTestCaseModelElementTypeAsString,
+			&immatureElementModelElement.OriginalElementUuid,
+			&tempTopElementUuid,
+			&tempIsTopElement,
 		)
 
 		if err != nil {
 			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-				"Id":           "d4dcd3d8-ab65-46d2-b4a5-85d92481718d",
+				"Id":           "7a937579-bb0a-44d4-850f-4cbdd5fff3a5",
 				"Error":        err,
 				"sqlToExecute": sqlToExecute,
 			}).Error("Something went wrong when processing result from database")
@@ -615,7 +620,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		dataStateChangeFound :=
 			firstRowInSQLRespons == true &&
 				tempImmatureElementModelDomainUuid != previousTempImmatureDomainUuid &&
-				immatureElementModelElement.OriginalElementUuid != previousImmatureElementModelElement.OriginalElementUuid
+				immatureElementModelElement.ImmatureElementUuid != previousImmatureElementModelElement.ImmatureElementUuid
 
 		if dataStateChangeFound == true {
 			dataStateChange = 1
@@ -626,17 +631,17 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			dataStateChange == 0 &&
 				firstRowInSQLRespons == false &&
 				tempImmatureElementModelDomainUuid != previousTempImmatureDomainUuid &&
-				immatureElementModelElement.OriginalElementUuid != previousImmatureElementModelElement.OriginalElementUuid
+				immatureElementModelElement.ImmatureElementUuid != previousImmatureElementModelElement.ImmatureElementUuid
 		if dataStateChangeFound == true {
 			dataStateChange = 2
 		}
 
-		// A new Element model Element , but it belongs to same 'OriginalElementUuid' as previous Element, and this is not the first row [dataStateChange=3]
+		// A new Element model Element , but it belongs to same 'ImmatureElementUuid' as previous Element, and this is not the first row [dataStateChange=3]
 		dataStateChangeFound =
 			dataStateChange == 0 &&
 				firstRowInSQLRespons == false &&
 				tempImmatureElementModelDomainUuid == previousTempImmatureDomainUuid &&
-				immatureElementModelElement.OriginalElementUuid == previousImmatureElementModelElement.OriginalElementUuid
+				immatureElementModelElement.ImmatureElementUuid == previousImmatureElementModelElement.ImmatureElementUuid
 		if dataStateChangeFound == true {
 			dataStateChange = 3
 		}
@@ -646,7 +651,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			dataStateChange == 0 &&
 				firstRowInSQLRespons == false &&
 				tempImmatureElementModelDomainUuid == previousTempImmatureDomainUuid &&
-				immatureElementModelElement.OriginalElementUuid != previousImmatureElementModelElement.OriginalElementUuid
+				immatureElementModelElement.ImmatureElementUuid != previousImmatureElementModelElement.ImmatureElementUuid
 		if dataStateChangeFound == true {
 			dataStateChange = 4
 		}
@@ -655,7 +660,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		dataStateChangeFound =
 			firstRowInSQLRespons == false &&
 				tempImmatureElementModelDomainUuid == previousTempImmatureDomainUuid &&
-				immatureElementModelElement.OriginalElementUuid != previousImmatureElementModelElement.OriginalElementUuid
+				immatureElementModelElement.ImmatureElementUuid != previousImmatureElementModelElement.ImmatureElementUuid
 		if dataStateChangeFound == true {
 			dataStateChange = 4
 		}
@@ -678,12 +683,12 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			immatureElementModelElements = append(immatureElementModelElements, previousImmatureElementModelElement)
 
 			// Add immatureElementModelElements to 'immatureTestInstructionMessage' which can be found in map
-			immatureTestInstructionMessage, existsInMap := immatureTestInstructionMessageMap[previousImmatureElementModelElement.OriginalElementUuid]
+			immatureTestInstructionMessage, existsInMap := immatureTestInstructionMessageMap[previousImmatureElementModelElement.ImmatureElementUuid]
 			if existsInMap == false {
 				fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-					"Id": "8630d2e6-261b-4dab-a499-71463346c5a3",
-					"previousImmatureElementModelElement.OriginalElementUuid": previousImmatureElementModelElement.OriginalElementUuid,
-				}).Fatal("OriginalElementUuid should exist in map. If not then there is a problem")
+					"Id": "ef98b5ca-17d5-4bf8-8af4-a1a954736a47",
+					"previousImmatureElementModelElement.ImmatureElementUuid": previousImmatureElementModelElement.ImmatureElementUuid,
+				}).Fatal("ImmatureElementUuid should exist in map. If not then there is a problem")
 			}
 
 			// Convert to pointer object instead before storing in map
@@ -695,13 +700,13 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			}
 
 			immatureTestInstructionMessage.ImmatureSubTestCaseModel.TestCaseModelElements = immatureElementModelElementsToStore
-			immatureTestInstructionMessageMap[previousImmatureElementModelElement.OriginalElementUuid] = immatureTestInstructionMessage
+			immatureTestInstructionMessageMap[previousImmatureElementModelElement.ImmatureElementUuid] = immatureTestInstructionMessage
 
 			// Create fresh versions of variables
 			newIimmatureElementModelElements := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestCaseModelElementMessage{}
 			immatureElementModelElements = newIimmatureElementModelElements
 
-			// A new Element model Element , but it belongs to same 'OriginalElementUuid' as previous Element, and this is not the first row [dataStateChange=3]
+			// A new Element model Element , but it belongs to same 'ImmatureElementUuid' as previous Element, and this is not the first row [dataStateChange=3]
 		case 3:
 
 			immatureElementModelElements = append(immatureElementModelElements, previousImmatureElementModelElement)
@@ -730,12 +735,12 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	immatureElementModelElements = append(immatureElementModelElements, immatureElementModelElement)
 
 	// Add immatureElementModelElements to 'immatureTestInstructionMessage' which can be found in map
-	immatureTestInstructionMessage, existsInMap := immatureTestInstructionMessageMap[immatureElementModelElement.OriginalElementUuid]
+	immatureTestInstructionMessage, existsInMap := immatureTestInstructionMessageMap[immatureElementModelElement.ImmatureElementUuid]
 	if existsInMap == false {
 		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
 			"Id": "a1744497-782f-4e82-bec0-ae0205c6573f",
-			"immatureElementModelElement.OriginalElementUuid": immatureElementModelElement.OriginalElementUuid,
-		}).Fatal("OriginalElementUuid should exist in map. If not then there is a problem")
+			"immatureElementModelElement.ImmatureElementUuid": immatureElementModelElement.ImmatureElementUuid,
+		}).Fatal("ImmatureElementUuid should exist in map. If not then there is a problem")
 	}
 
 	// Convert to pointer object instead before storing in map
@@ -747,7 +752,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	}
 
 	immatureTestInstructionMessage.ImmatureSubTestCaseModel.TestCaseModelElements = immatureElementModelElementsToStore
-	immatureTestInstructionMessageMap[immatureElementModelElement.OriginalElementUuid] = immatureTestInstructionMessage
+	immatureTestInstructionMessageMap[immatureElementModelElement.ImmatureElementUuid] = immatureTestInstructionMessage
 
 	return nil
 
