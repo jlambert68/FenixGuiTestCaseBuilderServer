@@ -531,7 +531,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	//immatureTestInstructionInformationMessagesMap := make(map[string]fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage)
 
 	// Temp variables used when extracting data
-	var tempImmatureElementModelDomainUuid, previousTempImmatureDomainUuid string
+	var tempImmatureElementModelDomainUuid string
 	var tempImmatureElementModelDomainName string
 	var tempTestCaseModelElementTypeAsString string
 	var tempIsTopElement bool
@@ -616,53 +616,33 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		// Handle the correct order of building together the full object
 		dataStateChange := 0
 
-		// All UUIDs are changed and this is the first row [dataStateChange=1]
+		// This is the first row, and it is flagged as Top-element [dataStateChange=1]
 		dataStateChangeFound :=
 			firstRowInSQLRespons == true &&
-				tempImmatureElementModelDomainUuid != previousTempImmatureDomainUuid &&
-				immatureElementModelElement.ImmatureElementUuid != previousImmatureElementModelElement.ImmatureElementUuid
+				tempIsTopElement == true
 
 		if dataStateChangeFound == true {
 			dataStateChange = 1
 		}
 
-		// All UUIDs are changed and this is not the first row [dataStateChange=2]
+		// This is not the first row, and it is flagged as Top-element [dataStateChange=2]
 		dataStateChangeFound =
 			dataStateChange == 0 &&
 				firstRowInSQLRespons == false &&
-				tempImmatureElementModelDomainUuid != previousTempImmatureDomainUuid &&
-				immatureElementModelElement.ImmatureElementUuid != previousImmatureElementModelElement.ImmatureElementUuid
+				tempIsTopElement == true
+
 		if dataStateChangeFound == true {
 			dataStateChange = 2
 		}
 
-		// A new Element model Element , but it belongs to same 'ImmatureElementUuid' as previous Element, and this is not the first row [dataStateChange=3]
+		//  This is not the first row, and it is not flagged as Top-element [dataStateChange=3]
 		dataStateChangeFound =
 			dataStateChange == 0 &&
 				firstRowInSQLRespons == false &&
-				tempImmatureElementModelDomainUuid == previousTempImmatureDomainUuid &&
-				immatureElementModelElement.ImmatureElementUuid == previousImmatureElementModelElement.ImmatureElementUuid
+				tempIsTopElement == false
+
 		if dataStateChangeFound == true {
 			dataStateChange = 3
-		}
-
-		// A new Element model Element and this is not the first row [dataStateChange=4]
-		dataStateChangeFound =
-			dataStateChange == 0 &&
-				firstRowInSQLRespons == false &&
-				tempImmatureElementModelDomainUuid == previousTempImmatureDomainUuid &&
-				immatureElementModelElement.ImmatureElementUuid != previousImmatureElementModelElement.ImmatureElementUuid
-		if dataStateChangeFound == true {
-			dataStateChange = 4
-		}
-
-		// A new Element model Element and this is not the first row [dataStateChange=4]
-		dataStateChangeFound =
-			firstRowInSQLRespons == false &&
-				tempImmatureElementModelDomainUuid == previousTempImmatureDomainUuid &&
-				immatureElementModelElement.ImmatureElementUuid != previousImmatureElementModelElement.ImmatureElementUuid
-		if dataStateChangeFound == true {
-			dataStateChange = 4
 		}
 
 		// Act on which 'dataStateChange' that was achieved
@@ -683,7 +663,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			immatureElementModelElements = append(immatureElementModelElements, previousImmatureElementModelElement)
 
 			// Add immatureElementModelElements to 'immatureTestInstructionMessage' which can be found in map
-			immatureTestInstructionMessage, existsInMap := immatureTestInstructionMessageMap[previousImmatureElementModelElement.ImmatureElementUuid]
+			immatureTestInstructionMessage, existsInMap := immatureTestInstructionMessageMap[tempTopElementUuid]
 			if existsInMap == false {
 				fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
 					"Id": "ef98b5ca-17d5-4bf8-8af4-a1a954736a47",
@@ -700,7 +680,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			}
 
 			immatureTestInstructionMessage.ImmatureSubTestCaseModel.TestCaseModelElements = immatureElementModelElementsToStore
-			immatureTestInstructionMessageMap[previousImmatureElementModelElement.ImmatureElementUuid] = immatureTestInstructionMessage
+			immatureTestInstructionMessage.ImmatureSubTestCaseModel.FirstImmatureElementUuid = tempTopElementUuid
+			immatureTestInstructionMessageMap[tempTopElementUuid] = immatureTestInstructionMessage
 
 			// Create fresh versions of variables
 			newIimmatureElementModelElements := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestCaseModelElementMessage{}
@@ -722,7 +703,6 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		}
 
 		// Move previous values to current
-		previousTempImmatureDomainUuid = tempImmatureElementModelDomainUuid
 		previousImmatureElementModelElement = immatureElementModelElement
 
 		// Set to be not the first row
@@ -735,7 +715,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	immatureElementModelElements = append(immatureElementModelElements, immatureElementModelElement)
 
 	// Add immatureElementModelElements to 'immatureTestInstructionMessage' which can be found in map
-	immatureTestInstructionMessage, existsInMap := immatureTestInstructionMessageMap[immatureElementModelElement.ImmatureElementUuid]
+	immatureTestInstructionMessage, existsInMap := immatureTestInstructionMessageMap[tempTopElementUuid]
 	if existsInMap == false {
 		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
 			"Id": "a1744497-782f-4e82-bec0-ae0205c6573f",
@@ -752,7 +732,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	}
 
 	immatureTestInstructionMessage.ImmatureSubTestCaseModel.TestCaseModelElements = immatureElementModelElementsToStore
-	immatureTestInstructionMessageMap[immatureElementModelElement.ImmatureElementUuid] = immatureTestInstructionMessage
+	immatureTestInstructionMessage.ImmatureSubTestCaseModel.FirstImmatureElementUuid = tempTopElementUuid
+	immatureTestInstructionMessageMap[tempTopElementUuid] = immatureTestInstructionMessage
 
 	return nil
 

@@ -531,11 +531,11 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	//immatureTestInstructionContainerInformationMessagesMap := make(map[string]fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage)
 
 	// Temp variables used when extracting data
-	var tempImmatureElementModelDomainUuid, previousTempImmatureDomainUuid string
+	var tempImmatureElementModelDomainUuid string
 	var tempImmatureElementModelDomainName string
 	var tempTestCaseModelElementTypeAsString string
 	var tempIsTopElement bool
-	var tempTopElementUuid, previousTempTopElementUuid string
+	var tempTopElementUuid string
 	//var previousOriginalElementUuid string
 	//var testInstructionContainerUuid, previousTestInstructionContainerUuid string
 	//var testInstructionContainerName string
@@ -619,8 +619,6 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		// This is the first row, and it is flagged as Top-element [dataStateChange=1]
 		dataStateChangeFound :=
 			firstRowInSQLRespons == true &&
-				tempImmatureElementModelDomainUuid != previousTempImmatureDomainUuid &&
-				tempTopElementUuid != previousTempTopElementUuid &&
 				tempIsTopElement == true
 
 		if dataStateChangeFound == true {
@@ -702,7 +700,6 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		}
 
 		// Move previous values to current
-		previousTempImmatureDomainUuid = tempImmatureElementModelDomainUuid
 		previousImmatureElementModelElement = immatureElementModelElement
 
 		// Set to be not the first row
