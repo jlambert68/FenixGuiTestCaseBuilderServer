@@ -280,8 +280,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			firstRowInSQLRespons == true &&
 				domainUuid != previousDomainUuid &&
 				testInstructionUuid != previousTestInstructionUuid &&
-				availableDropZone.DropZoneUuid != previousAvailableDropZone.DropZoneUuid &&
-				dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid
+				availableDropZone.DropZoneUuid != previousAvailableDropZone.DropZoneUuid
+		//dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid
 		if dataStateChangeFound == true {
 			dataStateChange = 1
 		}
@@ -291,8 +291,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			firstRowInSQLRespons == false &&
 				domainUuid != previousDomainUuid &&
 				testInstructionUuid != previousTestInstructionUuid &&
-				availableDropZone.DropZoneUuid != previousAvailableDropZone.DropZoneUuid &&
-				dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid
+				availableDropZone.DropZoneUuid != previousAvailableDropZone.DropZoneUuid
+		//dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid
 		if dataStateChangeFound == true {
 			dataStateChange = 2
 		}
@@ -302,8 +302,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			firstRowInSQLRespons == false &&
 				domainUuid == previousDomainUuid &&
 				testInstructionUuid == previousTestInstructionUuid &&
-				availableDropZone.DropZoneUuid == previousAvailableDropZone.DropZoneUuid &&
-				dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid
+				availableDropZone.DropZoneUuid == previousAvailableDropZone.DropZoneUuid
+		//dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid
 		if dataStateChangeFound == true {
 			dataStateChange = 3
 		}
@@ -313,8 +313,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			firstRowInSQLRespons == false &&
 				domainUuid == previousDomainUuid &&
 				testInstructionUuid == previousTestInstructionUuid &&
-				availableDropZone.DropZoneUuid != previousAvailableDropZone.DropZoneUuid &&
-				dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid
+				availableDropZone.DropZoneUuid != previousAvailableDropZone.DropZoneUuid
+		//dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid
 		if dataStateChangeFound == true {
 			dataStateChange = 4
 		}
@@ -324,8 +324,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			firstRowInSQLRespons == false &&
 				domainUuid == previousDomainUuid &&
 				testInstructionUuid != previousTestInstructionUuid &&
-				availableDropZone.DropZoneUuid != previousAvailableDropZone.DropZoneUuid &&
-				dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid
+				availableDropZone.DropZoneUuid != previousAvailableDropZone.DropZoneUuid
+		//dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid
 		if dataStateChangeFound == true {
 			dataStateChange = 5
 		}
@@ -420,20 +420,10 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			// Add previousAvailableDropZone to array of DropZone
 			availableDropZones = append(availableDropZones, previousAvailableDropZone)
 
-			// Create fresh versions of variables
-			newAvailableDropZone := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage{}
-			availableDropZone = newAvailableDropZone
-
-			newDropZonePreSetTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
-			dropZonePreSetTestInstructionAttribute = newDropZonePreSetTestInstructionAttribute
-
-			newDropZonePreSetTestInstructionAttributes := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
-			dropZonePreSetTestInstructionAttributes = newDropZonePreSetTestInstructionAttributes
-
 			// Something is wrong in the ordering of the testdata or the testdata itself
 		default:
 			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-				"Id":                                     "0779886a-8280-42b6-9434-46ec1afd1d7f",
+				"Id":                                     "352075ba-32f8-4374-86d9-a936ec91b179",
 				"domainUuid":                             domainUuid,
 				"previousDomainUuid":                     previousDomainUuid,
 				"testInstructionUuid":                    testInstructionUuid,
@@ -451,6 +441,16 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		previousTestInstructionUuid = testInstructionUuid
 		previousAvailableDropZone = availableDropZone
 		previousDropZonePreSetTestInstructionAttribute = dropZonePreSetTestInstructionAttribute
+
+		// Create fresh versions of variables
+		newAvailableDropZone := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage{}
+		availableDropZone = newAvailableDropZone
+
+		newDropZonePreSetTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+		dropZonePreSetTestInstructionAttribute = newDropZonePreSetTestInstructionAttribute
+
+		newDropZonePreSetTestInstructionAttributes := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+		dropZonePreSetTestInstructionAttributes = newDropZonePreSetTestInstructionAttributes
 
 		// Set to not be the first row
 		firstRowInSQLRespons = false
@@ -470,10 +470,10 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	}
 
 	// Add attributes to previousDropZone
-	availableDropZone.DropZonePreSetTestInstructionAttributes = dropZonePreSetTestInstructionAttributesToStore
+	previousAvailableDropZone.DropZonePreSetTestInstructionAttributes = dropZonePreSetTestInstructionAttributesToStore
 
 	// Add previousAvailableDropZone to array of DropZone
-	availableDropZones = append(availableDropZones, availableDropZone)
+	availableDropZones = append(availableDropZones, previousAvailableDropZone)
 
 	// Add 'basicTestInstructionInformation' to map
 	immatureTestInstructionMessage, existsInMap := immatureTestInstructionMessageMap[testInstructionUuid]
