@@ -536,6 +536,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	var tempTestCaseModelElementTypeAsString string
 	var tempIsTopElement bool
 	var tempTopElementUuid string
+	var previousTempTopElementUuid string
+
 	//var previousOriginalElementUuid string
 	//var testInstructionContainerUuid, previousTestInstructionContainerUuid string
 	//var testInstructionContainerName string
@@ -660,7 +662,9 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			immatureElementModelElements = append(immatureElementModelElements, previousImmatureElementModelElement)
 
 			// Add immatureElementModelElements to 'immatureTestInstructionContainerMessage' which can be found in map
-			immatureTestInstructionContainerMessage, existsInMap := immatureTestInstructionContainerMessageMap[tempTopElementUuid]
+			var immatureTestInstructionContainerMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage
+			var existsInMap bool
+			immatureTestInstructionContainerMessage, existsInMap = immatureTestInstructionContainerMessageMap[previousTempTopElementUuid]
 			if existsInMap == false {
 				fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
 					"Id": "c757d974-805d-4d1c-98e9-464868aa273e",
@@ -677,8 +681,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			}
 
 			immatureTestInstructionContainerMessage.ImmatureSubTestCaseModel.TestCaseModelElements = immatureElementModelElementsToStore
-			immatureTestInstructionContainerMessage.ImmatureSubTestCaseModel.FirstImmatureElementUuid = tempTopElementUuid
-			immatureTestInstructionContainerMessageMap[tempTopElementUuid] = immatureTestInstructionContainerMessage
+			immatureTestInstructionContainerMessage.ImmatureSubTestCaseModel.FirstImmatureElementUuid = previousTempTopElementUuid
+			immatureTestInstructionContainerMessageMap[previousTempTopElementUuid] = immatureTestInstructionContainerMessage
 
 			// Create fresh versions of variables
 			newIimmatureElementModelElements := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestCaseModelElementMessage{}
@@ -701,6 +705,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 		// Move previous values to current
 		previousImmatureElementModelElement = immatureElementModelElement
+		previousTempTopElementUuid = tempTopElementUuid
 
 		// Set to be not the first row
 		firstRowInSQLRespons = false
@@ -712,7 +717,9 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	immatureElementModelElements = append(immatureElementModelElements, immatureElementModelElement)
 
 	// Add immatureElementModelElements to 'immatureTestInstructionContainerMessage' which can be found in map
-	immatureTestInstructionContainerMessage, existsInMap := immatureTestInstructionContainerMessageMap[tempTopElementUuid]
+	var immatureTestInstructionContainerMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage
+	var existsInMap bool
+	immatureTestInstructionContainerMessage, existsInMap = immatureTestInstructionContainerMessageMap[tempTopElementUuid]
 	if existsInMap == false {
 		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
 			"Id": "a1744497-782f-4e82-bec0-ae0205c6573f",
