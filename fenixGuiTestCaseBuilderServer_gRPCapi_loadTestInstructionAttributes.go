@@ -63,7 +63,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllImmatureTestInstru
 	responseMessage = &fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage{
 		TestInstructionAttributesList: testInstructionAttributesList,
 		AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-			AckNack:                      false,
+			AckNack:                      true,
 			Comments:                     "",
 			ErrorCodes:                   nil,
 			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
