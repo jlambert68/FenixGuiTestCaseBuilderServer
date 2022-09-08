@@ -70,8 +70,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			// NonEditableInformation
 			&nonEditableInformation.DomainUuid,
 			&nonEditableInformation.DomainName,
-			&nonEditableInformation.TestInstructionUuid,
-			&nonEditableInformation.TestInstructionName,
+			&nonEditableInformation.TestInstructionOrignalUuid,
+			&nonEditableInformation.TestInstructionOriginalName,
 			&nonEditableInformation.TestInstructionTypeUuid,
 			&nonEditableInformation.TestInstructionTypeName,
 			&nonEditableInformation.Deprecated,
@@ -110,7 +110,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		//editableTestInstructionAttribute.TestInstructionExecutionType = fenixTestCaseBuilderServerGrpcApi.TestInstructionExecutionTypeEnum(fenixTestCaseBuilderServerGrpcApi.TestInstructionExecutionTypeEnum_value[tempTestInstructionExecutionType])
 
 		// Add 'basicTestInstructionInformation' to map
-		testInstructionUuid := nonEditableInformation.TestInstructionUuid
+		testInstructionUuid := nonEditableInformation.TestInstructionOrignalUuid
 
 		_, existsInMap := immatureTestInstructionMessageMap[testInstructionUuid]
 		// testInstructionUuid shouldn't exist in map. If so then there is a problem
@@ -126,19 +126,19 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		// Create 'basicTestInstructionInformation' of the parts
 		basicTestInstructionInformation := fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage{
 			NonEditableInformation: &fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_NonEditableBasicInformationMessage{
-				DomainUuid:              nonEditableInformation.DomainUuid,
-				DomainName:              nonEditableInformation.DomainName,
-				TestInstructionUuid:     nonEditableInformation.TestInstructionUuid,
-				TestInstructionName:     nonEditableInformation.TestInstructionName,
-				TestInstructionTypeUuid: nonEditableInformation.TestInstructionTypeUuid,
-				TestInstructionTypeName: nonEditableInformation.TestInstructionTypeName,
-				Deprecated:              nonEditableInformation.Deprecated,
-				MajorVersionNumber:      nonEditableInformation.MajorVersionNumber,
-				MinorVersionNumber:      nonEditableInformation.MinorVersionNumber,
-				UpdatedTimeStamp:        nonEditableInformation.UpdatedTimeStamp,
-				TestInstructionColor:    nonEditableInformation.TestInstructionColor,
-				TCRuleDeletion:          nonEditableInformation.TCRuleDeletion,
-				TCRuleSwap:              nonEditableInformation.TCRuleSwap,
+				DomainUuid:                  nonEditableInformation.DomainUuid,
+				DomainName:                  nonEditableInformation.DomainName,
+				TestInstructionOrignalUuid:  nonEditableInformation.TestInstructionOrignalUuid,
+				TestInstructionOriginalName: nonEditableInformation.TestInstructionOriginalName,
+				TestInstructionTypeUuid:     nonEditableInformation.TestInstructionTypeUuid,
+				TestInstructionTypeName:     nonEditableInformation.TestInstructionTypeName,
+				Deprecated:                  nonEditableInformation.Deprecated,
+				MajorVersionNumber:          nonEditableInformation.MajorVersionNumber,
+				MinorVersionNumber:          nonEditableInformation.MinorVersionNumber,
+				UpdatedTimeStamp:            nonEditableInformation.UpdatedTimeStamp,
+				TestInstructionColor:        nonEditableInformation.TestInstructionColor,
+				TCRuleDeletion:              nonEditableInformation.TCRuleDeletion,
+				TCRuleSwap:                  nonEditableInformation.TCRuleSwap,
 			},
 			EditableInformation: &fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_EditableBasicInformationMessage{
 				TestInstructionDescription:   editableInformation.TestInstructionDescription,
@@ -201,6 +201,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	var testInstructionUuid, previousTestInstructionUuid string
 	var testInstructionName string
 	var tempTestInstructionAttributeType string
+
 	// First Row in TestData
 	var firstRowInSQLRespons bool
 	firstRowInSQLRespons = true
@@ -257,11 +258,14 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 			// Reference to first element in element-model
 			&firstImmatureElementUuid,
+
+			// Attribute Action Command controls have to use the attribute
+			&dropZonePreSetTestInstructionAttribute.AttributeActionCommand,
 		)
 
 		if err != nil {
 			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-				"Id":           "525079b7-8484-4e61-a811-fa863a41ee2f",
+				"Id":           "e514dbca-530d-490e-9fb7-58eaa114a721",
 				"Error":        err,
 				"sqlToExecute": sqlToExecute,
 			}).Error("Something went wrong when processing result from database")
