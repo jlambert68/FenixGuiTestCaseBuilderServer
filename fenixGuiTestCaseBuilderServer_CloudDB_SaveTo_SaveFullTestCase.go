@@ -54,14 +54,14 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	usedDBSchema := "FenixGuiBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 
 	// Extract column data to be added to data-row
-	tempDomainUuid := ""
-	tempDomainName := ""
-	tempTestCaseUuid := ""
-	tempTestCaseName := ""
-	tempTestCaseVersion := 0
-	tempTestCaseBasicInformationAsJsonb := ""
-	tempTestInstructionsAsJsonb := ""
-	tempTestInstructionContainersAsJsonb := ""
+	tempDomainUuid := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.DomainUuid
+	tempDomainName := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.DomainName
+	tempTestCaseUuid := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.TestCaseUuid
+	tempTestCaseName := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.EditableInformation.TestCaseName
+	tempTestCaseVersion := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.DomainName
+	tempTestCaseBasicInformationAsJsonb := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation
+	tempTestInstructionsAsJsonb := fullTestCaseMessage.MatureTestInstructions
+	tempTestInstructionContainersAsJsonb := fullTestCaseMessage.MatureTestInstructionContainers
 
 	var dataRowToBeInsertedMultiType []interface{}
 	var dataRowsToBeInsertedMultiType [][]interface{}
