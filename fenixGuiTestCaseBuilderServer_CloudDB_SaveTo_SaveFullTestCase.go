@@ -9,6 +9,7 @@ import (
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // Load BasicInformation for TestCase to be able to populate the TestCaseExecution
@@ -53,15 +54,42 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	usedDBSchema := "FenixGuiBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 
+	nexTestCaseVersion, err := fenixGuiTestCaseBuilderServerObject.getNexTestCaseVersion(fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.TestCaseUuid)
+	if err != nil {
+		if err != nil {
+
+			// Set Error codes to return message
+			var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+			var errorCode fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+
+			errorCode = fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM
+			errorCodes = append(errorCodes, errorCode)
+
+			// Create Return message
+			returnMessage = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+				AckNack:                      false,
+				Comments:                     "Problem when getting next TestCaseVersion from database",
+				ErrorCodes:                   errorCodes,
+				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+			}
+		}
+
+		return returnMessage, err
+
+	}
+
+	// Set Next TestCaseVersion in TestCase
+	fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.TestCaseVersion = nexTestCaseVersion
+
 	// Extract column data to be added to data-row
 	tempDomainUuid := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.DomainUuid
 	tempDomainName := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.DomainName
 	tempTestCaseUuid := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.TestCaseUuid
 	tempTestCaseName := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.EditableInformation.TestCaseName
-	tempTestCaseVersion := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.DomainName
-	tempTestCaseBasicInformationAsJsonb := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation
-	tempTestInstructionsAsJsonb := fullTestCaseMessage.MatureTestInstructions
-	tempTestInstructionContainersAsJsonb := fullTestCaseMessage.MatureTestInstructionContainers
+	tempTestCaseVersion := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.TestCaseVersion
+	tempTestCaseBasicInformationAsJsonb := protojson.Format(fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation)
+	tempTestInstructionsAsJsonb := protojson.Format(fullTestCaseMessage.MatureTestInstructions)
+	tempTestInstructionContainersAsJsonb := tempTestInstructionsAsJsonb //protojson.Format(fullTestCaseMessage.MatureTestInstructionContainers)
 
 	var dataRowToBeInsertedMultiType []interface{}
 	var dataRowsToBeInsertedMultiType [][]interface{}

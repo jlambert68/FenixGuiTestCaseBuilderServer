@@ -7,6 +7,7 @@ import (
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/sirupsen/logrus"
+	"strings"
 )
 
 // Prepare to Save Pinned TestInstructions and TestInstructionContainers to CloudDB
@@ -205,13 +206,18 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 			case int:
 				sqlInsertValuesString = sqlInsertValuesString + fmt.Sprint(value)
-			case string:
 
-				sqlInsertValuesString = sqlInsertValuesString + "'" + fmt.Sprint(value) + "'"
+			case uint32:
+				sqlInsertValuesString = sqlInsertValuesString + fmt.Sprint(value)
+
+			case string:
+				valuePrepared := strings.ReplaceAll(fmt.Sprint(value), "'", "''")
+				sqlInsertValuesString = sqlInsertValuesString + "'" + valuePrepared + "'"
 
 			default:
 				fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-					"id": "53539786-cbb6-418d-8752-c2e337b9e962",
+					"id":    "53539786-cbb6-418d-8752-c2e337b9e962",
+					"value": value,
 				}).Fatal("Unhandled type, %valueType", valueType)
 			}
 
