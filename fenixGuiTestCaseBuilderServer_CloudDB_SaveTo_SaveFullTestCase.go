@@ -87,7 +87,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	tempTestCaseUuid := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.TestCaseUuid
 	tempTestCaseName := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.EditableInformation.TestCaseName
 	tempTestCaseVersion := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.TestCaseVersion
-	tempTestCaseBasicInformationAsJsonb := protojson.Format(fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation)
+	tempTestCaseBasicInformationAsJsonb := protojson.Format(fullTestCaseMessage.TestCaseBasicInformation)
 	tempTestInstructionsAsJsonb := protojson.Format(fullTestCaseMessage.MatureTestInstructions)
 	tempTestInstructionContainersAsJsonb := protojson.Format(fullTestCaseMessage.MatureTestInstructionContainers)
 
