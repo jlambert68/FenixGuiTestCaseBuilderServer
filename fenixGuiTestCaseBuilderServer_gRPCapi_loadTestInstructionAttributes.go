@@ -75,7 +75,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllImmatureTestInstru
 
 func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadClientsImmatureTestInstructionAttributesFromCloudDB(userID string) (testInstructionAttributesMessage []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage_TestInstructionAttributeMessage, err error) {
 
-	usedDBSchema := "FenixGuiBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
+	usedDBSchema := "FenixBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 
 	// **** BasicTestInstructionInformation **** **** BasicTestInstructionInformation **** **** BasicTestInstructionInformation ****
 	sqlToExecute := ""

@@ -11,7 +11,7 @@ import (
 // Load BasicInformation for TestCase to be able to populate the TestCaseExecution
 func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) getNexTestCaseVersion(testCaseUuid string) (nextTestCaseVersion uint32, err error) {
 
-	//usedDBSchema := "FenixGuiBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
+	//usedDBSchema := "FenixBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "SELECT MAX(TC.\"TestCaseVersion\") "

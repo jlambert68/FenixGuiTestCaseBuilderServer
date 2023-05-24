@@ -52,7 +52,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 // Save TestCase in Execution-queue
 func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) saveFullTestCase(dbTransaction pgx.Tx, fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse, err error) {
 
-	usedDBSchema := "FenixGuiBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
+	usedDBSchema := "FenixBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 
 	nexTestCaseVersion, err := fenixGuiTestCaseBuilderServerObject.getNexTestCaseVersion(fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.TestCaseUuid)
 	if err != nil {
