@@ -15,7 +15,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "SELECT MAX(TC.\"TestCaseVersion\") "
-	sqlToExecute = sqlToExecute + "FROM \"FenixGuiBuilder\".\"TestCases\" TC "
+	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" TC "
 	sqlToExecute = sqlToExecute + "WHERE TC.\"TestCaseUuid\" = '" + testCaseUuid + "';"
 
 	// Query DB
