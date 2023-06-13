@@ -142,13 +142,14 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	// Log response from CloudDB
 	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-		"Id":                       "dcb110c2-822a-4dde-8bc6-9ebbe9fcbdb0",
+		"Id":                       "bea64662-3a70-4a5b-9e92-26d130983f63",
 		"comandTag.Insert()":       comandTag.Insert(),
 		"comandTag.Delete()":       comandTag.Delete(),
 		"comandTag.Select()":       comandTag.Select(),
 		"comandTag.Update()":       comandTag.Update(),
 		"comandTag.RowsAffected()": comandTag.RowsAffected(),
 		"comandTag.String()":       comandTag.String(),
+		"sqlToExecute":             sqlToExecute,
 	}).Debug("Return data for SQL executed in database")
 
 	// No errors occurred
