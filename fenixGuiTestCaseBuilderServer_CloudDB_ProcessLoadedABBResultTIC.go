@@ -33,7 +33,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	if err != nil {
 		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-			"Id":           "b944c506-4ded-4f5e-98c4-06f272d16e1a",
+			"Id":           "bdc00c9e-9201-46a6-a65d-18c148b88e74",
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
 		}).Error("Something went wrong when executing SQL")
