@@ -20,8 +20,13 @@ func cleanup() {
 		// Stop Backend gRPC Server
 		fenixGuiTestCaseBuilderServerObject.StopGrpcServer()
 
-		//log.Println("Close DB_session: %v", DB_session)
-		//DB_session.Close()
+		// Close Database Connection
+		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			"Id": "587cc9b8-88eb-422c-b419-53fa4c51ebce",
+		}).Info("Closing Database connection")
+
+		fenixSyncShared.DbPool.Close()
+
 	}
 }
 
