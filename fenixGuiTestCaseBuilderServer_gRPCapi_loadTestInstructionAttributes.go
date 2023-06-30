@@ -5,6 +5,7 @@ import (
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/sirupsen/logrus"
+	"time"
 )
 
 // ListAllImmatureTestInstructionAttributes - *********************************************************************
@@ -84,7 +85,11 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	sqlToExecute = sqlToExecute + "ORDER BY TIATTR.\"DomainUuid\" ASC, TIATTR.\"TestInstructionUuid\" ASC, TIATTR.\"TestInstructionAttributeUuid\" ASC; "
 
 	// Query DB
-	rows, err := fenixSyncShared.DbPool.Query(context.Background(), sqlToExecute)
+	var ctx context.Context
+	ctx, timeOutCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer timeOutCancel()
+
+	rows, err := fenixSyncShared.DbPool.Query(ctx, sqlToExecute)
 
 	if err != nil {
 		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{

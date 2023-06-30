@@ -6,6 +6,7 @@ import (
 	"fmt"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/sirupsen/logrus"
+	"time"
 )
 
 // Load BasicInformation for TestCase to be able to populate the TestCaseExecution
@@ -19,7 +20,11 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	sqlToExecute = sqlToExecute + "WHERE TC.\"TestCaseUuid\" = '" + testCaseUuid + "';"
 
 	// Query DB
-	rows, err := fenixSyncShared.DbPool.Query(context.Background(), sqlToExecute)
+	var ctx context.Context
+	ctx, timeOutCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer timeOutCancel()
+
+	rows, err := fenixSyncShared.DbPool.Query(ctx, sqlToExecute)
 
 	if err != nil {
 		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{

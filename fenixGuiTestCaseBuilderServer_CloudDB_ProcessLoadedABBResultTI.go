@@ -29,7 +29,11 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	sqlToExecute = sqlToExecute + "ORDER BY BTI.\"DomainUuid\" ASC,  BTI.\"TestInstructionTypeUuid\" ASC, BTI.\"TestInstructionUuid\" ASC; "
 
 	// Query DB
-	rows, err := fenixSyncShared.DbPool.Query(context.Background(), sqlToExecute)
+	var ctx context.Context
+	ctx, timeOutCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer timeOutCancel()
+
+	rows, err := fenixSyncShared.DbPool.Query(ctx, sqlToExecute)
 
 	if err != nil {
 		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
@@ -177,7 +181,11 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	sqlToExecute = sqlToExecute + "ORDER BY ITII.\"DomainUuid\" ASC, ITII.\"TestInstructionUuid\" ASC,  ITII.\"DropZoneUuid\" ASC, ITII.\"TestInstructionAttributeUuid\" ASC; "
 
 	// Query DB
-	rows, err := fenixSyncShared.DbPool.Query(context.Background(), sqlToExecute)
+	var ctx context.Context
+	ctx, timeOutCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer timeOutCancel()
+
+	rows, err := fenixSyncShared.DbPool.Query(ctx, sqlToExecute)
 
 	if err != nil {
 		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
@@ -520,7 +528,11 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	sqlToExecute = sqlToExecute + "ORDER BY IEM.\"DomainUuid\" ASC, IEM.\"TopImmatureElementUuid\" ASC, IEM.\"IsTopElement\" DESC; " //, IEM.\"CurrentElementModelElement\" ASC; "
 
 	// Query DB
-	rows, err := fenixSyncShared.DbPool.Query(context.Background(), sqlToExecute)
+	var ctx context.Context
+	ctx, timeOutCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer timeOutCancel()
+
+	rows, err := fenixSyncShared.DbPool.Query(ctx, sqlToExecute)
 
 	if err != nil {
 		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
