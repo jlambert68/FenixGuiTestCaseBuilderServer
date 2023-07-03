@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/go-gota/gota v0.12.0
-	github.com/jlambert68/FenixSyncShared v0.0.0-20220309201741-aa2c115e0cc1
+	github.com/jlambert68/FenixSyncShared v0.0.0-20230703094150-8d1c9829298f
 	github.com/sirupsen/logrus v1.8.1
 	golang.org/x/net v0.0.0-20220421235706-1d1ef9303861
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
