@@ -90,6 +90,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	defer timeOutCancel()
 
 	rows, err := fenixSyncShared.DbPool.Query(ctx, sqlToExecute)
+	defer rows.Close()
 
 	if err != nil {
 		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{

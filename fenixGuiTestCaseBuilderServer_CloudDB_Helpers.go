@@ -25,6 +25,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	defer timeOutCancel()
 
 	rows, err := fenixSyncShared.DbPool.Query(ctx, sqlToExecute)
+	defer rows.Close()
 
 	if err != nil {
 		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
@@ -32,6 +33,13 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
 		}).Error("Something went wrong when executing SQL")
+
+		databaseStatistics := fenixSyncShared.DbPool.Stat()
+
+		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			"Id":                 "92dce2b7-a9c1-40f2-b46e-618c91c83d65",
+			"databaseStatistics": databaseStatistics,
+		}).Error("DBPool Statistics")
 
 		return 0, err
 	}
