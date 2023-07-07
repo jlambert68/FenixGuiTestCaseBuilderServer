@@ -52,7 +52,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	// Load the TestCase
 	var fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage
-	fullTestCaseMessage, err = fenixGuiTestCaseBuilderServerObject.LoadFullTestCase(txn, testCaseUuidToLoad)
+	fullTestCaseMessage, err = fenixGuiTestCaseBuilderServerObject.loadFullTestCase(txn, testCaseUuidToLoad)
 
 	// Error when retrieving TestCase
 	if err != nil {
@@ -134,13 +134,14 @@ LIMIT 1;
 */
 
 // Load All Domains and their address information
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) LoadFullTestCase(
+func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadFullTestCase(
 	dbTransaction pgx.Tx, testCaseUuidToLoad string) (
 	fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage, err error) {
 
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "SELECT TC.\"TestCaseBasicInformationAsJsonb\", " +
-		"TC.\"TestInstructionsAsJsonb\", \"TestInstructionContainersAsJsonb\" "
+		"TC.\"TestInstructionsAsJsonb\", \"TestInstructionContainersAsJsonb\"," +
+		"TC.\"TestCaseHash\" "
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" TC "
 	sqlToExecute = sqlToExecute + fmt.Sprintf("WHERE TC.\"TestCaseUuid\" = '%s' ", testCaseUuidToLoad)
 	sqlToExecute = sqlToExecute + "ORDER BY TC.\"TestCaseVersion\" DESC "
@@ -151,7 +152,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
 			"Id":           "01b246fb-effe-4348-9a5c-830604e6daf6",
 			"sqlToExecute": sqlToExecute,
-		}).Debug("SQL to be executed within 'LoadFullTestCase'")
+		}).Debug("SQL to be executed within 'loadFullTestCase'")
 	}
 
 	// Query DB
@@ -182,9 +183,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		tempTestCaseBasicInformationAsByteArray  []byte
 		tempTestInstructionsAsByteArray          []byte
 		tempTestInstructionContainersAsByteArray []byte
-		//tempTestCaseBasicInformationAsJsonb := protojson.Format(fullTestCaseMessage.TestCaseBasicInformation)
-		//tempTestInstructionsAsJsonb := protojson.Format(fullTestCaseMessage.MatureTestInstructions)
-		//tempTestInstructionContainersAsJsonb := protojson.Format(fullTestCaseMessage.MatureTestInstructionContainers)
+
+		testCaseHash string
 	)
 
 	// Extract data from DB result set
@@ -194,6 +194,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			&tempTestCaseBasicInformationAsString,
 			&tempTestInstructionsAsString,
 			&tempTestInstructionContainersAsString,
+			&testCaseHash,
 		)
 
 		if err != nil {
@@ -248,7 +249,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			TestCaseBasicInformation:        &tempTestCaseBasicInformation,
 			MatureTestInstructions:          &tempMatureTestInstructions,
 			MatureTestInstructionContainers: &tempMatureTestInstructionContainers,
-			MessageHash:                     "",
+			MessageHash:                     testCaseHash,
 		}
 
 	}
