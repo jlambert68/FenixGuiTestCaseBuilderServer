@@ -6,6 +6,10 @@
 # https://stackoverflow.com/questions/60578892/protoc-gen-go-grpc-program-not-found-or-is-not-executable
 
 
+RunGrpcGui:
+	cd ~/egen_kod/go/go_workspace/src/jlambert/grpcui/standalone && grpcui -plaintext localhost:6670
+
+
 compileProto:
 	@echo "Compile proto file..."
 # Old

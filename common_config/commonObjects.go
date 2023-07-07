@@ -35,4 +35,7 @@ var (
 	FenixGuiServerPort             int
 )
 
+// LogAllSQLs - Environment variable for deciding if SQLs should be logged
+var LogAllSQLs bool
+
 // ***********************************************************************************************************
