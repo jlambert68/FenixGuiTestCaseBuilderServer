@@ -237,8 +237,8 @@ github.com/jackc/puddle v0.0.0-20190608224051-11cab39313c9/go.mod h1:m4B5Dj62Y0f
 github.com/jackc/puddle v1.1.3/go.mod h1:m4B5Dj62Y0fbyuIc15OsIqK0+JU8nkqQjsgx7dvjSWk=
 github.com/jackc/puddle v1.2.1 h1:gI8os0wpRXFd4FiAY2dWiqRK037tjj3t7rKFeO4X5iw=
 github.com/jackc/puddle v1.2.1/go.mod h1:m4B5Dj62Y0fbyuIc15OsIqK0+JU8nkqQjsgx7dvjSWk=
-github.com/jlambert68/FenixGrpcApi v0.0.0-20230706123059-0d028bea4816 h1:dq3nlmXMCuzaC9jTNaOwyefr+Kgcu5HFztsDDOM23k8=
-github.com/jlambert68/FenixGrpcApi v0.0.0-20230706123059-0d028bea4816/go.mod h1:W1LBy0KtSSvZ6zaIG1LZ5P5kTK6yzvubjmHUduD773w=
+github.com/jlambert68/FenixGrpcApi v0.0.0-20230719190619-277f4f458f29 h1:5AkK6zk5JJuMeqyfA26okddt8HbPa5o25KZAUc03K7s=
+github.com/jlambert68/FenixGrpcApi v0.0.0-20230719190619-277f4f458f29/go.mod h1:W1LBy0KtSSvZ6zaIG1LZ5P5kTK6yzvubjmHUduD773w=
 github.com/jlambert68/FenixSyncShared v0.0.0-20230703094150-8d1c9829298f h1:4m9tPgVv6m6gRR+u+aWHliEbNMd9AGN5ii03y0/3CUc=
 github.com/jlambert68/FenixSyncShared v0.0.0-20230703094150-8d1c9829298f/go.mod h1:F6ooEuMuIxTRbpUOXU3pT4GG2InJDyaOb2BPW2+6Hmo=
 github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1:6v2b51hI/fHJwM22ozAgKL4VKDeJcHhJFhtBdhmNjmU=
