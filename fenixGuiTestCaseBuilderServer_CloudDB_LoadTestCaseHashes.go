@@ -202,8 +202,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	sqlToExecute = ""
 	sqlToExecute = sqlToExecute + "SELECT TC.\"TestCaseUuid\", TC.\"TestCaseHash\" "
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" TC "
-	sqlToExecute = sqlToExecute + "WHERE TC.\"TestCaseExecutionUuid\"  IN "
-	sqlToExecute = sqlToExecute + "(SELECT temp.\"uniqueCounter\" FROM \"" + tempraryTableName + "\" temp;)"
+	sqlToExecute = sqlToExecute + "WHERE TC.\"UniqueCounter\"  IN "
+	sqlToExecute = sqlToExecute + "(SELECT temp.\"uniqueCounter\" FROM " + tempraryTableName + " temp)"
 	sqlToExecute = sqlToExecute + ";"
 
 	// Log SQL to be executed if Environment variable is true
