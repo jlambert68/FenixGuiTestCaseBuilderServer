@@ -157,7 +157,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	sqlToExecute = sqlToExecute + "CREATE TEMPORARY TABLE " + tempraryTableName + " ON COMMIT DROP AS "
 	sqlToExecute = sqlToExecute + "SELECT TC.\"TestCaseUuid\", MAX(TC.\"UniqueCounter\") \"uniqueCounter\" "
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" TC "
-	sqlToExecute = sqlToExecute + "WHERE TC.\"TestCaseUuid\" IN " + ""
+	sqlToExecute = sqlToExecute + "WHERE TC.\"TestCaseUuid\" IN " + common_config.GenerateSQLINArray(*testCaseUuids)
 	sqlToExecute = sqlToExecute + "GROUP BY TC.\"TestCaseUuid\" "
 	sqlToExecute = sqlToExecute + ";"
 
@@ -203,7 +203,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	sqlToExecute = sqlToExecute + "SELECT TC.\"TestCaseUuid\", TC.\"TestCaseHash\" "
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" TC "
 	sqlToExecute = sqlToExecute + "WHERE TC.\"TestCaseExecutionUuid\"  IN "
-	sqlToExecute = sqlToExecute + "(SELECT temp.\"uniqueCounter\" FROM \"" + tempraryTableName + "\" temp);"
+	sqlToExecute = sqlToExecute + "(SELECT temp.\"uniqueCounter\" FROM \"" + tempraryTableName + "\" temp;)"
 	sqlToExecute = sqlToExecute + ";"
 
 	// Log SQL to be executed if Environment variable is true
