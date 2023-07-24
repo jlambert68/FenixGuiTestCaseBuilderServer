@@ -51,7 +51,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) SaveFullTestCase(ctx cont
 		return returnMessage, nil
 	}
 
-	// Save Pinned TestInstructions and pre-created TestInstructionContainers to Cloud DB
+	// Save full TestCase to Cloud DB
 	returnMessage = fenixGuiTestCaseBuilderServerObject.prepareSaveFullTestCase(fullTestCaseMessage)
 	if returnMessage != nil {
 		// Something went wrong when saving to database
