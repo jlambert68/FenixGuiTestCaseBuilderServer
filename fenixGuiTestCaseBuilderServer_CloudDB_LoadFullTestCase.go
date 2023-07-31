@@ -141,7 +141,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "SELECT TC.\"TestCaseBasicInformationAsJsonb\", " +
 		"TC.\"TestInstructionsAsJsonb\", \"TestInstructionContainersAsJsonb\"," +
-		"TC.\"TestCaseHash\" "
+		"TC.\"TestCaseHash\", TC.\"TestCaseExtraInformationAsJsonb\" "
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" TC "
 	sqlToExecute = sqlToExecute + fmt.Sprintf("WHERE TC.\"TestCaseUuid\" = '%s' ", testCaseUuidToLoad)
 	sqlToExecute = sqlToExecute + "ORDER BY TC.\"TestCaseVersion\" DESC "
@@ -177,12 +177,15 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		tempTestCaseBasicInformation             fenixTestCaseBuilderServerGrpcApi.TestCaseBasicInformationMessage
 		tempMatureTestInstructions               fenixTestCaseBuilderServerGrpcApi.MatureTestInstructionsMessage
 		tempMatureTestInstructionContainers      fenixTestCaseBuilderServerGrpcApi.MatureTestInstructionContainersMessage
+		tempTestCaseExtraInformation             fenixTestCaseBuilderServerGrpcApi.TestCaseExtraInformationMessage
 		tempTestCaseBasicInformationAsString     string
 		tempTestInstructionsAsString             string
 		tempTestInstructionContainersAsString    string
+		tempTestCaseExtraInformationAsString     string
 		tempTestCaseBasicInformationAsByteArray  []byte
 		tempTestInstructionsAsByteArray          []byte
 		tempTestInstructionContainersAsByteArray []byte
+		tempTestCaseExtraInformationAsByteArray  []byte
 
 		testCaseHash string
 	)
@@ -195,6 +198,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			&tempTestInstructionsAsString,
 			&tempTestInstructionContainersAsString,
 			&testCaseHash,
+			&tempTestCaseExtraInformationAsString,
 		)
 
 		if err != nil {
@@ -212,8 +216,9 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		tempTestCaseBasicInformationAsByteArray = []byte(tempTestCaseBasicInformationAsString)
 		tempTestInstructionsAsByteArray = []byte(tempTestInstructionsAsString)
 		tempTestInstructionContainersAsByteArray = []byte(tempTestInstructionContainersAsString)
+		tempTestCaseExtraInformationAsByteArray = []byte(tempTestCaseExtraInformationAsString)
 
-		// Convert json-byte-arrys into proto-messages
+		// Convert json-byte-arrays into proto-messages
 		err = protojson.Unmarshal(tempTestCaseBasicInformationAsByteArray, &tempTestCaseBasicInformation)
 		if err != nil {
 			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
@@ -244,12 +249,23 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			return nil, err
 		}
 
+		err = protojson.Unmarshal(tempTestCaseExtraInformationAsByteArray, &tempTestCaseExtraInformation)
+		if err != nil {
+			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+				"Id":    "3b02c709-cb70-43c6-982e-19eb58395a24",
+				"Error": err,
+			}).Error("Something went wrong when converting 'tempTestCaseExtraInformationAsByteArray' into proto-message")
+
+			return nil, err
+		}
+
 		// Add the different parts into full TestCase-message
 		fullTestCaseMessage = &fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage{
 			TestCaseBasicInformation:        &tempTestCaseBasicInformation,
 			MatureTestInstructions:          &tempMatureTestInstructions,
 			MatureTestInstructionContainers: &tempMatureTestInstructionContainers,
 			MessageHash:                     testCaseHash,
+			TestCaseExtraInformation:        &tempTestCaseExtraInformation,
 		}
 
 	}
