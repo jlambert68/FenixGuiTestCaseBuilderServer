@@ -1,10 +1,13 @@
 module FenixGuiTestCaseBuilderServer
 
-go 1.19
+go 1.21
+
+toolchain go1.21.5
 
 require (
 	github.com/go-gota/gota v0.12.0 // indirect
 	github.com/jlambert68/FenixSyncShared v0.0.0-20231023123349-e891692cede8
+	github.com/jlambert68/FenixTestInstructionsAdminShared v0.0.0-20231215220350-557504bf6dda
 	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/net v0.19.0
 	golang.org/x/oauth2 v0.15.0

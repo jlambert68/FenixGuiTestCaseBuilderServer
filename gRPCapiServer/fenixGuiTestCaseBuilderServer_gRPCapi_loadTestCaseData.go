@@ -34,7 +34,10 @@ import (
 
 // GetDetailedTestCase
 // TestCase GUI use this gRPC-api to Load a full TestCase with all its data
-func (s *fenixTestCaseBuilderServerGrpcServicesServer) GetDetailedTestCase(ctx context.Context, getTestCaseRequestMessage *fenixTestCaseBuilderServerGrpcApi.GetTestCaseRequestMessage) (*fenixTestCaseBuilderServerGrpcApi.GetDetailedTestCaseResponse, error) {
+func (s *fenixTestCaseBuilderServerGrpcServicesServer) GetDetailedTestCase(
+	ctx context.Context,
+	getTestCaseRequestMessage *fenixTestCaseBuilderServerGrpcApi.GetTestCaseRequestMessage) (
+	*fenixTestCaseBuilderServerGrpcApi.GetDetailedTestCaseResponse, error) {
 
 	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "76c53d30-a25e-43e3-87ef-523181a0d949",
