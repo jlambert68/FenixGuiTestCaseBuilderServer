@@ -1,6 +1,7 @@
-package main
+package CloudDbProcessing
 
 import (
+	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
@@ -9,24 +10,24 @@ import (
 	"time"
 )
 
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) processTestInstructionsBasicTestInstructionInformation(immatureTestInstructionMessageMap map[string]*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage) (err error) {
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) processTestInstructionContainersBasicTestInstructionContainerInformation(immatureTestInstructionContainerMessageMap map[string]*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage) (err error) {
 
 	var (
-	//	basicTestInstructionInformation            fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage
-	//basicTestInstructionInformationSQLCount    int64
-	//immatureTestInstructionInformation fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage
-	//immatureTestInstructionInformationSQLCount int64
+	//	basicTestInstructionContainerInformation            fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionContainerInformationMessage
+	//basicTestInstructionContainerInformationSQLCount    int64
+	//immatureTestInstructionContainerInformation fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage
+	//immatureTestInstructionContainerInformationSQLCount int64
 	//immatureSubTestCaseModel                   fenixTestCaseBuilderServerGrpcApi.ImmatureElementModelMessage
 	//immatureSubTestCaseModelSQLCount           int64
 	)
 
 	usedDBSchema := "FenixBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 
-	// **** BasicTestInstructionInformation **** **** BasicTestInstructionInformation **** **** BasicTestInstructionInformation ****
+	// **** BasicTestInstructionContainerInformation **** **** BasicTestInstructionContainerInformation **** **** BasicTestInstructionContainerInformation ****
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "SELECT BTI.* "
-	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"BasicTestInstructionInformation\" BTI "
-	sqlToExecute = sqlToExecute + "ORDER BY BTI.\"DomainUuid\" ASC,  BTI.\"TestInstructionTypeUuid\" ASC, BTI.\"TestInstructionUuid\" ASC; "
+	sqlToExecute = sqlToExecute + "SELECT BTIC.* "
+	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"BasicTestInstructionContainerInformation\" BTIC "
+	sqlToExecute = sqlToExecute + "ORDER BY BTIC.\"DomainUuid\" ASC,  BTIC.\"TestInstructionContainerTypeUuid\" ASC, BTIC.\"TestInstructionContainerUuid\" ASC; "
 
 	// Query DB
 	var ctx context.Context
@@ -37,8 +38,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	defer rows.Close()
 
 	if err != nil {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-			"Id":           "b944c506-4ded-4f5e-98c4-06f272d16e1a",
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "bdc00c9e-9201-46a6-a65d-18c148b88e74",
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
 		}).Error("Something went wrong when executing SQL")
@@ -47,59 +48,59 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	}
 
 	// Variables to used when extract data from result set
-	//var basicTestInstructionInformation fenixTestCaseBuilderServerGrpcApi.TestInstructionMessage
+	//var basicTestInstructionContainerInformation fenixTestCaseBuilderServerGrpcApi.TestInstructionMessage
 	var tempTimeStamp time.Time
-	//var tempTestInstructionExecutionType string
+	var tempTestInstructionContainerExecutionType string
 
-	// Get number of rows for 'basicTestInstructionInformation'
-	//basicTestInstructionInformationSQLCount = rows.CommandTag().RowsAffected()
+	// Get number of rows for 'basicTestInstructionContainerInformation'
+	//basicTestInstructionContainerInformationSQLCount = rows.CommandTag().RowsAffected()
 	var (
-		nonEditableInformation    fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_NonEditableBasicInformationMessage
-		editableInformation       fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_EditableBasicInformationMessage
-		invisibleBasicInformation fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_InvisibleBasicInformationMessage
-		//editableTestInstructionAttribute fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_EditableTestInstructionAttributesMessage
+		nonEditableInformation                    fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionContainerInformationMessage_NonEditableBasicInformationMessage
+		editableInformation                       fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionContainerInformationMessage_EditableBasicInformationMessage
+		invisibleBasicInformation                 fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionContainerInformationMessage_InvisibleBasicInformationMessage
+		editableTestInstructionContainerAttribute fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionContainerInformationMessage_EditableTestInstructionContainerAttributesMessage
 		//immatureElementModelMessage                        fenixTestCaseBuilderServerGrpcApi.ImmatureElementModelMessage
-		//immatureTestInstructionInformationMessage fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage
+		//immatureTestInstructionContainerInformationMessage fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage
 	)
 
 	// Extract data from DB result set
 	for rows.Next() {
 
 		// Initiate a new variable to store the data
-		nonEditableInformation = fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_NonEditableBasicInformationMessage{}
-		editableInformation = fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_EditableBasicInformationMessage{}
-		invisibleBasicInformation = fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_InvisibleBasicInformationMessage{}
-		//editableTestInstructionAttribute = fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_EditableTestInstructionAttributesMessage{}
+		nonEditableInformation = fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionContainerInformationMessage_NonEditableBasicInformationMessage{}
+		editableInformation = fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionContainerInformationMessage_EditableBasicInformationMessage{}
+		invisibleBasicInformation = fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionContainerInformationMessage_InvisibleBasicInformationMessage{}
+		editableTestInstructionContainerAttribute = fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionContainerInformationMessage_EditableTestInstructionContainerAttributesMessage{}
 
 		err := rows.Scan(
 			// NonEditableInformation
 			&nonEditableInformation.DomainUuid,
 			&nonEditableInformation.DomainName,
-			&nonEditableInformation.TestInstructionOrignalUuid,
-			&nonEditableInformation.TestInstructionOriginalName,
-			&nonEditableInformation.TestInstructionTypeUuid,
-			&nonEditableInformation.TestInstructionTypeName,
+			&nonEditableInformation.TestInstructionContainerUuid,
+			&nonEditableInformation.TestInstructionContainerName,
+			&nonEditableInformation.TestInstructionContainerTypeUuid,
+			&nonEditableInformation.TestInstructionContainerTypeName,
 			&nonEditableInformation.Deprecated,
 			&nonEditableInformation.MajorVersionNumber,
 			&nonEditableInformation.MinorVersionNumber,
 			&tempTimeStamp,
-			&nonEditableInformation.TestInstructionColor,
+			&nonEditableInformation.TestInstructionContainerColor,
 			&nonEditableInformation.TCRuleDeletion,
 			&nonEditableInformation.TCRuleSwap,
 
 			// EditableInformation
-			&editableInformation.TestInstructionDescription,
-			&editableInformation.TestInstructionMouseOverText,
+			&editableInformation.TestInstructionContainerDescription,
+			&editableInformation.TestInstructionContainerMouseOverText,
 
 			// InvisibleBasicInformation
 			&invisibleBasicInformation.Enabled,
 
-			// EditableTestInstructionAttribute
-			//&tempTestInstructionExecutionType,
+			// EditableTestInstructionContainerAttribute
+			&tempTestInstructionContainerExecutionType,
 		)
 
 		if err != nil {
-			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			common_config.Logger.WithFields(logrus.Fields{
 				"Id":           "7d082f7c-f987-44e7-97b7-c3c1652955c3",
 				"Error":        err,
 				"sqlToExecute": sqlToExecute,
@@ -111,75 +112,75 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		// Convert TimeStamp into proto-format for TimeStamp
 		nonEditableInformation.UpdatedTimeStamp = timestamppb.New(tempTimeStamp)
 
-		// Convert 'tempTestInstructionExecutionType' gRPC-type
-		//editableTestInstructionAttribute.TestInstructionExecutionType = fenixTestCaseBuilderServerGrpcApi.TestInstructionExecutionTypeEnum(fenixTestCaseBuilderServerGrpcApi.TestInstructionExecutionTypeEnum_value[tempTestInstructionExecutionType])
+		// Convert 'tempTestInstructionContainerExecutionType' gRPC-type
+		editableTestInstructionContainerAttribute.TestInstructionContainerExecutionType = fenixTestCaseBuilderServerGrpcApi.TestInstructionContainerExecutionTypeEnum(fenixTestCaseBuilderServerGrpcApi.TestInstructionContainerExecutionTypeEnum_value[tempTestInstructionContainerExecutionType])
 
-		// Add 'basicTestInstructionInformation' to map
-		testInstructionUuid := nonEditableInformation.TestInstructionOrignalUuid
+		// Add 'basicTestInstructionContainerInformation' to map
+		testInstructionContainerUuid := nonEditableInformation.TestInstructionContainerUuid
 
-		_, existsInMap := immatureTestInstructionMessageMap[testInstructionUuid]
-		// testInstructionUuid shouldn't exist in map. If so then there is a problem
+		_, existsInMap := immatureTestInstructionContainerMessageMap[testInstructionContainerUuid]
+		// testInstructionContainerUuid shouldn't exist in map. If so then there is a problem
 		if existsInMap == true {
-			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-				"Id":                  "58cd4928-e4b5-4faf-9724-047c1cbc82a1",
-				"testInstructionUuid": testInstructionUuid,
-				"sqlToExecute":        sqlToExecute,
-			}).Fatal("TestInstructionUuid shouldn't exist in map. If so then there is a problem")
+			common_config.Logger.WithFields(logrus.Fields{
+				"Id":                           "58cd4928-e4b5-4faf-9724-047c1cbc82a1",
+				"testInstructionContainerUuid": testInstructionContainerUuid,
+				"sqlToExecute":                 sqlToExecute,
+			}).Fatal("TestInstructionContainerUuid shouldn't exist in map. If so then there is a problem")
 
 		}
 
-		// Create 'basicTestInstructionInformation' of the parts
-		basicTestInstructionInformation := fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage{
-			NonEditableInformation: &fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_NonEditableBasicInformationMessage{
-				DomainUuid:                  nonEditableInformation.DomainUuid,
-				DomainName:                  nonEditableInformation.DomainName,
-				TestInstructionOrignalUuid:  nonEditableInformation.TestInstructionOrignalUuid,
-				TestInstructionOriginalName: nonEditableInformation.TestInstructionOriginalName,
-				TestInstructionTypeUuid:     nonEditableInformation.TestInstructionTypeUuid,
-				TestInstructionTypeName:     nonEditableInformation.TestInstructionTypeName,
-				Deprecated:                  nonEditableInformation.Deprecated,
-				MajorVersionNumber:          nonEditableInformation.MajorVersionNumber,
-				MinorVersionNumber:          nonEditableInformation.MinorVersionNumber,
-				UpdatedTimeStamp:            nonEditableInformation.UpdatedTimeStamp,
-				TestInstructionColor:        nonEditableInformation.TestInstructionColor,
-				TCRuleDeletion:              nonEditableInformation.TCRuleDeletion,
-				TCRuleSwap:                  nonEditableInformation.TCRuleSwap,
+		// Create 'basicTestInstructionContainerInformation' of the parts
+		basicTestInstructionContainerInformation := fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionContainerInformationMessage{
+			NonEditableInformation: &fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionContainerInformationMessage_NonEditableBasicInformationMessage{
+				DomainUuid:                       nonEditableInformation.DomainUuid,
+				DomainName:                       nonEditableInformation.DomainName,
+				TestInstructionContainerUuid:     nonEditableInformation.TestInstructionContainerUuid,
+				TestInstructionContainerName:     nonEditableInformation.TestInstructionContainerName,
+				TestInstructionContainerTypeUuid: nonEditableInformation.TestInstructionContainerTypeUuid,
+				TestInstructionContainerTypeName: nonEditableInformation.TestInstructionContainerTypeName,
+				Deprecated:                       nonEditableInformation.Deprecated,
+				MajorVersionNumber:               nonEditableInformation.MajorVersionNumber,
+				MinorVersionNumber:               nonEditableInformation.MinorVersionNumber,
+				UpdatedTimeStamp:                 nonEditableInformation.UpdatedTimeStamp,
+				TestInstructionContainerColor:    nonEditableInformation.TestInstructionContainerColor,
+				TCRuleDeletion:                   nonEditableInformation.TCRuleDeletion,
+				TCRuleSwap:                       nonEditableInformation.TCRuleSwap,
 			},
-			EditableInformation: &fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_EditableBasicInformationMessage{
-				TestInstructionDescription:   editableInformation.TestInstructionDescription,
-				TestInstructionMouseOverText: editableInformation.TestInstructionMouseOverText,
+			EditableInformation: &fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionContainerInformationMessage_EditableBasicInformationMessage{
+				TestInstructionContainerDescription:   editableInformation.TestInstructionContainerDescription,
+				TestInstructionContainerMouseOverText: editableInformation.TestInstructionContainerMouseOverText,
 			},
-			InvisibleBasicInformation: &fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_InvisibleBasicInformationMessage{
+			InvisibleBasicInformation: &fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionContainerInformationMessage_InvisibleBasicInformationMessage{
 				Enabled: invisibleBasicInformation.Enabled},
-			//EditableTestInstructionAttributes: &fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_EditableTestInstructionAttributesMessage{
-			//	TestInstructionExecutionType: editableTestInstructionAttribute.TestInstructionExecutionType},
+			EditableTestInstructionContainerAttributes: &fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionContainerInformationMessage_EditableTestInstructionContainerAttributesMessage{
+				TestInstructionContainerExecutionType: editableTestInstructionContainerAttribute.TestInstructionContainerExecutionType},
 		}
 
-		immatureTestInstructionInformationMessage := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage{}
+		immatureTestInstructionContainerInformationMessage := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage{}
 		immatureElementModelMessage := fenixTestCaseBuilderServerGrpcApi.ImmatureElementModelMessage{}
 
-		// Create 'immatureTestInstructionMessage' and add 'BasicTestInstructionInformation' and a small part of 'ImmatureSubTestCaseModel'
-		newImmatureTestInstructionMessage := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage{
-			BasicTestInstructionInformation:    &basicTestInstructionInformation,
-			ImmatureTestInstructionInformation: &immatureTestInstructionInformationMessage,
-			ImmatureSubTestCaseModel:           &immatureElementModelMessage}
+		// Create 'immatureTestInstructionContainerMessage' and add 'BasicTestInstructionInformation' and a small part of 'ImmatureSubTestCaseModel'
+		newImmatureTestInstructionContainerMessage := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage{
+			BasicTestInstructionContainerInformation:    &basicTestInstructionContainerInformation,
+			ImmatureTestInstructionContainerInformation: &immatureTestInstructionContainerInformationMessage,
+			ImmatureSubTestCaseModel:                    &immatureElementModelMessage}
 
-		// Save immatureTestInstructionMessage in map
-		immatureTestInstructionMessageMap[testInstructionUuid] = &newImmatureTestInstructionMessage
+		// Save immatureTestInstructionContainerMessage in map
+		immatureTestInstructionContainerMessageMap[testInstructionContainerUuid] = &newImmatureTestInstructionContainerMessage
 
 	}
 	return nil
 }
 
-// **** immatureTestInstructionInformation **** **** immatureTestInstructionInformation **** **** immatureTestInstructionInformation ****
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) processTestInstructionsImmatureTestInstructionInformation(immatureTestInstructionMessageMap map[string]*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage) (err error) {
+// **** immatureTestInstructionContainerInformation **** **** immatureTestInstructionContainerInformation **** **** immatureTestInstructionContainerInformation ****
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) processTestInstructionContainersImmatureTestInstructionContainerInformation(immatureTestInstructionContainerMessageMap map[string]*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage) (err error) {
 
 	usedDBSchema := "FenixBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "SELECT ITII.* "
-	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"ImmatureTestInstructionInformation\" ITII "
-	sqlToExecute = sqlToExecute + "ORDER BY ITII.\"DomainUuid\" ASC, ITII.\"TestInstructionUuid\" ASC,  ITII.\"DropZoneUuid\" ASC, ITII.\"TestInstructionAttributeUuid\" ASC; "
+	sqlToExecute = sqlToExecute + "SELECT ITICI.* "
+	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"ImmatureTestInstructionContainerMessage\" ITICI "
+	sqlToExecute = sqlToExecute + "ORDER BY ITICI.\"DomainUuid\" ASC, ITICI.\"TestInstructionContainerUuid\" ASC,  ITICI.\"DropZoneUuid\" ASC, ITICI.\"TestInstructionAttributeUuid\" ASC; "
 
 	// Query DB
 	var ctx context.Context
@@ -190,7 +191,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	defer rows.Close()
 
 	if err != nil {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id":           "aa4b0e8e-3644-491d-be99-8c87ea9b9c23",
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
@@ -199,31 +200,30 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		return err
 	}
 
-	// Get number of rows for 'immatureTestInstructionInformation'
-	//immatureTestInstructionInformationSQLCount = rows.CommandTag().RowsAffected()
+	// Get number of rows for 'immatureTestInstructionContainerInformation'
+	//immatureTestInstructionContainerInformationSQLCount = rows.CommandTag().RowsAffected()
 
-	// Create map to store ImmatureTestInstructionInformationMessages
-	//immatureTestInstructionInformationMessagesMap := make(map[string]fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage)
+	// Create map to store ImmatureTestInstructionContainerInformationMessages
+	//immatureTestInstructionContainerInformationMessagesMap := make(map[string]fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage)
 
 	// Temp variables used when extracting data
 	var domainUuid, previousDomainUuid string
 	var domainName string
-	var testInstructionUuid, previousTestInstructionUuid string
-	var testInstructionName string
+	var testInstructionContainerUuid, previousTestInstructionContainerUuid string
+	var testInstructionContainerName string
 	var tempTestInstructionAttributeType string
-
 	// First Row in TestData
 	var firstRowInSQLRespons bool
 	firstRowInSQLRespons = true
 
 	var (
-		availableDropZone, previousAvailableDropZone fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage
-		availableDropZones                           []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage
+		availableDropZone, previousAvailableDropZone fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage
+		availableDropZones                           []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage
 	)
 
 	var (
-		dropZonePreSetTestInstructionAttribute, previousDropZonePreSetTestInstructionAttribute fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
-		dropZonePreSetTestInstructionAttributes                                                []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
+		dropZonePreSetTestInstructionAttribute, previousDropZonePreSetTestInstructionAttribute fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
+		dropZonePreSetTestInstructionAttributes                                                []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
 	)
 
 	var firstImmatureElementUuid string
@@ -232,13 +232,13 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	// Clear previous variables
 	previousDomainUuid = ""
-	previousTestInstructionUuid = ""
+	previousTestInstructionContainerUuid = ""
 
 	// Initiate a new variable to store the data
-	newAvailableDropZone := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage{}
+	newAvailableDropZone := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage{}
 	availableDropZone = newAvailableDropZone
 
-	newDropZonePreSetTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+	newDropZonePreSetTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
 	dropZonePreSetTestInstructionAttribute = newDropZonePreSetTestInstructionAttribute
 
 	// Extract data from DB result set
@@ -249,8 +249,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			// temp-data which is not stored in object
 			&domainUuid,
 			&domainName,
-			&testInstructionUuid,
-			&testInstructionName,
+			&testInstructionContainerUuid,
+			&testInstructionContainerName,
 
 			// DropZone-data
 			&availableDropZone.DropZoneUuid,
@@ -268,14 +268,11 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 			// Reference to first element in element-model
 			&firstImmatureElementUuid,
-
-			// Attribute Action Command controls have to use the attribute
-			&dropZonePreSetTestInstructionAttribute.AttributeActionCommand,
 		)
 
 		if err != nil {
-			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-				"Id":           "e514dbca-530d-490e-9fb7-58eaa114a721",
+			common_config.Logger.WithFields(logrus.Fields{
+				"Id":           "525079b7-8484-4e61-a811-fa863a41ee2f",
 				"Error":        err,
 				"sqlToExecute": sqlToExecute,
 			}).Error("Something went wrong when processing result from database")
@@ -292,8 +289,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		// All UUIDs are changed and this is the first row [dataStateChange=1]
 		dataStateChangeFound :=
 			firstRowInSQLRespons == true &&
-				//domainUuid != previousDomainUuid &&
-				testInstructionUuid != previousTestInstructionUuid &&
+				domainUuid != previousDomainUuid &&
+				testInstructionContainerUuid != previousTestInstructionContainerUuid &&
 				availableDropZone.DropZoneUuid != previousAvailableDropZone.DropZoneUuid
 		//dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid
 		if dataStateChangeFound == true {
@@ -303,8 +300,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		// All UUIDs are changed and this is not the first row [dataStateChange=2]
 		dataStateChangeFound =
 			firstRowInSQLRespons == false &&
-				//domainUuid != previousDomainUuid &&
-				testInstructionUuid != previousTestInstructionUuid &&
+				domainUuid != previousDomainUuid &&
+				testInstructionContainerUuid != previousTestInstructionContainerUuid &&
 				availableDropZone.DropZoneUuid != previousAvailableDropZone.DropZoneUuid
 		//dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid
 		if dataStateChangeFound == true {
@@ -314,10 +311,10 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		// Only DropZonePreSetTestInstructionAttributeUuid is changed and this is not the first row [dataStateChange=3]
 		dataStateChangeFound =
 			firstRowInSQLRespons == false &&
-				//domainUuid == previousDomainUuid &&
-				testInstructionUuid == previousTestInstructionUuid &&
-				availableDropZone.DropZoneUuid == previousAvailableDropZone.DropZoneUuid
-		//dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid
+				domainUuid == previousDomainUuid &&
+				testInstructionContainerUuid == previousTestInstructionContainerUuid &&
+				availableDropZone.DropZoneUuid == previousAvailableDropZone.DropZoneUuid &&
+				dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid
 		if dataStateChangeFound == true {
 			dataStateChange = 3
 		}
@@ -325,19 +322,19 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		// Only AvailableDropZoneUuid and DropZonePreSetTestInstructionAttributeUuid are changed and this is not the first row [dataStateChange=4]
 		dataStateChangeFound =
 			firstRowInSQLRespons == false &&
-				//domainUuid == previousDomainUuid &&
-				testInstructionUuid == previousTestInstructionUuid &&
+				domainUuid == previousDomainUuid &&
+				testInstructionContainerUuid == previousTestInstructionContainerUuid &&
 				availableDropZone.DropZoneUuid != previousAvailableDropZone.DropZoneUuid
 		//dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid
 		if dataStateChangeFound == true {
 			dataStateChange = 4
 		}
 
-		// Only TestInstructionUuid, AvailableDropZoneUuid and DropZonePreSetTestInstructionAttributeUuid are changed and this is not the first row [dataStateChange=5]
+		// Only TestInstructionContainerUuid, AvailableDropZoneUuid and DropZonePreSetTestInstructionAttributeUuid are changed and this is not the first row [dataStateChange=5]
 		dataStateChangeFound =
 			firstRowInSQLRespons == false &&
-				//domainUuid == previousDomainUuid &&
-				testInstructionUuid != previousTestInstructionUuid &&
+				domainUuid == previousDomainUuid &&
+				testInstructionContainerUuid != previousTestInstructionContainerUuid &&
 				availableDropZone.DropZoneUuid != previousAvailableDropZone.DropZoneUuid
 		//dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid != previousDropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid
 		if dataStateChangeFound == true {
@@ -349,22 +346,22 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 		// All UUIDs are changed and this is the first row [dataStateChange=1]
 		case 1:
-			newDropZonePreSetTestInstructionAttributes := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+			newDropZonePreSetTestInstructionAttributes := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
 			dropZonePreSetTestInstructionAttributes = newDropZonePreSetTestInstructionAttributes
 
-			newAvailableDropZones := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage{}
+			newAvailableDropZones := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage{}
 			availableDropZones = newAvailableDropZones
 
 		// All UUIDs are changed and this is not the first row [dataStateChange=2]
-		// Only TestInstructionUuid, AvailableDropZoneUuid and DropZonePreSetTestInstructionAttributeUuid are changed and this is not the first row [dataStateChange=5]
+		// Only TestInstructionContainerUuid, AvailableDropZoneUuid and DropZonePreSetTestInstructionAttributeUuid are changed and this is not the first row [dataStateChange=5]
 		case 2, 5:
 			// New DropZone so add the previous DropZone-attributes to the DropZone-array
 			dropZonePreSetTestInstructionAttributes = append(dropZonePreSetTestInstructionAttributes, previousDropZonePreSetTestInstructionAttribute)
 
 			// Convert to pointer object instead before storing in map
-			var dropZonePreSetTestInstructionAttributesToStore []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
+			var dropZonePreSetTestInstructionAttributesToStore []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
 			for _, tempDropZonePreSetTestInstructionAttributeToStore := range dropZonePreSetTestInstructionAttributes {
-				newAdropZonePreSetTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+				newAdropZonePreSetTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
 				newAdropZonePreSetTestInstructionAttribute = tempDropZonePreSetTestInstructionAttributeToStore
 				dropZonePreSetTestInstructionAttributesToStore = append(dropZonePreSetTestInstructionAttributesToStore, &newAdropZonePreSetTestInstructionAttribute)
 			}
@@ -376,38 +373,38 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			availableDropZones = append(availableDropZones, previousAvailableDropZone)
 
 			// Add the availableDropZones to the ImmatureTestInstructionInformationMessage-map
-			immatureTestInstructionMessage, existsInMap := immatureTestInstructionMessageMap[previousTestInstructionUuid]
-			// testInstructionUuid shouldn't exist in map. If so then there is a problem
+			immatureTestInstructionContainerMessage, existsInMap := immatureTestInstructionContainerMessageMap[previousTestInstructionContainerUuid]
+			// testInstructionContainerUuid shouldn't exist in map. If so then there is a problem
 			if existsInMap == false {
-				fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-					"Id":                  "9fd1b07e-c87a-4583-869b-b3ed28b44616",
-					"testInstructionUuid": testInstructionUuid,
-					"sqlToExecute":        sqlToExecute,
-				}).Fatal("TestInstructionUuid should exist in map. If not so then there is a problem")
+				common_config.Logger.WithFields(logrus.Fields{
+					"Id":                           "9fd1b07e-c87a-4583-869b-b3ed28b44616",
+					"testInstructionContainerUuid": testInstructionContainerUuid,
+					"sqlToExecute":                 sqlToExecute,
+				}).Fatal("TestInstructionContainerUuid should exist in map. If not so then there is a problem")
 			}
 
 			// Convert to pointer object instead before storing in map
-			var availableDropZoneMessageToStore []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage
+			var availableDropZoneMessageToStore []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage
 			for _, tempAvailableDropZones := range availableDropZones {
-				newAvailableDropZone := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage{}
+				newAvailableDropZone := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage{}
 				newAvailableDropZone = tempAvailableDropZones
 				availableDropZoneMessageToStore = append(availableDropZoneMessageToStore, &newAvailableDropZone)
 			}
 
-			immatureTestInstructionMessage.ImmatureTestInstructionInformation.AvailableDropZones = availableDropZoneMessageToStore
-			immatureTestInstructionMessageMap[previousTestInstructionUuid] = immatureTestInstructionMessage
+			immatureTestInstructionContainerMessage.ImmatureTestInstructionContainerInformation.AvailableDropZones = availableDropZoneMessageToStore
+			immatureTestInstructionContainerMessageMap[previousTestInstructionContainerUuid] = immatureTestInstructionContainerMessage
 
 			// Create fresh versions of variables
-			//newAvailableDropZone := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage{}
-			//availableDropZone = newAvailableDropZone
+			newAvailableDropZone := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage{}
+			availableDropZone = newAvailableDropZone
 
-			newAailableDropZones := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage{}
+			newAailableDropZones := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage{}
 			availableDropZones = newAailableDropZones
 
-			//newDropZonePreSetTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
-			//dropZonePreSetTestInstructionAttribute = newDropZonePreSetTestInstructionAttribute
+			newDropZonePreSetTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+			dropZonePreSetTestInstructionAttribute = newDropZonePreSetTestInstructionAttribute
 
-			newDropZonePreSetTestInstructionAttributes := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+			newDropZonePreSetTestInstructionAttributes := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
 			dropZonePreSetTestInstructionAttributes = newDropZonePreSetTestInstructionAttributes
 
 		// Only DropZonePreSetTestInstructionAttributeUuid is changed and this is not the first row [dataStateChange=3]
@@ -421,9 +418,9 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			dropZonePreSetTestInstructionAttributes = append(dropZonePreSetTestInstructionAttributes, previousDropZonePreSetTestInstructionAttribute)
 
 			// Convert to pointer object instead before storing in map
-			var dropZonePreSetTestInstructionAttributesToStore []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
+			var dropZonePreSetTestInstructionAttributesToStore []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
 			for _, tempDropZonePreSetTestInstructionAttributeToStore := range dropZonePreSetTestInstructionAttributes {
-				newAdropZonePreSetTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+				newAdropZonePreSetTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
 				newAdropZonePreSetTestInstructionAttribute = tempDropZonePreSetTestInstructionAttributeToStore
 				dropZonePreSetTestInstructionAttributesToStore = append(dropZonePreSetTestInstructionAttributesToStore, &newAdropZonePreSetTestInstructionAttribute)
 			}
@@ -434,18 +431,14 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			// Add previousAvailableDropZone to array of DropZone
 			availableDropZones = append(availableDropZones, previousAvailableDropZone)
 
-			// Clear DropZone-attributes-array
-			newDropZonePreSetTestInstructionAttributes := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
-			dropZonePreSetTestInstructionAttributes = newDropZonePreSetTestInstructionAttributes
-
 			// Something is wrong in the ordering of the testdata or the testdata itself
 		default:
-			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-				"Id":                                     "352075ba-32f8-4374-86d9-a936ec91b179",
+			common_config.Logger.WithFields(logrus.Fields{
+				"Id":                                     "0779886a-8280-42b6-9434-46ec1afd1d7f",
 				"domainUuid":                             domainUuid,
 				"previousDomainUuid":                     previousDomainUuid,
-				"testInstructionUuid":                    testInstructionUuid,
-				"previousTestInstructionUuid":            previousTestInstructionUuid,
+				"testInstructionContainerUuid":           testInstructionContainerUuid,
+				"previousTestInstructionContainerUuid":   previousTestInstructionContainerUuid,
 				"availableDropZone.DropZoneUuid":         availableDropZone.DropZoneUuid,
 				"previousAvailableDropZone.DropZoneUuid": previousAvailableDropZone.DropZoneUuid,
 				"dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid":         dropZonePreSetTestInstructionAttribute.TestInstructionAttributeUuid,
@@ -456,19 +449,19 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 		// Move actual values into previous-variables
 		previousDomainUuid = domainUuid
-		previousTestInstructionUuid = testInstructionUuid
+		previousTestInstructionContainerUuid = testInstructionContainerUuid
 		previousAvailableDropZone = availableDropZone
 		previousDropZonePreSetTestInstructionAttribute = dropZonePreSetTestInstructionAttribute
 
 		// Create fresh versions of variables
-		newAvailableDropZone := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage{}
+		newAvailableDropZone := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage{}
 		availableDropZone = newAvailableDropZone
 
-		newDropZonePreSetTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+		newDropZonePreSetTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
 		dropZonePreSetTestInstructionAttribute = newDropZonePreSetTestInstructionAttribute
 
-		//newDropZonePreSetTestInstructionAttributes := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
-		//dropZonePreSetTestInstructionAttributes = newDropZonePreSetTestInstructionAttributes
+		newDropZonePreSetTestInstructionAttributes := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+		dropZonePreSetTestInstructionAttributes = newDropZonePreSetTestInstructionAttributes
 
 		// Set to not be the first row
 		firstRowInSQLRespons = false
@@ -480,9 +473,9 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	dropZonePreSetTestInstructionAttributes = append(dropZonePreSetTestInstructionAttributes, previousDropZonePreSetTestInstructionAttribute)
 
 	// Convert to pointer object instead before storing in map
-	var dropZonePreSetTestInstructionAttributesToStore []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
+	var dropZonePreSetTestInstructionAttributesToStore []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage
 	for _, tempDropZonePreSetTestInstructionAttributeToStore := range dropZonePreSetTestInstructionAttributes {
-		newAdropZonePreSetTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
+		newAdropZonePreSetTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage{}
 		newAdropZonePreSetTestInstructionAttribute = tempDropZonePreSetTestInstructionAttributeToStore
 		dropZonePreSetTestInstructionAttributesToStore = append(dropZonePreSetTestInstructionAttributesToStore, &newAdropZonePreSetTestInstructionAttribute)
 	}
@@ -493,40 +486,40 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	// Add previousAvailableDropZone to array of DropZone
 	availableDropZones = append(availableDropZones, previousAvailableDropZone)
 
-	// Add 'basicTestInstructionInformation' to map
-	immatureTestInstructionMessage, existsInMap := immatureTestInstructionMessageMap[testInstructionUuid]
+	// Add 'basicTestInstructionContainerInformation' to map
+	immatureTestInstructionContainerMessage, existsInMap := immatureTestInstructionContainerMessageMap[testInstructionContainerUuid]
 	if existsInMap == false {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-			"Id":                  "0f59327f-84a9-47bd-bfe2-337c3402ab0c",
-			"testInstructionUuid": testInstructionUuid,
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":                           "8630d2e6-261b-4dab-a499-71463346c5a3",
+			"testInstructionContainerUuid": testInstructionContainerUuid,
 		}).Fatal("TestInstructionUuid should exist in map. If not then there is a problem")
 	}
 
 	// Convert to pointer object instead before storing in map
-	var availableDropZoneMessageToStore []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage
+	var availableDropZoneMessageToStore []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage
 	for _, tempAvailableDropZones := range availableDropZones {
-		newAvailableDropZone := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage{}
+		newAvailableDropZone := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage_AvailableDropZoneMessage{}
 		newAvailableDropZone = tempAvailableDropZones
 		availableDropZoneMessageToStore = append(availableDropZoneMessageToStore, &newAvailableDropZone)
 	}
 
 	// Store the result back in the map
-	immatureTestInstructionMessage.ImmatureTestInstructionInformation.AvailableDropZones = availableDropZoneMessageToStore
-	immatureTestInstructionMessageMap[testInstructionUuid] = immatureTestInstructionMessage
+	immatureTestInstructionContainerMessage.ImmatureTestInstructionContainerInformation.AvailableDropZones = availableDropZoneMessageToStore
+	immatureTestInstructionContainerMessageMap[testInstructionContainerUuid] = immatureTestInstructionContainerMessage
 
 	return err
 }
 
 // **** ImmatureElementModelMessage **** **** ImmatureElementModelMessage **** **** ImmatureElementModelMessage ****
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) processTestInstructionsImmatureElementModel(immatureTestInstructionMessageMap map[string]*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage) (err error) {
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) processTestInstructionContainersImmatureElementModel(immatureTestInstructionContainerMessageMap map[string]*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage) (err error) {
 
 	usedDBSchema := "FenixBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "SELECT IEM.* "
-	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"BasicTestInstructionInformation\" BTII, "
+	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"BasicTestInstructionContainerInformation\" BTICI, "
 	sqlToExecute = sqlToExecute + "\"" + usedDBSchema + "\".\"ImmatureElementModelMessage\" IEM "
-	sqlToExecute = sqlToExecute + "WHERE BTII.\"TestInstructionUuid\" = IEM.\"TopImmatureElementUuid\" "
+	sqlToExecute = sqlToExecute + "WHERE BTICI.\"TestInstructionContainerUuid\" = IEM.\"TopImmatureElementUuid\" "
 	sqlToExecute = sqlToExecute + "ORDER BY IEM.\"DomainUuid\" ASC, IEM.\"TopImmatureElementUuid\" ASC, IEM.\"IsTopElement\" DESC; " //, IEM.\"CurrentElementModelElement\" ASC; "
 
 	// Query DB
@@ -538,8 +531,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	defer rows.Close()
 
 	if err != nil {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-			"Id":           "c98209fd-150c-4e4c-bcce-303d66523213",
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "4ef75e5a-8386-4a1d-a04c-4992ee9d7559",
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
 		}).Error("Something went wrong when executing SQL")
@@ -547,11 +540,11 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		return err
 	}
 
-	// Get number of rows for 'immatureTestInstructionInformation'
-	//immatureTestInstructionInformationSQLCount = rows.CommandTag().RowsAffected()
+	// Get number of rows for 'immatureTestInstructionContainerInformation'
+	//immatureTestInstructionContainerInformationSQLCount = rows.CommandTag().RowsAffected()
 
 	// Create map to store ImmatureTestInstructionInformationMessages
-	//immatureTestInstructionInformationMessagesMap := make(map[string]fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage)
+	//immatureTestInstructionContainerInformationMessagesMap := make(map[string]fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage)
 
 	// Temp variables used when extracting data
 	var tempImmatureElementModelDomainUuid string
@@ -562,8 +555,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	var previousTempTopElementUuid string
 
 	//var previousOriginalElementUuid string
-	//var testInstructionUuid, previousTestInstructionUuid string
-	//var testInstructionName string
+	//var testInstructionContainerUuid, previousTestInstructionContainerUuid string
+	//var testInstructionContainerName string
 	//var tempTestInstructionAttributeType string
 	// First Row in TestData
 	//var firstRowInSQLRespons bool
@@ -590,7 +583,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	// Clear previous variables
 	//previousDomainUuid := ""
-	//previousTestInstructionUuid := ""
+	//previousTestInstructionContainerUuid := ""
 
 	// Initiate a new variable to store the data
 	newImmatureElementModelElement := fenixTestCaseBuilderServerGrpcApi.ImmatureTestCaseModelElementMessage{}
@@ -626,8 +619,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		)
 
 		if err != nil {
-			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-				"Id":           "7a937579-bb0a-44d4-850f-4cbdd5fff3a5",
+			common_config.Logger.WithFields(logrus.Fields{
+				"Id":           "d4dcd3d8-ab65-46d2-b4a5-85d92481718d",
 				"Error":        err,
 				"sqlToExecute": sqlToExecute,
 			}).Error("Something went wrong when processing result from database")
@@ -673,27 +666,24 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		// Act on which 'dataStateChange' that was achieved
 		switch dataStateChange {
 
-		// All UUIDs are changed and this is the first row [dataStateChange=1]
-
+		// This is the first row, and it is flagged as Top-element [dataStateChange=1]
 		case 1:
 
 			newImmatureElementModelElements := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestCaseModelElementMessage{}
 			immatureElementModelElements = newImmatureElementModelElements
 
-			// All UUIDs are changed and this is not the first row [dataStateChange=2]
-			// A new Element model Element and this is not the first row [dataStateChange=4]
-
-		case 2, 4:
+		// This is not the first row, and it is flagged as Top-element [dataStateChange=2]
+		case 2:
 
 			immatureElementModelElements = append(immatureElementModelElements, previousImmatureElementModelElement)
 
-			// Add immatureElementModelElements to 'immatureTestInstructionMessage' which can be found in map
-			var immatureTestInstructionMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage
+			// Add immatureElementModelElements to 'immatureTestInstructionContainerMessage' which can be found in map
+			var immatureTestInstructionContainerMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage
 			var existsInMap bool
-			immatureTestInstructionMessage, existsInMap = immatureTestInstructionMessageMap[previousTempTopElementUuid]
+			immatureTestInstructionContainerMessage, existsInMap = immatureTestInstructionContainerMessageMap[previousTempTopElementUuid]
 			if existsInMap == false {
-				fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
-					"Id": "ef98b5ca-17d5-4bf8-8af4-a1a954736a47",
+				common_config.Logger.WithFields(logrus.Fields{
+					"Id": "c757d974-805d-4d1c-98e9-464868aa273e",
 					"previousImmatureElementModelElement.ImmatureElementUuid": previousImmatureElementModelElement.ImmatureElementUuid,
 				}).Fatal("ImmatureElementUuid should exist in map. If not then there is a problem")
 			}
@@ -706,22 +696,22 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 				immatureElementModelElementsToStore = append(immatureElementModelElementsToStore, &newImmatureElementModelElement)
 			}
 
-			immatureTestInstructionMessage.ImmatureSubTestCaseModel.TestCaseModelElements = immatureElementModelElementsToStore
-			immatureTestInstructionMessage.ImmatureSubTestCaseModel.FirstImmatureElementUuid = previousTempTopElementUuid
-			immatureTestInstructionMessageMap[previousTempTopElementUuid] = immatureTestInstructionMessage
+			immatureTestInstructionContainerMessage.ImmatureSubTestCaseModel.TestCaseModelElements = immatureElementModelElementsToStore
+			immatureTestInstructionContainerMessage.ImmatureSubTestCaseModel.FirstImmatureElementUuid = previousTempTopElementUuid
+			immatureTestInstructionContainerMessageMap[previousTempTopElementUuid] = immatureTestInstructionContainerMessage
 
 			// Create fresh versions of variables
 			newIimmatureElementModelElements := []fenixTestCaseBuilderServerGrpcApi.ImmatureTestCaseModelElementMessage{}
 			immatureElementModelElements = newIimmatureElementModelElements
 
-			// A new Element model Element , but it belongs to same 'ImmatureElementUuid' as previous Element, and this is not the first row [dataStateChange=3]
+		//  This is not the first row, and it is not flagged as Top-element [dataStateChange=3]
 		case 3:
 
 			immatureElementModelElements = append(immatureElementModelElements, previousImmatureElementModelElement)
 
 			// Something is wrong in the ordering of the testdata or the testdata itself
 		default:
-			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			common_config.Logger.WithFields(logrus.Fields{
 				"Id":                                  "24be5ad9-09b3-41a2-81e8-b4171dded878",
 				"immatureElementModelElement":         immatureElementModelElements,
 				"previousImmatureElementModelElement": previousImmatureElementModelElement,
@@ -742,12 +732,12 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	// New ElementModelElement so add the previous ElementModelElement to the ElementModelElements-array
 	immatureElementModelElements = append(immatureElementModelElements, immatureElementModelElement)
 
-	// Add immatureElementModelElements to 'immatureTestInstructionMessage' which can be found in map
-	var immatureTestInstructionMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage
+	// Add immatureElementModelElements to 'immatureTestInstructionContainerMessage' which can be found in map
+	var immatureTestInstructionContainerMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage
 	var existsInMap bool
-	immatureTestInstructionMessage, existsInMap = immatureTestInstructionMessageMap[tempTopElementUuid]
+	immatureTestInstructionContainerMessage, existsInMap = immatureTestInstructionContainerMessageMap[tempTopElementUuid]
 	if existsInMap == false {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id": "a1744497-782f-4e82-bec0-ae0205c6573f",
 			"immatureElementModelElement.ImmatureElementUuid": immatureElementModelElement.ImmatureElementUuid,
 		}).Fatal("ImmatureElementUuid should exist in map. If not then there is a problem")
@@ -761,9 +751,9 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		immatureElementModelElementsToStore = append(immatureElementModelElementsToStore, &newImmatureElementModelElement)
 	}
 
-	immatureTestInstructionMessage.ImmatureSubTestCaseModel.TestCaseModelElements = immatureElementModelElementsToStore
-	immatureTestInstructionMessage.ImmatureSubTestCaseModel.FirstImmatureElementUuid = tempTopElementUuid
-	immatureTestInstructionMessageMap[tempTopElementUuid] = immatureTestInstructionMessage
+	immatureTestInstructionContainerMessage.ImmatureSubTestCaseModel.TestCaseModelElements = immatureElementModelElementsToStore
+	immatureTestInstructionContainerMessage.ImmatureSubTestCaseModel.FirstImmatureElementUuid = tempTopElementUuid
+	immatureTestInstructionContainerMessageMap[tempTopElementUuid] = immatureTestInstructionContainerMessage
 
 	return nil
 

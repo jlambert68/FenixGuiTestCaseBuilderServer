@@ -2,6 +2,7 @@ package main
 
 import (
 	"FenixGuiTestCaseBuilderServer/common_config"
+	"FenixGuiTestCaseBuilderServer/gRPCapiServer"
 	"strconv"
 
 	//"flag"
@@ -22,7 +23,7 @@ func mustGetenv(k string) string {
 
 func main() {
 	//time.Sleep(15 * time.Second)
-	fenixGuiTestCaseBuilderServerMain()
+	gRPCapiServer.FenixGuiTestCaseBuilderServerMain()
 }
 
 func init() {

@@ -1,5 +1,7 @@
 package common_config
 
+import "github.com/sirupsen/logrus"
+
 // ***********************************************************************************************************
 // The following variables receives their values from environment variables
 
@@ -39,3 +41,7 @@ var (
 var LogAllSQLs bool
 
 // ***********************************************************************************************************
+
+var highestFenixProtoFileVersion int32 = -1
+
+var Logger *logrus.Logger

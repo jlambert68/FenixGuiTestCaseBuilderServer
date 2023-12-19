@@ -1,6 +1,7 @@
-package main
+package CloudDbProcessing
 
 import (
+	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
 	"database/sql/driver"
 	"encoding/json"
@@ -13,13 +14,13 @@ import (
 )
 
 // Load BasicInformation for TestCase to be able to populate the TestCaseExecution
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) prepareSaveFullTestCase(fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse) {
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestCase(fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse) {
 
 	// Begin SQL Transaction
 	txn, err := fenixSyncShared.DbPool.Begin(context.Background())
 
 	if err != nil {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"id":    "f5ccddd6-cf8f-4eed-bfcb-1db8a757fb0b",
 			"error": err,
 		}).Error("Problem to do 'DbPool.Begin'  in 'prepareSaveFullTestCase'")
@@ -36,7 +37,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			AckNack:                      false,
 			Comments:                     "Problem when saving to database",
 			ErrorCodes:                   errorCodes,
-			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		}
 
 		return returnMessage
@@ -45,17 +46,17 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	defer txn.Commit(context.Background())
 
 	// Save the TestCase
-	returnMessage, err = fenixGuiTestCaseBuilderServerObject.saveFullTestCase(txn, fullTestCaseMessage)
+	returnMessage, err = fenixCloudDBObject.saveFullTestCase(txn, fullTestCaseMessage)
 
 	return returnMessage
 }
 
 // Save TestCase in Execution-queue
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) saveFullTestCase(dbTransaction pgx.Tx, fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse, err error) {
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(dbTransaction pgx.Tx, fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse, err error) {
 
 	usedDBSchema := "FenixBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 
-	nexTestCaseVersion, err := fenixGuiTestCaseBuilderServerObject.getNexTestCaseVersion(fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.TestCaseUuid)
+	nexTestCaseVersion, err := fenixCloudDBObject.getNexTestCaseVersion(fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.TestCaseUuid)
 	if err != nil {
 		if err != nil {
 
@@ -71,7 +72,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 				AckNack:                      false,
 				Comments:                     "Problem when getting next TestCaseVersion from database",
 				ErrorCodes:                   errorCodes,
-				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 			}
 		}
 
@@ -121,7 +122,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	sqlToExecute = sqlToExecute + "(\"DomainUuid\", \"DomainName\", \"TestCaseUuid\", \"TestCaseName\", \"TestCaseVersion\", " +
 		"\"TestCaseBasicInformationAsJsonb\", \"TestInstructionsAsJsonb\", \"TestInstructionContainersAsJsonb\", " +
 		"\"TestCaseHash\", \"TestCaseExtraInformationAsJsonb\") "
-	sqlToExecute = sqlToExecute + fenixGuiTestCaseBuilderServerObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
+	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
 	sqlToExecute = sqlToExecute + ";"
 
 	// Execute Query CloudDB
@@ -142,12 +143,12 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			AckNack:                      false,
 			Comments:                     "Problem when Loading TestCase Basic Information from database",
 			ErrorCodes:                   errorCodes,
-			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		}
 	}
 
 	// Log response from CloudDB
-	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	common_config.Logger.WithFields(logrus.Fields{
 		"Id":                       "bea64662-3a70-4a5b-9e92-26d130983f63",
 		"comandTag.Insert()":       comandTag.Insert(),
 		"comandTag.Delete()":       comandTag.Delete(),
@@ -163,7 +164,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		AckNack:                      true,
 		Comments:                     "",
 		ErrorCodes:                   nil,
-		ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+		ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 	}, nil
 
 }

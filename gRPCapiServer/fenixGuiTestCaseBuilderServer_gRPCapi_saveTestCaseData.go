@@ -1,6 +1,8 @@
-package main
+package gRPCapiServer
 
 import (
+	"FenixGuiTestCaseBuilderServer/CloudDbProcessing"
+	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	"github.com/sirupsen/logrus"
@@ -35,24 +37,28 @@ import (
 // TestCase GUI use this gRPC-api to save a full TestCase with all its data
 func (s *fenixTestCaseBuilderServerGrpcServicesServer) SaveFullTestCase(ctx context.Context, fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (*fenixTestCaseBuilderServerGrpcApi.AckNackResponse, error) {
 
-	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "d5168677-cf4f-4c22-81b5-235f1c34b079",
 	}).Debug("Incoming 'gRPC - SaveFullTestCase'")
 
-	defer fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	defer fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "3670e241-49d1-4931-b729-c95f00199f66",
 	}).Debug("Outgoing 'gRPC - SaveFullTestCase'")
 
 	// Check if Client is using correct proto files version
-	returnMessage := fenixGuiTestCaseBuilderServerObject.isClientUsingCorrectTestDataProtoFileVersion(fullTestCaseMessage.TestCaseBasicInformation.UserIdentification.UserId, fullTestCaseMessage.TestCaseBasicInformation.UserIdentification.ProtoFileVersionUsedByClient)
+	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion(fullTestCaseMessage.TestCaseBasicInformation.UserIdentification.UserId, fullTestCaseMessage.TestCaseBasicInformation.UserIdentification.ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 		// Not correct proto-file version is used
 		// Exiting
 		return returnMessage, nil
 	}
 
+	// Initiate object forCloudDB-processing
+	var fenixCloudDBObject *CloudDbProcessing.FenixCloudDBObjectStruct
+	fenixCloudDBObject = &CloudDbProcessing.FenixCloudDBObjectStruct{}
+
 	// Save full TestCase to Cloud DB
-	returnMessage = fenixGuiTestCaseBuilderServerObject.prepareSaveFullTestCase(fullTestCaseMessage)
+	returnMessage = fenixCloudDBObject.PrepareSaveFullTestCase(fullTestCaseMessage)
 	if returnMessage != nil {
 		// Something went wrong when saving to database
 		// Exiting
@@ -63,6 +69,6 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) SaveFullTestCase(ctx cont
 		AckNack:                      true,
 		Comments:                     "",
 		ErrorCodes:                   nil,
-		ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+		ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 	}, nil
 }

@@ -1,4 +1,4 @@
-package main
+package CloudDbProcessing
 
 import (
 	"FenixGuiTestCaseBuilderServer/common_config"
@@ -13,13 +13,13 @@ import (
 )
 
 // Load Full TestCase from Database
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) prepareLoadTestCaseHashes(testCaseUuids *[]string) (responseMessage *fenixTestCaseBuilderServerGrpcApi.TestCasesHashResponse) {
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadTestCaseHashes(testCaseUuids *[]string) (responseMessage *fenixTestCaseBuilderServerGrpcApi.TestCasesHashResponse) {
 
 	// Begin SQL Transaction
 	txn, err := fenixSyncShared.DbPool.Begin(context.Background())
 
 	if err != nil {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"id":    "41b572ec-306e-4865-ac38-a738047703cc",
 			"error": err,
 		}).Error("Problem to do 'DbPool.Begin'  in 'prepareLoadTestCaseHashes'")
@@ -37,7 +37,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			AckNack:                      false,
 			Comments:                     "Problem when Loading from database",
 			ErrorCodes:                   errorCodes,
-			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		}
 
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.TestCasesHashResponse{
@@ -52,7 +52,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	// Load the list with TestCase Uuid's and their Hashes
 	var testCasesHashMessage []*fenixTestCaseBuilderServerGrpcApi.TestCasesHashResponse_TestCasesHashMessage
-	testCasesHashMessage, err = fenixGuiTestCaseBuilderServerObject.loadTestCasesHash(txn, testCaseUuids)
+	testCasesHashMessage, err = fenixCloudDBObject.loadTestCasesHash(txn, testCaseUuids)
 
 	// Error when retrieving TestCase
 	if err != nil {
@@ -69,7 +69,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			AckNack:                      false,
 			Comments:                     "Problem when Loading from database",
 			ErrorCodes:                   errorCodes,
-			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		}
 
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.TestCasesHashResponse{
@@ -96,7 +96,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			AckNack:                      false,
 			Comments:                     "No TestCases couldn't be found in Database",
 			ErrorCodes:                   errorCodes,
-			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		}
 
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.TestCasesHashResponse{
@@ -113,7 +113,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		AckNack:                      true,
 		Comments:                     "",
 		ErrorCodes:                   nil,
-		ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+		ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 	}
 
 	responseMessage = &fenixTestCaseBuilderServerGrpcApi.TestCasesHashResponse{
@@ -140,7 +140,7 @@ COMMIT;
 */
 
 // Load Hashes for requested TestCasUuid's
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadTestCasesHash(
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadTestCasesHash(
 	dbTransaction pgx.Tx, testCaseUuids *[]string) (
 	testCasesHashMessages []*fenixTestCaseBuilderServerGrpcApi.TestCasesHashResponse_TestCasesHashMessage, err error) {
 
@@ -163,7 +163,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	// Log SQL to be executed if Environment variable is true
 	if common_config.LogAllSQLs == true {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id":           "fec062e5-2c22-4a28-ba6b-510670389c9c",
 			"sqlToExecute": sqlToExecute,
 		}).Debug("SQL to be executed within 'loadTestCasesHash'")
@@ -173,7 +173,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	comandTag, err := dbTransaction.Exec(context.Background(), sqlToExecute)
 
 	if err != nil {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id":           "112ee469-252c-47ca-b0f3-5cd81297705b",
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
@@ -183,7 +183,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	}
 
 	// Log response from CloudDB
-	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	common_config.Logger.WithFields(logrus.Fields{
 		"Id":                       "dff4d8fd-3c9b-456f-95b4-fe75a0103a5d",
 		"comandTag.Insert()":       comandTag.Insert(),
 		"comandTag.Delete()":       comandTag.Delete(),
@@ -208,7 +208,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 	// Log SQL to be executed if Environment variable is true
 	if common_config.LogAllSQLs == true {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id":           "663ef807-1b47-4ebc-a374-e54e36162954",
 			"sqlToExecute": sqlToExecute,
 		}).Debug("SQL to be executed within 'loadTestCasesHash'")
@@ -223,7 +223,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	defer rows.Close()
 
 	if err != nil {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id":           "b609397e-cd70-4f6c-9b11-7dfe63f41c87",
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
@@ -245,7 +245,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 		if err != nil {
 
-			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			common_config.Logger.WithFields(logrus.Fields{
 				"Id":           "764b7cb3-2426-4f50-bf12-0a6a80f0b2ab",
 				"Error":        err,
 				"sqlToExecute": sqlToExecute,

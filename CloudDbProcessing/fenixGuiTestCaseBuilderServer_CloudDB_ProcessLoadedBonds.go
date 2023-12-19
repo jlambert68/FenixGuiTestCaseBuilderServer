@@ -1,6 +1,7 @@
-package main
+package CloudDbProcessing
 
 import (
+	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
@@ -9,7 +10,7 @@ import (
 	"time"
 )
 
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) processVisibleBondAttributesInformation() (bondsAttributes []fenixTestCaseBuilderServerGrpcApi.BasicBondInformationMessage_VisibleBondAttributesMessage, err error) {
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) processVisibleBondAttributesInformation() (bondsAttributes []fenixTestCaseBuilderServerGrpcApi.BasicBondInformationMessage_VisibleBondAttributesMessage, err error) {
 
 	usedDBSchema := "FenixBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 
@@ -28,7 +29,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	defer rows.Close()
 
 	if err != nil {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id":           "7161a37c-96ff-4df7-acfe-da41b80d2c29",
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
@@ -68,7 +69,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		)
 
 		if err != nil {
-			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			common_config.Logger.WithFields(logrus.Fields{
 				"Id":           "5dbe5e92-eefb-44bb-825f-3f6013902cf0",
 				"Error":        err,
 				"sqlToExecute": sqlToExecute,

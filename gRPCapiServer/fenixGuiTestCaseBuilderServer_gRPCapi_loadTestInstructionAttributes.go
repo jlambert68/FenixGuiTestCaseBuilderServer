@@ -1,6 +1,7 @@
-package main
+package gRPCapiServer
 
 import (
+	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
@@ -15,16 +16,16 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllImmatureTestInstru
 	// Define the response message
 	var responseMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage
 
-	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "a55f9c82-1d74-44a5-8662-058b8bc9e48f",
 	}).Debug("Incoming 'gRPC - ListAllAvailableTestInstructionsAndTestContainers'")
 
-	defer fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	defer fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "27fb45fe-3266-41aa-a6af-958513977e28",
 	}).Debug("Outgoing 'gRPC - ListAllAvailableTestInstructionsAndTestContainers'")
 
 	// Check if Client is using correct proto files version
-	returnMessage := fenixGuiTestCaseBuilderServerObject.isClientUsingCorrectTestDataProtoFileVersion("666", userIdentificationMessage.ProtoFileVersionUsedByClient)
+	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion("666", userIdentificationMessage.ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 		// Not correct proto-file version is used
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage{
@@ -52,7 +53,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllImmatureTestInstru
 				AckNack:                      false,
 				Comments:                     "Got some Error when retrieving ImmatureTestInstructionAttributes from database",
 				ErrorCodes:                   []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
-				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 			},
 		}
 
@@ -67,7 +68,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllImmatureTestInstru
 			AckNack:                      true,
 			Comments:                     "",
 			ErrorCodes:                   nil,
-			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		},
 	}
 
@@ -93,7 +94,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	defer rows.Close()
 
 	if err != nil {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 			"Id":           "5f769af2-f75a-4ea6-8c3d-2108c9dfb9b7",
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
@@ -134,7 +135,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		)
 
 		if err != nil {
-			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 				"Id":           "7cd322cb-2219-4c4d-a8c8-2770a42b0c23",
 				"Error":        err,
 				"sqlToExecute": sqlToExecute,

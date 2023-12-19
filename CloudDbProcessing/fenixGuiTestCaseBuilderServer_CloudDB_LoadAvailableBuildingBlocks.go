@@ -1,6 +1,7 @@
-package main
+package CloudDbProcessing
 
 import (
+	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
@@ -15,14 +16,14 @@ import (
 // Load TestInstructions for Client
 
 /*
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadClientsImmatureTestInstructionsFromCloudDB(userID string) (cloudDBImmatureTestInstructionItems []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage, err error) {
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) LoadClientsImmatureTestInstructionsFromCloudDB(userID string) (cloudDBImmatureTestInstructionItems []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage, err error) {
 
-	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	common_config.Logger.WithFields(logrus.Fields{
 		"Id": "38fbd4e2-cfe8-405c-84ce-1667c2292c58",
 	}).Debug("Entering: loadClientsImmatureTestInstructionsFromCloudDB()")
 
 	defer func() {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id": "6acee974-1280-48f5-9c4f-886aeff58863",
 		}).Debug("Exiting: loadClientsImmatureTestInstructionsFromCloudDB()")
 	}()
@@ -67,7 +68,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	rows, err := fenixSyncShared.DbPool.Query(context.Background(), sqlToExecute)
 
 	if err != nil {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id":           "2f130d7e-f8aa-466f-b29d-0fb63608c1a6",
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
@@ -122,7 +123,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		)
 
 		if err != nil {
-			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			common_config.Logger.WithFields(logrus.Fields{
 				"Id":           "e7925b78-327c-40ad-9144-ae4a8a6f35f5",
 				"Error":        err,
 				"sqlToExecute": sqlToExecute,
@@ -139,7 +140,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		immatureTestInstructionMessage, existsInMap := ImmatureTestInstructionMessageMap[testInstructionUuid]
 		// testInstructionUuid shouldn't exist in map. If so then there is a problem
 		if existsInMap == true {
-			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			common_config.Logger.WithFields(logrus.Fields{
 				"Id":                  "4713a8c8-c9d0-4315-9341-27365d64cdc8",
 				"testInstructionUuid": testInstructionUuid,
 				"sqlToExecute":        sqlToExecute,
@@ -174,7 +175,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	rows, err = fenixSyncShared.DbPool.Query(context.Background(), sqlToExecute)
 
 	if err != nil {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id":           "b3ef4fec-9097-46c4-8ff6-85a758967e46",
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
@@ -251,7 +252,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		)
 
 		if err != nil {
-			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			common_config.Logger.WithFields(logrus.Fields{
 				"Id":           "9f0618f2-ca04-41e9-aeef-60cd1874f6b7",
 				"Error":        err,
 				"sqlToExecute": sqlToExecute,
@@ -369,7 +370,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 			// Something is wrong in the ordering of the testdata or the testdata itself
 		default:
-			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			common_config.Logger.WithFields(logrus.Fields{
 				"Id":                                     "ca46deb0-a788-4c68-aefb-27bb7ccaad0d",
 				"domainUuid":                             domainUuid,
 				"previousDomainUuid":                     previousDomainUuid,
@@ -412,7 +413,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	immatureTestInstructionMessage, existsInMap := ImmatureTestInstructionMessageMap[testInstructionUuid]
 	// testInstructionUuid shouldn't exist in map. If so then there is a problem
 	if existsInMap == false {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id":                  "4894cf70-08fd-401b-b076-d643ea721abb",
 			"testInstructionUuid": testInstructionUuid,
 		}).Fatal("TestInstructionUuid should exist in map. If not then there is a problem")
@@ -442,7 +443,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	rows, err = fenixSyncShared.DbPool.Query(context.Background(), sqlToExecute)
 
 	if err != nil {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id":           "b3ef4fec-9097-46c4-8ff6-85a758967e46",
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
@@ -516,7 +517,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		)
 
 		if err != nil {
-			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			common_config.Logger.WithFields(logrus.Fields{
 				"Id":           "808377e2-70ec-4894-bb17-7d92321caaa2",
 				"Error":        err,
 				"sqlToExecute": sqlToExecute,
@@ -575,7 +576,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			immatureTestInstructionMessage, existsInMap = ImmatureTestInstructionMessageMap[previousImmatureElementModelElement.OriginalElementUuid]
 			// testInstructionUuid shouldn exist in map. If not so then there is a problem
 			if existsInMap == false {
-				fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+				common_config.Logger.WithFields(logrus.Fields{
 					"Id": "c2d2448e-9e86-4947-a5f5-7787a72e7ef8",
 					"previousImmatureElementModelElement.OriginalElementUuid": previousImmatureElementModelElement.OriginalElementUuid,
 				}).Fatal("TestInstructionUuid should exist in map. If not then there is a problem")
@@ -594,7 +595,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 			// Something is wrong in the ordering of the testdata or the testdata itself
 		default:
-			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			common_config.Logger.WithFields(logrus.Fields{
 				"Id":                          "e464567a-79ab-49e7-9519-ce187b34458d",
 				"domainUuid":                  domainUuid,
 				"previousDomainUuid":          previousDomainUuid,
@@ -624,7 +625,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	immatureTestInstructionMessage, existsInMap = ImmatureTestInstructionMessageMap[immatureElementModelElement.OriginalElementUuid]
 	// testInstructionUuid shouldn exist in map. If not so then there is a problem
 	if existsInMap == false {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id": "c2d2448e-9e86-4947-a5f5-7787a72e7ef8",
 			"immatureElementModelElement.OriginalElementUuid": immatureElementModelElement.OriginalElementUuid,
 		}).Fatal("TestInstructionUuid should exist in map. If not then there is a problem")
@@ -653,31 +654,31 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 */
 // Load TestInstructions for Client
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadClientsImmatureTestInstructionsFromCloudDB(userID string) (cloudDBImmatureTestInstructionItems []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage, err error) {
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) LoadClientsImmatureTestInstructionsFromCloudDB(userID string) (cloudDBImmatureTestInstructionItems []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage, err error) {
 
-	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	common_config.Logger.WithFields(logrus.Fields{
 		"Id": "273dceef-7982-4e7d-98db-c132342e530b",
 	}).Debug("Entering: loadClientsImmatureTestInstructionsFromCloudDB()")
 
 	defer func() {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id": "0894a272-3e91-407a-b5a4-1b70f8e00e6b",
 		}).Debug("Exiting: loadClientsImmatureTestInstructionsFromCloudDB()")
 	}()
 
 	immatureTestInstructionMessageMap := make(map[string]*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage)
 
-	err = fenixGuiTestCaseBuilderServerObject.processTestInstructionsBasicTestInstructionInformation(immatureTestInstructionMessageMap)
+	err = fenixCloudDBObject.processTestInstructionsBasicTestInstructionInformation(immatureTestInstructionMessageMap)
 	if err != nil {
 		return nil, err
 	}
 
-	err = fenixGuiTestCaseBuilderServerObject.processTestInstructionsImmatureTestInstructionInformation(immatureTestInstructionMessageMap)
+	err = fenixCloudDBObject.processTestInstructionsImmatureTestInstructionInformation(immatureTestInstructionMessageMap)
 	if err != nil {
 		return nil, err
 	}
 
-	err = fenixGuiTestCaseBuilderServerObject.processTestInstructionsImmatureElementModel(immatureTestInstructionMessageMap)
+	err = fenixCloudDBObject.processTestInstructionsImmatureElementModel(immatureTestInstructionMessageMap)
 	if err != nil {
 		return nil, err
 	}
@@ -697,31 +698,31 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 }
 
 // Load TestInstructionContainers for Client
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadClientsImmatureTestInstructionContainersFromCloudDB(userID string) (cloudDBImmatureTestInstructionContainerItems []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage, err error) {
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) LoadClientsImmatureTestInstructionContainersFromCloudDB(userID string) (cloudDBImmatureTestInstructionContainerItems []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage, err error) {
 
-	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	common_config.Logger.WithFields(logrus.Fields{
 		"Id": "68b965ea-234c-425b-b525-1f8b7154850b",
 	}).Debug("Entering: loadClientsImmatureTestInstructionContainersFromCloudDB()")
 
 	defer func() {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id": "12021bfa-154f-48f2-bd8c-0809e1877fd4",
 		}).Debug("Exiting: loadClientsImmatureTestInstructionContainersFromCloudDB()")
 	}()
 
 	immatureTestInstructionContainerMessageMap := make(map[string]*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage)
 
-	err = fenixGuiTestCaseBuilderServerObject.processTestInstructionContainersBasicTestInstructionContainerInformation(immatureTestInstructionContainerMessageMap)
+	err = fenixCloudDBObject.processTestInstructionContainersBasicTestInstructionContainerInformation(immatureTestInstructionContainerMessageMap)
 	if err != nil {
 		return nil, err
 	}
 
-	err = fenixGuiTestCaseBuilderServerObject.processTestInstructionContainersImmatureTestInstructionContainerInformation(immatureTestInstructionContainerMessageMap)
+	err = fenixCloudDBObject.processTestInstructionContainersImmatureTestInstructionContainerInformation(immatureTestInstructionContainerMessageMap)
 	if err != nil {
 		return nil, err
 	}
 
-	err = fenixGuiTestCaseBuilderServerObject.processTestInstructionContainersImmatureElementModel(immatureTestInstructionContainerMessageMap)
+	err = fenixCloudDBObject.processTestInstructionContainersImmatureElementModel(immatureTestInstructionContainerMessageMap)
 	if err != nil {
 		return nil, err
 	}
@@ -741,14 +742,14 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 }
 
 // Load Pinned TestInstructions for Client
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadClientsPinnedTestInstructionsFromCloudDB(userID string) (availablePinnedPreCreatedTestInstructionContainerMessage []*fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionMessage, err error) {
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) LoadClientsPinnedTestInstructionsFromCloudDB(userID string) (availablePinnedPreCreatedTestInstructionContainerMessage []*fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionMessage, err error) {
 
-	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	common_config.Logger.WithFields(logrus.Fields{
 		"Id": "9901525f-a271-4f4f-a798-fea7fdf29dfb",
 	}).Debug("Entering: loadClientsPinnedTestInstructionsFromCloudDB()")
 
 	defer func() {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id": "0f7be73c-4065-4d4a-ae02-40a4d93fc2a3",
 		}).Debug("Exiting: loadClientsPinnedTestInstructionsFromCloudDB()")
 	}()
@@ -777,7 +778,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	defer rows.Close()
 
 	if err != nil {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id":           "6be84b22-613f-4d93-afe8-e8ee22826e7b",
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
@@ -807,7 +808,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		)
 
 		if err != nil {
-			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			common_config.Logger.WithFields(logrus.Fields{
 				"Id":           "e1d695b7-ec8a-4692-9e9a-416869923e82",
 				"Error":        err,
 				"sqlToExecute": sqlToExecute,
@@ -833,14 +834,14 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 }
 
 // Load Pinned TestInstructionContainers for Client
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadClientsPinnedTestInstructionContainersFromCloudDB(userID string) (availablePinnedPreCreatedTestInstructionContainerContainerMessage []*fenixTestCaseBuilderServerGrpcApi.AvailablePinnedPreCreatedTestInstructionContainerMessage, err error) {
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) LoadClientsPinnedTestInstructionContainersFromCloudDB(userID string) (availablePinnedPreCreatedTestInstructionContainerContainerMessage []*fenixTestCaseBuilderServerGrpcApi.AvailablePinnedPreCreatedTestInstructionContainerMessage, err error) {
 
-	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	common_config.Logger.WithFields(logrus.Fields{
 		"Id": "c2decb25-9f53-44c0-be49-88ac5c9cde5d",
 	}).Debug("Entering: loadClientsPinnedTestInstructionContainersFromCloudDB()")
 
 	defer func() {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id": "a9863d2a-4f59-4eef-a939-117bcddea3c4",
 		}).Debug("Exiting: loadClientsPinnedTestInstructionContainersFromCloudDB()")
 	}()
@@ -863,7 +864,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	defer rows.Close()
 
 	if err != nil {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id":           "6be84b22-613f-4d93-afe8-e8ee22826e7b",
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
@@ -893,7 +894,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 		)
 
 		if err != nil {
-			fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+			common_config.Logger.WithFields(logrus.Fields{
 				"Id":           "e1d695b7-ec8a-4692-9e9a-416869923e82",
 				"Error":        err,
 				"sqlToExecute": sqlToExecute,
@@ -919,21 +920,21 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 }
 
 // Load TestInstructions for Client
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadAvailableBondsFromCloudDB() (cloudDBAvailableBondsItems []*fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage_ImmatureBondMessage, err error) {
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) LoadAvailableBondsFromCloudDB() (cloudDBAvailableBondsItems []*fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage_ImmatureBondMessage, err error) {
 
-	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	common_config.Logger.WithFields(logrus.Fields{
 		"Id": "4b7058fe-c46d-4ab8-8612-895c8e1102a1",
 	}).Debug("Entering: loadAvailableBondsFromCloudDB()")
 
 	defer func() {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id": "665cecf6-a2cc-4c3a-bcb7-9ac1170bd8d3",
 		}).Debug("Exiting: loadAvailableBondsFromCloudDB()")
 	}()
 
 	//availableBondsAttributes := []fenixTestCaseBuilderServerGrpcApi.BasicBondInformationMessage_VisibleBondAttributesMessage
 
-	availableBondsAttributes, err := fenixGuiTestCaseBuilderServerObject.processVisibleBondAttributesInformation()
+	availableBondsAttributes, err := fenixCloudDBObject.processVisibleBondAttributesInformation()
 	if err != nil {
 		return nil, err
 	}

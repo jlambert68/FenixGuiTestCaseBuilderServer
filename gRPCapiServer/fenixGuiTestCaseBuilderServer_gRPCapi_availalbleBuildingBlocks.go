@@ -1,6 +1,8 @@
-package main
+package gRPCapiServer
 
 import (
+	"FenixGuiTestCaseBuilderServer/CloudDbProcessing"
+	"FenixGuiTestCaseBuilderServer/common_config"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
@@ -34,21 +36,23 @@ import (
 
 // ListAllAvailableTestInstructionsAndTestInstructionContainers - *********************************************************************
 // The TestCase Builder asks for all TestInstructions and Pre-defined TestInstructionContainer that the user can add to a TestCase
-func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableTestInstructionsAndTestInstructionContainers(ctx context.Context, userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (*fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage, error) {
+func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableTestInstructionsAndTestInstructionContainers(
+	ctx context.Context, userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (
+	*fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage, error) {
 
 	// Define the response message
 	var responseMessage *fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage
 
-	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "a55f9c82-1d74-44a5-8662-058b8bc9e48f",
 	}).Debug("Incoming 'gRPC - ListAllAvailableTestInstructionsAndTestContainers'")
 
-	defer fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	defer fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "27fb45fe-3266-41aa-a6af-958513977e28",
 	}).Debug("Outgoing 'gRPC - ListAllAvailableTestInstructionsAndTestContainers'")
 
 	// Check if Client is using correct proto files version
-	returnMessage := fenixGuiTestCaseBuilderServerObject.isClientUsingCorrectTestDataProtoFileVersion("666", userIdentificationMessage.ProtoFileVersionUsedByClient)
+	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion("666", userIdentificationMessage.ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 		// Not correct proto-file version is used
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
@@ -68,8 +72,12 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableTestInstr
 	var cloudDBImmatureTestInstructionItems []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage
 	var cloudDBImmatureTestInstructionContainerItems []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage
 
+	// Initiate object forCloudDB-processing
+	var fenixCloudDBObject *CloudDbProcessing.FenixCloudDBObjectStruct
+	fenixCloudDBObject = &CloudDbProcessing.FenixCloudDBObjectStruct{}
+
 	// Get users ImmatureTestInstruction-data from CloudDB
-	cloudDBImmatureTestInstructionItems, err := fenixGuiTestCaseBuilderServerObject.loadClientsImmatureTestInstructionsFromCloudDB(userID)
+	cloudDBImmatureTestInstructionItems, err := fenixCloudDBObject.LoadClientsImmatureTestInstructionsFromCloudDB(userID)
 	if err != nil {
 		// Something went wrong so return an error to caller
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
@@ -79,7 +87,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableTestInstr
 				AckNack:                      false,
 				Comments:                     "Got some Error when retrieving ImmatureTestInstructions from database",
 				ErrorCodes:                   []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
-				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 			},
 		}
 
@@ -88,7 +96,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableTestInstr
 	}
 
 	// Get users ImmatureTestInstructionContainer-data from CloudDB
-	cloudDBImmatureTestInstructionContainerItems, err = fenixGuiTestCaseBuilderServerObject.loadClientsImmatureTestInstructionContainersFromCloudDB(userID)
+	cloudDBImmatureTestInstructionContainerItems, err = fenixCloudDBObject.LoadClientsImmatureTestInstructionContainersFromCloudDB(userID)
 	if err != nil {
 		// Something went wrong so return an error to caller
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
@@ -98,7 +106,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableTestInstr
 				AckNack:                      false,
 				Comments:                     "Got some Error when retrieving ImmatureTestInstructionContainers from database",
 				ErrorCodes:                   []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
-				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 			},
 		}
 
@@ -114,7 +122,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableTestInstr
 			AckNack:                      true,
 			Comments:                     "",
 			ErrorCodes:                   nil,
-			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		},
 	}
 
@@ -128,16 +136,16 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailablePinnedTes
 	// Define the response message
 	var responseMessage *fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage
 
-	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "5a72e9c7-602e-4a16-a551-961f96fac457",
 	}).Debug("Incoming 'gRPC - ListAllAvailablePinnedTestInstructionsAndTestInstructionContainers'")
 
-	defer fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	defer fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "28a7d2e7-ebdc-4e98-a5e9-08491f1ff181",
 	}).Debug("Outgoing 'gRPC - ListAllAvailablePinnedTestInstructionsAndTestInstructionContainers'")
 
 	// Check if Client is using correct proto files version
-	returnMessage := fenixGuiTestCaseBuilderServerObject.isClientUsingCorrectTestDataProtoFileVersion("666", userIdentificationMessage.ProtoFileVersionUsedByClient)
+	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion("666", userIdentificationMessage.ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 		// Not correct proto-file version is used
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
@@ -157,8 +165,12 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailablePinnedTes
 	var cloudDBPinnedTestInstructionMessages []*fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionMessage
 	var cloudDBPinnedPreCreatedTestInstructionContainerMessages []*fenixTestCaseBuilderServerGrpcApi.AvailablePinnedPreCreatedTestInstructionContainerMessage
 
+	// Initiate object forCloudDB-processing
+	var fenixCloudDBObject *CloudDbProcessing.FenixCloudDBObjectStruct
+	fenixCloudDBObject = &CloudDbProcessing.FenixCloudDBObjectStruct{}
+
 	// Get users PinnedTestInstruction-data from CloudDB
-	cloudDBPinnedTestInstructionMessages, err := fenixGuiTestCaseBuilderServerObject.loadClientsPinnedTestInstructionsFromCloudDB(userID)
+	cloudDBPinnedTestInstructionMessages, err := fenixCloudDBObject.LoadClientsPinnedTestInstructionsFromCloudDB(userID)
 	if err != nil {
 		// Something went wrong so return an error to caller
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
@@ -168,7 +180,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailablePinnedTes
 				AckNack:                      false,
 				Comments:                     "Got some Error when retrieving PinnedTestInstructions from database",
 				ErrorCodes:                   []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
-				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 			},
 		}
 
@@ -177,7 +189,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailablePinnedTes
 	}
 
 	// Get users PinnedPreCreatedTestInstructionContainer-data from CloudDB
-	cloudDBPinnedPreCreatedTestInstructionContainerMessages, err = fenixGuiTestCaseBuilderServerObject.loadClientsPinnedTestInstructionContainersFromCloudDB(userID)
+	cloudDBPinnedPreCreatedTestInstructionContainerMessages, err = fenixCloudDBObject.LoadClientsPinnedTestInstructionContainersFromCloudDB(userID)
 	if err != nil {
 		// Something went wrong so return an error to caller
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
@@ -187,7 +199,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailablePinnedTes
 				AckNack:                      false,
 				Comments:                     "Got some Error when retrieving PinnedPreCreatedTestInstructionContainers from database",
 				ErrorCodes:                   []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
-				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 			},
 		}
 
@@ -203,7 +215,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailablePinnedTes
 			AckNack:                      true,
 			Comments:                     "",
 			ErrorCodes:                   nil,
-			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		},
 	}
 
@@ -214,24 +226,28 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailablePinnedTes
 // The TestCase Builder sends all TestInstructions and Pre-defined TestInstructionContainer that the user has pinned in the GUI
 func (s *fenixTestCaseBuilderServerGrpcServicesServer) SaveAllPinnedTestInstructionsAndTestInstructionContainers(ctx context.Context, pinnedTestInstructionsAndTestContainersMessage *fenixTestCaseBuilderServerGrpcApi.SavePinnedTestInstructionsAndPreCreatedTestInstructionContainersMessage) (*fenixTestCaseBuilderServerGrpcApi.AckNackResponse, error) {
 
-	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "a93fb1bd-1a5b-4417-80c3-082d34267c06",
 	}).Debug("Incoming 'gRPC - SavePinnedTestInstructionsAndTestContainers'")
 
-	defer fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	defer fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "981ad10a-2bfb-4a39-9b4d-35cac0d7481a",
 	}).Debug("Outgoing 'gRPC - SavePinnedTestInstructionsAndTestContainers'")
 
 	// Check if Client is using correct proto files version
-	returnMessage := fenixGuiTestCaseBuilderServerObject.isClientUsingCorrectTestDataProtoFileVersion(pinnedTestInstructionsAndTestContainersMessage.UserId, pinnedTestInstructionsAndTestContainersMessage.ProtoFileVersionUsedByClient)
+	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion(pinnedTestInstructionsAndTestContainersMessage.UserId, pinnedTestInstructionsAndTestContainersMessage.ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 		// Not correct proto-file version is used
 		// Exiting
 		return returnMessage, nil
 	}
 
+	// Initiate object forCloudDB-processing
+	var fenixCloudDBObject *CloudDbProcessing.FenixCloudDBObjectStruct
+	fenixCloudDBObject = &CloudDbProcessing.FenixCloudDBObjectStruct{}
+
 	// Save Pinned TestInstructions and pre-created TestInstructionContainers to Cloud DB
-	returnMessage = fenixGuiTestCaseBuilderServerObject.prepareSavePinnedTestInstructionsAndPinnedTestInstructionContainersToCloudDB(pinnedTestInstructionsAndTestContainersMessage)
+	returnMessage = fenixCloudDBObject.PrepareSavePinnedTestInstructionsAndPinnedTestInstructionContainersToCloudDB(pinnedTestInstructionsAndTestContainersMessage)
 	if returnMessage != nil {
 		// Something went wrong when saving to database
 		// Exiting
@@ -242,7 +258,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) SaveAllPinnedTestInstruct
 		AckNack:                      true,
 		Comments:                     "",
 		ErrorCodes:                   nil,
-		ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+		ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 	}, nil
 }
 
@@ -253,16 +269,16 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableBonds(ctx
 	// Define the response message
 	var responseMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage
 
-	fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "ffb95b37-9ab0-4933-a53c-b7676a12c8f2",
 	}).Debug("Incoming 'gRPC - ListAllAvailableBonds'")
 
-	defer fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+	defer fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "b46215a0-6620-428d-bee9-9fa4c5e4e98b",
 	}).Debug("Outgoing 'gRPC - ListAllAvailableBonds'")
 
 	// Check if Client is using correct proto files version
-	returnMessage := fenixGuiTestCaseBuilderServerObject.isClientUsingCorrectTestDataProtoFileVersion(userIdentificationMessage.UserId, userIdentificationMessage.ProtoFileVersionUsedByClient)
+	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion(userIdentificationMessage.UserId, userIdentificationMessage.ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 		// Not correct proto-file version is used
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage{
@@ -277,8 +293,12 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableBonds(ctx
 	// Define variables to store data from DB in
 	var cloudDBAvailableBonds []*fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage_ImmatureBondMessage
 
+	// Initiate object forCloudDB-processing
+	var fenixCloudDBObject *CloudDbProcessing.FenixCloudDBObjectStruct
+	fenixCloudDBObject = &CloudDbProcessing.FenixCloudDBObjectStruct{}
+
 	// Get users ImmatureTestInstruction-data from CloudDB
-	cloudDBAvailableBonds, err := fenixGuiTestCaseBuilderServerObject.loadAvailableBondsFromCloudDB()
+	cloudDBAvailableBonds, err := fenixCloudDBObject.LoadAvailableBondsFromCloudDB()
 	if err != nil {
 		// Something went wrong so return an error to caller
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage{
@@ -287,7 +307,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableBonds(ctx
 				AckNack:                      false,
 				Comments:                     "Got some Error when retrieving Available Bonds from database",
 				ErrorCodes:                   []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
-				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 			},
 		}
 
@@ -302,7 +322,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableBonds(ctx
 			AckNack:                      true,
 			Comments:                     "",
 			ErrorCodes:                   nil,
-			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(fenixGuiTestCaseBuilderServerObject.getHighestFenixTestDataProtoFileVersion()),
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		},
 	}
 

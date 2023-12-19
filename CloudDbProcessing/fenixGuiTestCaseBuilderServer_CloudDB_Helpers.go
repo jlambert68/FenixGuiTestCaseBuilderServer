@@ -1,6 +1,7 @@
-package main
+package CloudDbProcessing
 
 import (
+	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
 	"errors"
 	"fmt"
@@ -10,7 +11,7 @@ import (
 )
 
 // Load BasicInformation for TestCase to be able to populate the TestCaseExecution
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) getNexTestCaseVersion(testCaseUuid string) (nextTestCaseVersion uint32, err error) {
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) getNexTestCaseVersion(testCaseUuid string) (nextTestCaseVersion uint32, err error) {
 
 	//usedDBSchema := "FenixBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 
@@ -28,7 +29,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	defer rows.Close()
 
 	if err != nil {
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id":           "78b049e0-ab58-4c5e-a7f8-1aa1416d8535",
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
@@ -36,7 +37,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 
 		databaseStatistics := fenixSyncShared.DbPool.Stat()
 
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id":                 "92dce2b7-a9c1-40f2-b46e-618c91c83d65",
 			"databaseStatistics": databaseStatistics,
 		}).Error("DBPool Statistics")
@@ -61,7 +62,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 			)
 
 			if err != nil {
-				fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+				common_config.Logger.WithFields(logrus.Fields{
 					"Id":           "0d94d43c-1989-4915-a22b-3d1f7ae4fe37",
 					"Error":        err,
 					"sqlToExecute": sqlToExecute,
@@ -85,7 +86,7 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	case 1:
 
 	default:
-		fenixGuiTestCaseBuilderServerObject.logger.WithFields(logrus.Fields{
+		common_config.Logger.WithFields(logrus.Fields{
 			"Id":             "492e218c-9b5d-4b69-aad7-dff9137b4170",
 			"Number of Rows": rows.CommandTag().RowsAffected(),
 		}).Error("Expected 0 or 1 row")
