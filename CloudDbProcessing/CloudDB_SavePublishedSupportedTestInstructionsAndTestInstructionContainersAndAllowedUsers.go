@@ -3,6 +3,8 @@ package CloudDbProcessing
 import (
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
+	"errors"
+	"fmt"
 	"github.com/jackc/pgx/v4"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/TestInstructionAndTestInstuctionContainerTypes"
@@ -228,7 +230,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyChangesToTestInstructi
 			"DomainHash": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainHash,
 			"DomainName": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainName,
 			"error":      err,
-		}).Error("Got some problem when verifying changes to TestInstructions")
+		}).Error("Got some problem when verifying changes to TestInstructionContainers")
 
 		return err
 	}
@@ -246,7 +248,34 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyChangesToTestInstructi
 			"DomainHash": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainHash,
 			"DomainName": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainName,
 			"error":      err,
-		}).Error("Got some problem when verifying changes to TestInstructions")
+		}).Error("Got some problem when verifying changes to Allowed Users")
+
+		return err
+	}
+
+	// Found correct changes, so update supported TestInstructions, TestInstructionContainers and Allowed Users in database
+	if correctNewChangesFoundInTestInstructions == true || correctNewChangesFoundInTestInstructionContainers ||
+		correctNewChangesFoundInAllowedUsers {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id": "83536474-a037-4b67-85fc-2818f9181e38",
+			"correctNewChangesFoundInTestInstructions":          correctNewChangesFoundInTestInstructions,
+			"correctNewChangesFoundInTestInstructionContainers": correctNewChangesFoundInTestInstructionContainers,
+			"correctNewChangesFoundInAllowedUsers":              correctNewChangesFoundInAllowedUsers,
+		}).Info("Found correct changes, so update supported TestInstructions, TestInstructionContainers and Allowed Users in database")
+	}
+
+	// Save new message with supported TestInstructions, TestInstructionContainers and Allowed Users in database
+	err = fenixCloudDBObject.performSaveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
+		dbTransaction,
+		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id":         "3df8e2a0-efb2-40a4-9fa2-58eb23ffa911",
+			"DomainHash": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainHash,
+			"DomainName": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainName,
+			"error":      err,
+		}).Error("Got some problem when saving supported TestInstructions, TestInstructionContainers and Allowed Users in database")
 
 		return err
 	}
@@ -268,6 +297,102 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyChangesToTestInstructi
 		return correctNewChangesFoundInTestInstructions, err
 	}
 
+	// There aren't any changes then just return
+	if testInstructionsMessage.TestInstructionsHash !=
+		testInstructionsAndTestInstructionContainersAndAllowedUsersMessageSavedInDB.TestInstructions.TestInstructionsHash {
+
+		return correctNewChangesFoundInTestInstructions, err
+	}
+
+	// Now we know that there are changes, find which TestInstruction that are changed, added or removed
+	// Loop existing TestInstruction that were stored in database
+	for tempTestInstructionUUIDFromDB, tempTestInstructionFromDB := range testInstructionsAndTestInstructionContainersAndAllowedUsersMessageSavedInDB.TestInstructions.TestInstructionsMap {
+		// Check if it exists in new message
+		publishedTestInstructionFromConnector, existInMap := testInstructionsMessage.TestInstructionsMap[tempTestInstructionUUIDFromDB]
+
+		// If it doesn't exit in new message then just continue
+		if existInMap == false {
+			continue
+		}
+
+		// If it has the same hash then just continue
+		if publishedTestInstructionFromConnector.TestInstructionVersionsHash == tempTestInstructionFromDB.TestInstructionVersionsHash {
+			continue
+		}
+
+		// If the hash is different then process the TestInstructionVersions
+		if publishedTestInstructionFromConnector.TestInstructionVersionsHash != tempTestInstructionFromDB.TestInstructionVersionsHash {
+
+			// Loop existing TestInstructionVersion that were stored in database
+			for versionCounter, tempTestInstructionVersionFromDB := range tempTestInstructionFromDB.TestInstructionVersions {
+
+				// If the version hash is different then something is wrong
+				if tempTestInstructionVersionFromDB.TestInstructionInstanceVersionHash !=
+					publishedTestInstructionFromConnector.TestInstructionVersions[versionCounter].
+						TestInstructionInstanceVersionHash {
+
+					var tempTestInstructionUUID string
+					var tempMajorVersionNumber int
+					var tempMinorVersionNumber int
+
+					tempTestInstructionUUID = string(publishedTestInstructionFromConnector.
+						TestInstructionVersions[versionCounter].TestInstructionInstance.TestInstruction.TestInstructionUUID)
+					tempMajorVersionNumber = publishedTestInstructionFromConnector.
+						TestInstructionVersions[versionCounter].TestInstructionInstance.TestInstruction.MajorVersionNumber
+					tempMinorVersionNumber = publishedTestInstructionFromConnector.
+						TestInstructionVersions[versionCounter].TestInstructionInstance.TestInstruction.MinorVersionNumber
+
+					common_config.Logger.WithFields(logrus.Fields{
+						"id":                  "8c91a76d-887a-477d-b5ea-168b0d0c6061",
+						"TestInstructionUUID": tempTestInstructionUUID,
+						"MajorVersionNumber":  tempMajorVersionNumber,
+						"MinorVersionNumber":  tempMinorVersionNumber,
+						"versionCounter":      versionCounter,
+					}).Error("New TestInstructionVersion is not the same as existing, which was expected")
+
+					err = errors.New(fmt.Sprintf("New TestInstructionVersion has not the same hash as existing, "+
+						"which was expected. "+
+						"TestInstructionUUID=%s, MajorVersionNumber=%d, MinorVersionNumber=%d, SlicePosition=%d ",
+						tempTestInstructionUUID,
+						tempMajorVersionNumber,
+						tempMinorVersionNumber,
+						versionCounter))
+
+					return false, err
+
+				}
+			}
+			// Verify if there are more TestInstructionVersions in new published TestInstructionVersions
+			if len(publishedTestInstructionFromConnector.TestInstructionVersions) > len(tempTestInstructionFromDB.TestInstructionVersions) {
+
+				// There are more TestInstructionVersions in new published TestInstructionVersions so accept that
+				correctNewChangesFoundInTestInstructions = true
+
+				return correctNewChangesFoundInTestInstructions, err
+
+			} else {
+				// This should happen because the versions-Hash can't be the same when there are more versions in new TestInstruction
+
+				var tempTestInstructionUUID string
+				tempTestInstructionUUID = string(publishedTestInstructionFromConnector.
+					TestInstructionVersions[0].TestInstructionInstance.TestInstruction.TestInstructionUUID)
+
+				common_config.Logger.WithFields(logrus.Fields{
+					"id":                  "7dc54367-7290-4641-a43a-dfb4ca30a728",
+					"TestInstructionUUID": tempTestInstructionUUID,
+				}).Error("This should happen because the versions-Hash can't be the same when there are more versions in new TestInstruction")
+
+				err = errors.New(fmt.Sprintf("This should happen because the versions-Hash can't be the same when "+
+					"there are more versions in new TestInstruction. "+
+					"TestInstructionUUID=%s",
+					tempTestInstructionUUID))
+
+				return false, err
+
+			}
+		}
+	}
+
 	return correctNewChangesFoundInTestInstructions, err
 }
 
@@ -285,6 +410,110 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyChangesToTestInstructi
 		return correctNewChangesFoundInTestInstructionContainers, err
 	}
 
+	// There aren't any changes then just return
+	if testInstructionContainersMessage.TestInstructionContainersHash !=
+		testInstructionsAndTestInstructionContainersAndAllowedUsersMessageSavedInDB.TestInstructionContainers.TestInstructionContainersHash {
+
+		return correctNewChangesFoundInTestInstructionContainers, err
+	}
+
+	// Now we know that there are changes, find which TestInstruction that are changed, added or removed
+	// Loop existing TestInstruction that were stored in database
+	for tempTestInstructionContainerUUIDFromDB, tempTestInstructionContainerFromDB := range testInstructionsAndTestInstructionContainersAndAllowedUsersMessageSavedInDB.TestInstructionContainers.TestInstructionContainersMap {
+
+		// Check if it exists in new message
+		publishedTestInstructionContainerFromConnector, existInMap := testInstructionContainersMessage.
+			TestInstructionContainersMap[tempTestInstructionContainerUUIDFromDB]
+
+		// If it doesn't exit in new message then just continue
+		if existInMap == false {
+			continue
+		}
+
+		// If it has the same hash then just continue
+		if publishedTestInstructionContainerFromConnector.TestInstructionContainerVersionsHash ==
+			tempTestInstructionContainerFromDB.TestInstructionContainerVersionsHash {
+			continue
+		}
+
+		// If the hash is different then process the TestInstructionVersions
+		if publishedTestInstructionContainerFromConnector.TestInstructionContainerVersionsHash !=
+			tempTestInstructionContainerFromDB.TestInstructionContainerVersionsHash {
+
+			// Loop existing TestInstructionContainerVersion that were stored in database
+			for versionCounter, tempTestInstructionContainerVersionFromDB := range tempTestInstructionContainerFromDB.TestInstructionContainerVersions {
+
+				// If the version hash is different then something is wrong
+				if tempTestInstructionContainerVersionFromDB.TestInstructionContainerInstanceHash !=
+					publishedTestInstructionContainerFromConnector.TestInstructionContainerVersions[versionCounter].
+						TestInstructionContainerInstanceHash {
+
+					var tempTestInstructionContainerUUID string
+					var tempMajorVersionNumber int
+					var tempMinorVersionNumber int
+
+					tempTestInstructionContainerUUID = string(publishedTestInstructionContainerFromConnector.
+						TestInstructionContainerVersions[versionCounter].TestInstructionContainerInstance.
+						TestInstructionContainer.TestInstructionContainerUUID)
+					tempMajorVersionNumber = publishedTestInstructionContainerFromConnector.
+						TestInstructionContainerVersions[versionCounter].TestInstructionContainerInstance.
+						TestInstructionContainer.MajorVersionNumber
+					tempMinorVersionNumber = publishedTestInstructionContainerFromConnector.
+						TestInstructionContainerVersions[versionCounter].TestInstructionContainerInstance.
+						TestInstructionContainer.MinorVersionNumber
+
+					common_config.Logger.WithFields(logrus.Fields{
+						"id":                           "160988ea-7f7c-4138-8190-e0f6d87e4a75",
+						"TestInstructionContainerUUID": tempTestInstructionContainerUUID,
+						"MajorVersionNumber":           tempMajorVersionNumber,
+						"MinorVersionNumber":           tempMinorVersionNumber,
+						"versionCounter":               versionCounter,
+					}).Error("New TestInstructionContainerVersion is not the same as existing, which was expected")
+
+					err = errors.New(fmt.Sprintf("New TestInstructionContainerVersion has not the same hash as existing, "+
+						"which was expected. "+
+						"TestInstructionUUID=%s, MajorVersionNumber=%d, MinorVersionNumber=%d, SlicePosition=%d ",
+						tempTestInstructionContainerUUID,
+						tempMajorVersionNumber,
+						tempMinorVersionNumber,
+						versionCounter))
+
+					return false, err
+
+				}
+			}
+			// Verify if there are more TestInstructionContainerVersions in new published TestInstructionVersions
+			if len(publishedTestInstructionContainerFromConnector.TestInstructionContainerVersions) >
+				len(tempTestInstructionContainerFromDB.TestInstructionContainerVersions) {
+
+				// There are more TestInstructionVersions in new published TestInstructionVersions so accept that
+				correctNewChangesFoundInTestInstructionContainers = true
+
+				return correctNewChangesFoundInTestInstructionContainers, err
+
+			} else {
+				// This should happen because the versions-Hash can't be the same when there are more versions in new TestInstructionContainer
+
+				var tempTestInstructionContainerVersionUUID string
+				tempTestInstructionContainerVersionUUID = string(publishedTestInstructionContainerFromConnector.
+					TestInstructionContainerVersions[0].TestInstructionContainerInstance.TestInstructionContainer.TestInstructionContainerUUID)
+
+				common_config.Logger.WithFields(logrus.Fields{
+					"id":                  "ea5745aa-e943-44b3-b7d8-ea753535968c",
+					"TestInstructionUUID": tempTestInstructionContainerVersionUUID,
+				}).Error("This should happen because the versions-Hash can't be the same when there are more versions in new TestInstructionContainer")
+
+				err = errors.New(fmt.Sprintf("This should happen because the versions-Hash can't be the same when "+
+					"there are more versions in new TestInstructionContainer. "+
+					"TestInstructionUUID=%s",
+					tempTestInstructionContainerVersionUUID))
+
+				return false, err
+
+			}
+		}
+	}
+
 	return correctNewChangesFoundInTestInstructionContainers, err
 }
 
@@ -296,11 +525,15 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyChangesToAllowedUsers(
 		TestInstructionsAndTestInstructionsContainersStruct) (
 	correctNewChangesFoundInAllowedUsers bool, err error) {
 
-	// No Allowed Users
-	if allowedUsers != nil {
+	// There aren't any changes then just return
+	if allowedUsers.AllowedUsersHash !=
+		testInstructionsAndTestInstructionContainersAndAllowedUsersMessageSavedInDB.AllowedUsers.AllowedUsersHash {
 
 		return correctNewChangesFoundInAllowedUsers, err
 	}
+
+	// Hash is changed so accept the new User Setup
+	correctNewChangesFoundInAllowedUsers = true
 
 	return correctNewChangesFoundInAllowedUsers, err
 }
