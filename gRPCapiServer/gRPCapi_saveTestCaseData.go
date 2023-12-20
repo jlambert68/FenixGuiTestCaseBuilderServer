@@ -35,7 +35,7 @@ import (
 
 // SaveFullTestCase
 // TestCase GUI use this gRPC-api to save a full TestCase with all its data
-func (s *fenixTestCaseBuilderServerGrpcServicesServer) SaveFullTestCase(ctx context.Context, fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (*fenixTestCaseBuilderServerGrpcApi.AckNackResponse, error) {
+func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) SaveFullTestCase(ctx context.Context, fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (*fenixTestCaseBuilderServerGrpcApi.AckNackResponse, error) {
 
 	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "d5168677-cf4f-4c22-81b5-235f1c34b079",

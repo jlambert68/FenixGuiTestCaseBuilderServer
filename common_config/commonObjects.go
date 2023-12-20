@@ -31,8 +31,8 @@ var LocationForFenixGuiBuilderServerTypeMapping = map[ExecutionLocationTypeType]
 
 // Address to Fenix TestData Server & Client, will have their values from Environment variables at startup
 var (
-	FenixTestDataSyncServerAddress string // TODO remove, but is referenced by code that is not removed yet
-	FenixGuiServerPort             int
+	//FenixGuiServerAddress string // TODO remove, but is referenced by code that is not removed yet
+	FenixGuiServerPort int
 )
 
 // LogAllSQLs - Environment variable for deciding if SQLs should be logged

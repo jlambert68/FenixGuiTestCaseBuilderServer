@@ -11,7 +11,7 @@ import (
 
 // ListAllImmatureTestInstructionAttributes - *********************************************************************
 // The TestCase Builder asks for all TestInstructions Attributes that the user must add values to in TestCase
-func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllImmatureTestInstructionAttributes(ctx context.Context, userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage, error) {
+func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllImmatureTestInstructionAttributes(ctx context.Context, userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage, error) {
 
 	// Define the response message
 	var responseMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage

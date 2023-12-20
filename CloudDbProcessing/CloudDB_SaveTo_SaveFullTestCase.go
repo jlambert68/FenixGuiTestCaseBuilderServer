@@ -3,9 +3,9 @@ package CloudDbProcessing
 import (
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
-	"database/sql/driver"
-	"encoding/json"
-	"errors"
+	//"database/sql/driver"
+	//"encoding/json"
+	//"errors"
 	"github.com/jackc/pgx/v4"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
@@ -13,7 +13,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-// Load BasicInformation for TestCase to be able to populate the TestCaseExecution
+// PrepareSaveFullTestCase
+// Do initial preparations to be able to save the TestCase
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestCase(fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse) {
 
 	// Begin SQL Transaction
@@ -51,7 +52,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestCase(full
 	return returnMessage
 }
 
-// Save TestCase in Execution-queue
+// Save the full TestCase to CloudDB
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(dbTransaction pgx.Tx, fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse, err error) {
 
 	usedDBSchema := "FenixBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
@@ -169,6 +170,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(dbTransacti
 
 }
 
+/*
 // See https://www.alexedwards.net/blog/using-postgresql-jsonb
 // Make the Attrs struct implement the driver.Valuer interface. This method
 // simply returns the JSON-encoded representation of the struct.
@@ -191,3 +193,4 @@ func (a *myAttrStruct) Scan(value interface{}) error {
 type myAttrStruct struct {
 	fenixTestCaseBuilderServerGrpcApi.BasicTestCaseInformationMessage
 }
+*/

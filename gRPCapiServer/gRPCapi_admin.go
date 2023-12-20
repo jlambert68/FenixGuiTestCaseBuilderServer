@@ -8,7 +8,7 @@ import (
 
 // AreYouAlive - *********************************************************************
 // Anyone can check if Fenix TestCase Builder server is alive with this service
-func (s *fenixTestCaseBuilderServerGrpcServicesServer) AreYouAlive(ctx context.Context, emptyParameter *fenixTestCaseBuilderServerGrpcApi.EmptyParameter) (*fenixTestCaseBuilderServerGrpcApi.AckNackResponse, error) {
+func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) AreYouAlive(ctx context.Context, emptyParameter *fenixTestCaseBuilderServerGrpcApi.EmptyParameter) (*fenixTestCaseBuilderServerGrpcApi.AckNackResponse, error) {
 
 	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "1ff67695-9a8b-4821-811d-0ab8d33c4d8b",
@@ -24,7 +24,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) AreYouAlive(ctx context.C
 /*
 // GetTestInstructionsAndTestContainers - *********************************************************************
 // The TestCase Builder asks for all TestInstructions and Pre-defined TestInstructionContainer that the user can add to a TestCase
-func (s *fenixTestCaseBuilderServerGrpcServicesServer) GetTestInstructionsAndTestContainers(ctx context.Context, userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (*fenixTestCaseBuilderServerGrpcApi.TestInstructionsAndTestContainersMessage, error) {
+func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) GetTestInstructionsAndTestContainers(ctx context.Context, userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (*fenixTestCaseBuilderServerGrpcApi.TestInstructionsAndTestContainersMessage, error) {
 
 	// Define the response message
 	var responseMessage *fenixTestCaseBuilderServerGrpcApi.TestInstructionsAndTestContainersMessage
@@ -110,7 +110,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) GetTestInstructionsAndTes
 
 // GetPinnedTestInstructionsAndTestContainers - *********************************************************************
 // The TestCase Builder asks for which TestInstructions and Pre-defined TestInstructionContainer that the user has pinned in the GUI
-func (s *fenixTestCaseBuilderServerGrpcServicesServer) GetPinnedTestInstructionsAndTestContainers(ctx context.Context, userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (*fenixTestCaseBuilderServerGrpcApi.TestInstructionsAndTestContainersMessage, error) {
+func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) GetPinnedTestInstructionsAndTestContainers(ctx context.Context, userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (*fenixTestCaseBuilderServerGrpcApi.TestInstructionsAndTestContainersMessage, error) {
 
 	// Define the response message
 	var responseMessage *fenixTestCaseBuilderServerGrpcApi.TestInstructionsAndTestContainersMessage
@@ -196,7 +196,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) GetPinnedTestInstructions
 
 // SavePinnedTestInstructionsAndTestContainers - *********************************************************************
 // The TestCase Builder sends all TestInstructions and Pre-defined TestInstructionContainer that the user has pinned in the GUI
-func (s *fenixTestCaseBuilderServerGrpcServicesServer) SavePinnedTestInstructionsAndTestContainers(ctx context.Context, pinnedTestInstructionsAndTestContainersMessage *fenixTestCaseBuilderServerGrpcApi.PinnedTestInstructionsAndTestContainersMessage) (*fenixTestCaseBuilderServerGrpcApi.AckNackResponse, error) {
+func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) SavePinnedTestInstructionsAndTestContainers(ctx context.Context, pinnedTestInstructionsAndTestContainersMessage *fenixTestCaseBuilderServerGrpcApi.PinnedTestInstructionsAndTestContainersMessage) (*fenixTestCaseBuilderServerGrpcApi.AckNackResponse, error) {
 
 	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "a93fb1bd-1a5b-4417-80c3-082d34267c06",

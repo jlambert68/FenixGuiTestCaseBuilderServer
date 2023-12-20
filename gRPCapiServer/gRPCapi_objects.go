@@ -24,7 +24,7 @@ var (
 )
 
 // gRPC Server used for register clients Name, Ip and Por and Clients Test Enviroments and Clients Test Commandst
-type fenixTestCaseBuilderServerGrpcServicesServer struct {
+type fenixTestCaseBuilderServerGrpcServicesServerStruct struct {
 	fenixGuiTestCaseBuilderServerGrpcApi.UnimplementedFenixTestCaseBuilderServerGrpcServicesServer
 }
 
@@ -32,6 +32,3 @@ type fenixTestCaseBuilderServerGrpcServicesServer struct {
 type fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct struct {
 	fenixGuiTestCaseBuilderServerGrpcApi.UnimplementedFenixTestCaseBuilderServerGrpcWorkerServicesServer
 }
-
-var highestFenixProtoFileVersion int32 = -1
-var highestClientProtoFileVersion int32 = -1

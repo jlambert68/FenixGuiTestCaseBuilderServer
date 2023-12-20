@@ -10,7 +10,7 @@ import (
 
 // GetDetailedTestCase
 // TestCase GUI use this gRPC-api to Load a full TestCase with all its data
-func (s *fenixTestCaseBuilderServerGrpcServicesServer) GetTestCasesHashes(ctx context.Context, testCasesHashRequest *fenixTestCaseBuilderServerGrpcApi.TestCasesHashRequest) (*fenixTestCaseBuilderServerGrpcApi.TestCasesHashResponse, error) {
+func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) GetTestCasesHashes(ctx context.Context, testCasesHashRequest *fenixTestCaseBuilderServerGrpcApi.TestCasesHashRequest) (*fenixTestCaseBuilderServerGrpcApi.TestCasesHashResponse, error) {
 
 	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "04aaa37e-1786-47e9-b4da-551624c2ee7d",

@@ -36,7 +36,7 @@ import (
 
 // ListAllAvailableTestInstructionsAndTestInstructionContainers - *********************************************************************
 // The TestCase Builder asks for all TestInstructions and Pre-defined TestInstructionContainer that the user can add to a TestCase
-func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableTestInstructionsAndTestInstructionContainers(
+func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTestInstructionsAndTestInstructionContainers(
 	ctx context.Context, userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (
 	*fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage, error) {
 
@@ -131,7 +131,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableTestInstr
 
 // ListAllAvailablePinnedTestInstructionsAndTestInstructionContainers - *********************************************************************
 // The TestCase Builder asks for all Pinned TestInstructions and Pinned Pre-defined TestInstructionContainer that the user can add to a TestCase
-func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailablePinnedTestInstructionsAndTestInstructionContainers(ctx context.Context, userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (*fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage, error) {
+func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailablePinnedTestInstructionsAndTestInstructionContainers(ctx context.Context, userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (*fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage, error) {
 
 	// Define the response message
 	var responseMessage *fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage
@@ -224,7 +224,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailablePinnedTes
 
 // SavePinnedTestInstructionsAndTestContainers - *********************************************************************
 // The TestCase Builder sends all TestInstructions and Pre-defined TestInstructionContainer that the user has pinned in the GUI
-func (s *fenixTestCaseBuilderServerGrpcServicesServer) SaveAllPinnedTestInstructionsAndTestInstructionContainers(ctx context.Context, pinnedTestInstructionsAndTestContainersMessage *fenixTestCaseBuilderServerGrpcApi.SavePinnedTestInstructionsAndPreCreatedTestInstructionContainersMessage) (*fenixTestCaseBuilderServerGrpcApi.AckNackResponse, error) {
+func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) SaveAllPinnedTestInstructionsAndTestInstructionContainers(ctx context.Context, pinnedTestInstructionsAndTestContainersMessage *fenixTestCaseBuilderServerGrpcApi.SavePinnedTestInstructionsAndPreCreatedTestInstructionContainersMessage) (*fenixTestCaseBuilderServerGrpcApi.AckNackResponse, error) {
 
 	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "a93fb1bd-1a5b-4417-80c3-082d34267c06",
@@ -264,7 +264,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServer) SaveAllPinnedTestInstruct
 
 // ListAllAvailableTestInstructionsAndTestInstructionContainers - *********************************************************************
 // The TestCase Builder asks for all TestInstructions and Pre-defined TestInstructionContainer that the user can add to a TestCase
-func (s *fenixTestCaseBuilderServerGrpcServicesServer) ListAllAvailableBonds(ctx context.Context, userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (*fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage, error) {
+func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableBonds(ctx context.Context, userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (*fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage, error) {
 
 	// Define the response message
 	var responseMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage
