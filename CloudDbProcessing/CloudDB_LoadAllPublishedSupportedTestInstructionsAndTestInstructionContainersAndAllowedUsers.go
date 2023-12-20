@@ -3,6 +3,7 @@ package CloudDbProcessing
 import (
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
+	"fmt"
 	"github.com/jackc/pgx/v4"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/TestInstructionAndTestInstuctionContainerTypes"
@@ -52,6 +53,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadAllSupportedTestInstruct
 	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessages []*TestInstructionAndTestInstuctionContainerTypes.
 		TestInstructionsAndTestInstructionsContainersStruct,
 	err error) {
+
+	fmt.Println(" **** Load  all supported TestInstructions, TestInstructionContainers and Allowed Users for a specific domain ****")
 
 	return testInstructionsAndTestInstructionContainersFromGrpcBuilderMessages, err
 }

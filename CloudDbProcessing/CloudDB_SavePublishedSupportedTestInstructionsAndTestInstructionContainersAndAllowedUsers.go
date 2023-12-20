@@ -58,7 +58,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 	err error) {
 
 	// Verify that Domain exists in database
-	err = fenixCloudDBObject.verifyDomainExistsInDatabase(dbTransaction, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainHash)
+	err = fenixCloudDBObject.verifyDomainExistsInDatabase(
+		dbTransaction,
+		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainHash)
+
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
 			"id":         "b248368c-efdf-475c-b2e3-8c4643a11c9d",
@@ -103,13 +106,14 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 			common_config.Logger.WithFields(logrus.Fields{
 				"id":         "d8c8ef69-49f7-464e-b51f-23b5ca59bca9",
 				"domainHash": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainHash,
+				"domainName": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainName,
 			}).Info("No Message Hash found in database, so supported TestInstructions, TestInstructionContainers and Allowed Users will be saved")
 		}
 
 		if testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.
 			ForceNewBaseLineForTestInstructionsAndTestInstructionContainers == true {
 			common_config.Logger.WithFields(logrus.Fields{
-				"id":         "d8c8ef69-49f7-464e-b51f-23b5ca59bca9",
+				"id":         "ca054b92-f093-438a-bfb1-be5438ca3f33",
 				"domainHash": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainHash,
 				"domainName": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainName,
 			}).Info("New forced 'baseline' for the domains supported TestInstructions, TestInstructionContainers and Allowed Users")
@@ -158,6 +162,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyDomainExistsInDatabase
 	domainUUID string) (
 	err error) {
 
+	fmt.Println(" **** Verify that Domain exists in database ****")
+
 	return err
 }
 
@@ -167,6 +173,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestInst
 	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage *TestInstructionAndTestInstuctionContainerTypes.
 		TestInstructionsAndTestInstructionsContainersStruct) (
 	err error) {
+
+	fmt.Println(" **** Do the actual save for all supported TestInstructions, TestInstructionContainers and Allowed Users to database ****")
 
 	return err
 }
@@ -185,7 +193,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyChangesToTestInstructi
 	testInstructionsAndTestInstructionContainersAndAllowedUsersMessageSavedInDB, err = fenixCloudDBObject.
 		loadDomainSpecificPublishedSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsersMessage(
 			dbTransaction,
-			testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID)
+			string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID))
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{

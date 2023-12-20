@@ -3,6 +3,7 @@ package CloudDbProcessing
 import (
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
+	"fmt"
 	"github.com/jackc/pgx/v4"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/sirupsen/logrus"
@@ -45,12 +46,14 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) prepareLoadSupportedTestInst
 	return messageHash, err
 }
 
-// Load  all supported TestInstructions, TestInstructionContainers and Allowed Users for all domains
+// Load Message Hash for supported TestInstructions, TestInstructionContainers and Allowed Users for specific domain
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsersMessageHash(
 	dbTransaction pgx.Tx,
 	domainUUID string) (
 	messageHash string,
 	err error) {
+
+	fmt.Println(" **** Load Message Hash for supported TestInstructions, TestInstructionContainers and Allowed Users for specific domain ****")
 
 	return messageHash, err
 }
