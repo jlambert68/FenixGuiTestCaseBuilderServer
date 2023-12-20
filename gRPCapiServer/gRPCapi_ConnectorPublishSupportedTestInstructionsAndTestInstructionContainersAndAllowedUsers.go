@@ -1,9 +1,9 @@
 package gRPCapiServer
 
 import (
+	"FenixGuiTestCaseBuilderServer/CloudDbProcessing"
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
-	"fmt"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/TestInstructionAndTestInstuctionContainerTypes"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/shared_code"
@@ -102,7 +102,35 @@ func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) PublishSuppor
 		ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 	}
 
-	fmt.Println("Hej hej")
+	// Save SupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers in CloudDB
+	// Save the TestCase
+	var fenixCloudDBObject *CloudDbProcessing.FenixCloudDBObjectStruct
+	err = fenixCloudDBObject.PrepareSaveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
+		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id":    "70484037-5e3e-43f2-9213-9ff52c3ccbea",
+			"error": err,
+		}).Error("Couldn't save supported TestInstructions, TestInstructionContainers and Allowed Users in CloudDB")
+
+		// Set Error codes to return message
+		var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+		var errorCode fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+
+		errorCode = fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM
+		errorCodes = append(errorCodes, errorCode)
+
+		// Create Return message
+		returnMessage = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+			AckNack:                      false,
+			Comments:                     err.Error(),
+			ErrorCodes:                   errorCodes,
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
+		}
+
+		return returnMessage, nil
+	}
 
 	return returnMessage, nil
 
