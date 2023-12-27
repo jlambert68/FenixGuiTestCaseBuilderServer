@@ -7,7 +7,7 @@ toolchain go1.21.5
 require (
 	github.com/go-gota/gota v0.12.0 // indirect
 	github.com/jlambert68/FenixSyncShared v0.0.0-20231023123349-e891692cede8
-	github.com/jlambert68/FenixTestInstructionsAdminShared v0.0.0-20231220200639-5c1a06f74bfb
+	github.com/jlambert68/FenixTestInstructionsAdminShared v0.0.0-20231227093652-90e9fd9f49e2
 	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/net v0.19.0
 	golang.org/x/oauth2 v0.15.0

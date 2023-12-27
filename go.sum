@@ -90,8 +90,8 @@ github.com/jlambert68/FenixGrpcApi v0.0.0-20231215160546-f65965881a79 h1:Au3bZEv
 github.com/jlambert68/FenixGrpcApi v0.0.0-20231215160546-f65965881a79/go.mod h1:5BO7Hq8qdgzK5W7KY14yXPYN/fNuXAMdDQTY7xHIeXc=
 github.com/jlambert68/FenixSyncShared v0.0.0-20231023123349-e891692cede8 h1:6DNmHc/BgCUzYuLO9nk0x924VnJAE750QFckkVmWgS8=
 github.com/jlambert68/FenixSyncShared v0.0.0-20231023123349-e891692cede8/go.mod h1:fqUSlkZdNCbpusNU0LxyL19Ag21+prMzJCx/1f4RiFs=
-github.com/jlambert68/FenixTestInstructionsAdminShared v0.0.0-20231220200639-5c1a06f74bfb h1:UPYGwoc27n+IkIu+nNTLHwCKxY9BHxWgvjMHzuIX09U=
-github.com/jlambert68/FenixTestInstructionsAdminShared v0.0.0-20231220200639-5c1a06f74bfb/go.mod h1:g+CbPElN/qeWAF7q0oGlUARCb9XP+l+zCcpJuoT0w6A=
+github.com/jlambert68/FenixTestInstructionsAdminShared v0.0.0-20231227093652-90e9fd9f49e2 h1:Fu4QGNC8pzrAqKn7useJOn8DlY9rvIn3xV7P/BQM+P8=
+github.com/jlambert68/FenixTestInstructionsAdminShared v0.0.0-20231227093652-90e9fd9f49e2/go.mod h1:g+CbPElN/qeWAF7q0oGlUARCb9XP+l+zCcpJuoT0w6A=
 github.com/jung-kurt/gofpdf v1.0.0/go.mod h1:7Id9E/uU8ce6rXgefFLlgrJj/GYY22cpxn+r32jIOes=
 github.com/jung-kurt/gofpdf v1.0.3-0.20190309125859-24315acbbda5/go.mod h1:7Id9E/uU8ce6rXgefFLlgrJj/GYY22cpxn+r32jIOes=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=

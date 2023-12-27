@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// ConnectorReportCompleteTestInstructionExecutionResult
+// PublishSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers
 // When a TestInstruction has been fully executed the Execution Connector use this to inform the results of the execution result to the Worker
 func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) PublishSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
 	ctx context.Context,
@@ -22,11 +22,11 @@ func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) PublishSuppor
 	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "66ed33eb-a92c-4231-9f37-e04d44d48dfa",
 		"supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersGrpcWorkerMessage": supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersGrpcWorkerMessage,
-	}).Debug("Incoming 'gRPCWorker- ConnectorPublishSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers'")
+	}).Debug("Incoming 'gRPCWorker- PublishSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers'")
 
 	defer fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "97688fc1-7010-4820-9d6f-26ffde24504e",
-	}).Debug("Outgoing 'gRPCWorker - ConnectorPublishSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers'")
+	}).Debug("Outgoing 'gRPCWorker - PublishSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers'")
 
 	// Calling system
 	userId := "Execution Connector"
@@ -57,19 +57,20 @@ func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) PublishSuppor
 			"error": err,
 		}).Fatalln("Problem when Convert back supported TestInstructions, TestInstructionContainers and " +
 			"Allowed Users message from a gRPC-Builder version of the message and check correctness of Hashes " +
-			"in 'ConnectorPublishSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers'")
+			"in 'PublishSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers'")
 	}
 
 	// Verify recreated Hashes from gRPC-Worker-message
 	var errorSliceWorker []error
-	errorSliceWorker = shared_code.VerifyTestInstructionAndTestInstructionContainerAndUsersMessageHashes(
+	errorSliceWorker = shared_code.VerifyTestInstructionAndTestInstructionContainerAndUsersMessageHashesAndDomain(
+		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID,
 		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
 	if errorSliceWorker != nil {
 		common_config.Logger.WithFields(logrus.Fields{
 			"ID":               "98ad28e7-3bff-405d-8d61-e94886db5f08",
 			"errorSliceWorker": errorSliceWorker,
 		}).Error("Problem when recreated Hashes from gRPC-Worker-message " +
-			"in 'ConnectorPublishSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers'")
+			"in 'PublishSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers'")
 
 		// Loop error messages and concatenate into one string
 		var errorMessageBackToConnector string

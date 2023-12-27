@@ -13,7 +13,9 @@ import (
 )
 
 // Load Full TestCase from Database
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadTestCaseHashes(testCaseUuids *[]string) (responseMessage *fenixTestCaseBuilderServerGrpcApi.TestCasesHashResponse) {
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadTestCaseHashes(
+	testCaseUuids *[]string) (
+	responseMessage *fenixTestCaseBuilderServerGrpcApi.TestCasesHashResponse) {
 
 	// Begin SQL Transaction
 	txn, err := fenixSyncShared.DbPool.Begin(context.Background())

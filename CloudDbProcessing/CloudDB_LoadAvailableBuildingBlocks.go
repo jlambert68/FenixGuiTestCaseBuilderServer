@@ -52,7 +52,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) LoadClientsImmatureTestInstr
 	   "Enabled"                      boolean   not null,
 	   "MajorVersionNumber"           integer   not null,
 	   "MinorVersionNumber"           integer   not null,
-	   "UpdatedTimeStamp"             timestamp not null
+	   "updatedTimeStamp"             timestamp not null
 
 
 
@@ -133,7 +133,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) LoadClientsImmatureTestInstr
 		}
 
 		// Convert TimeStamp into proto-format for TimeStamp
-		nonEditableInformation.UpdatedTimeStamp = timestamppb.New(tempTimeStamp)
+		nonEditableInformation.updatedTimeStamp = timestamppb.New(tempTimeStamp)
 
 		// Add 'basicTestInstructionInformation' to map
 		testInstructionUuid := nonEditableInformation.TestInstructionUuid
