@@ -34,7 +34,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) prepareLoadDomainSpecificPub
 
 	defer txn.Commit(context.Background())
 
-	// Load  all supported TestInstructions, TestInstructionContainers and Allowed Users for a specific domain
+	// Load all supported TestInstructions, TestInstructionContainers and Allowed Users for a specific domain
 	var supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessage *supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessageStruct
 	supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessage, err = fenixCloudDBObject.
 		loadDomainSpecificPublishedSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsersMessage(

@@ -3,9 +3,11 @@ package CloudDbProcessing
 import (
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/jackc/pgx/v4"
+	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/TestInstructionAndTestInstuctionContainerTypes"
 	"github.com/sirupsen/logrus"
@@ -62,7 +64,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 	var domainServiceAccountRelation *domainServiceAccountRelationStruct
 	domainServiceAccountRelation, err = fenixCloudDBObject.verifyDomainExistsInDatabase(
 		dbTransaction,
-		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainHash)
+		string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID))
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
@@ -80,14 +82,14 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 	// Get saved message hash for Domain
 	var savedMessageHash string
 	savedMessageHash, err = fenixCloudDBObject.prepareLoadSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsersMessageHash(
-		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainHash)
+		string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID))
 
 	if err != nil {
 
 		common_config.Logger.WithFields(logrus.Fields{
-			"id":         "5986b01f-d584-470a-908e-6f8898fd71e1",
-			"domainHash": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainHash,
-			"error":      err,
+			"id":                   "5986b01f-d584-470a-908e-6f8898fd71e1",
+			"ConnectorsDomainUUID": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID,
+			"error":                err,
 		}).Error("Couldn't get saved Message Hash from CloudDB")
 
 		return err
@@ -185,6 +187,77 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestInst
 	err error) {
 
 	fmt.Println(" **** Do the actual save for all supported TestInstructions, TestInstructionContainers and Allowed Users to database ****")
+	// Create Insert Statement for TestCaseExecution that will be put on ExecutionQueue
+	// Data to be inserted in the DB-table
+	var dataRowToBeInsertedMultiType []interface{}
+	var dataRowsToBeInsertedMultiType [][]interface{}
+	dataRowsToBeInsertedMultiType = nil
+	dataRowToBeInsertedMultiType = nil
+
+	var tempsupportedtiandticandallowedusersmessageasjsonbAsByteString []byte
+	tempsupportedtiandticandallowedusersmessageasjsonbAsByteString, err = json.Marshal(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
+
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainName)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.TestInstructionsAndTestInstructionsContainersAndUsersMessageHash)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.TestInstructions.TestInstructionsHash)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.TestInstructionContainers.TestInstructionContainersHash)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.AllowedUsers.AllowedUsersHash)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, string(tempsupportedtiandticandallowedusersmessageasjsonbAsByteString))
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.MessageCreationTimeStamp)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.MessageCreationTimeStamp)
+
+	dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
+
+	sqlToExecute := ""
+	sqlToExecute = sqlToExecute + "INSERT INTO \"" + usedDBSchema + "\".\"TestCases\" "
+	sqlToExecute = sqlToExecute + "(\"DomainUuid\", \"DomainName\", \"TestCaseUuid\", \"TestCaseName\", \"TestCaseVersion\", " +
+		"\"TestCaseBasicInformationAsJsonb\", \"TestInstructionsAsJsonb\", \"TestInstructionContainersAsJsonb\", " +
+		"\"TestCaseHash\", \"TestCaseExtraInformationAsJsonb\") "
+	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
+	sqlToExecute = sqlToExecute + ";"
+
+	// Execute Query CloudDB
+	// Execute Query CloudDB
+	comandTag, err := dbTransaction.Exec(context.Background(), sqlToExecute)
+
+	if err != nil {
+
+		// Set Error codes to return message
+		var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+		var errorCode fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+
+		errorCode = fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM
+		errorCodes = append(errorCodes, errorCode)
+
+		// Create Return message
+		returnMessage = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+			AckNack:                      false,
+			Comments:                     "Problem when Loading TestCase Basic Information from database",
+			ErrorCodes:                   errorCodes,
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
+		}
+	}
+
+	// Log response from CloudDB
+	common_config.Logger.WithFields(logrus.Fields{
+		"Id":                       "bea64662-3a70-4a5b-9e92-26d130983f63",
+		"comandTag.Insert()":       comandTag.Insert(),
+		"comandTag.Delete()":       comandTag.Delete(),
+		"comandTag.Select()":       comandTag.Select(),
+		"comandTag.Update()":       comandTag.Update(),
+		"comandTag.RowsAffected()": comandTag.RowsAffected(),
+		"comandTag.String()":       comandTag.String(),
+		"sqlToExecute":             sqlToExecute,
+	}).Debug("Return data for SQL executed in database")
+
+	// No errors occurred
+	return &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+		AckNack:                      true,
+		Comments:                     "",
+		ErrorCodes:                   nil,
+		ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
+	}, nil
 
 	return err
 }
@@ -599,7 +672,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainBaseData(
 	ctx, timeOutCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer timeOutCancel()
 
-	rows, err := fenixSyncShared.DbPool.Query(ctx, sqlToExecute)
+	rows, err := dbTransaction.Query(ctx, sqlToExecute)
 	defer rows.Close()
 
 	if err != nil {
@@ -617,10 +690,14 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainBaseData(
 	// Extract data from DB result set
 	for rows.Next() {
 
+		var tempDomainUUID string
+		var tempDomainName string
+		var tempDomainServiceAccountRelation string
+
 		err = rows.Scan(
-			&domainServiceAccountRelation.domainUUID,
-			&domainServiceAccountRelation.domainName,
-			&domainServiceAccountRelation.serviceAccountUsedByWorker,
+			&tempDomainUUID,
+			&tempDomainName,
+			&tempDomainServiceAccountRelation,
 		)
 
 		if err != nil {
@@ -631,6 +708,12 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainBaseData(
 			}).Error("Something went wrong when processing result from database")
 
 			return nil, err
+		}
+
+		domainServiceAccountRelation = &domainServiceAccountRelationStruct{
+			domainUUID:                 tempDomainUUID,
+			domainName:                 tempDomainName,
+			serviceAccountUsedByWorker: tempDomainServiceAccountRelation,
 		}
 
 		// Add to row counter; Max = 1

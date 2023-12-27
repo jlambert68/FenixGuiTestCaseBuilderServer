@@ -65,9 +65,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadSupportedTestInstruction
 	}()
 
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "SELECT STITICAU.\"MessageHash\" "
+	sqlToExecute = sqlToExecute + "SELECT STITICAU.\"messagehash\" "
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"SupportedTIAndTICAndAllowedUsers\" STITICAU "
-	sqlToExecute = sqlToExecute + "WHERE STITICAU.\"DomainUUID\" = '" + domainUUID + "'"
+	sqlToExecute = sqlToExecute + "WHERE STITICAU.\"domainuuid\" = '" + domainUUID + "' "
 	sqlToExecute = sqlToExecute + ";"
 
 	// Query DB
@@ -75,7 +75,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadSupportedTestInstruction
 	ctx, timeOutCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer timeOutCancel()
 
-	rows, err := fenixSyncShared.DbPool.Query(ctx, sqlToExecute)
+	rows, err := dbTransaction.Query(ctx, sqlToExecute)
 	defer rows.Close()
 
 	if err != nil {
