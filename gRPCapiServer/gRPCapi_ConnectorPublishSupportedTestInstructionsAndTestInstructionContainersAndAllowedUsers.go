@@ -55,7 +55,7 @@ func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) PublishSuppor
 		common_config.Logger.WithFields(logrus.Fields{
 			"ID":    "a5b86695-a1d4-43b4-9b73-8d5a29871269",
 			"error": err,
-		}).Fatalln("Problem when Convert back supported TestInstructions, TestInstructionContainers and " +
+		}).Info("Problem when Convert back supported TestInstructions, TestInstructionContainers and " +
 			"Allowed Users message from a gRPC-Builder version of the message and check correctness of Hashes " +
 			"in 'PublishSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers'")
 	}

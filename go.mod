@@ -16,7 +16,7 @@ require (
 
 require (
 	github.com/jackc/pgx/v4 v4.18.1
-	github.com/jlambert68/FenixGrpcApi v0.0.0-20231215160546-f65965881a79
+	github.com/jlambert68/FenixGrpcApi v0.0.0-20231227163427-10e6a71886e3
 	google.golang.org/protobuf v1.31.0
 )
 

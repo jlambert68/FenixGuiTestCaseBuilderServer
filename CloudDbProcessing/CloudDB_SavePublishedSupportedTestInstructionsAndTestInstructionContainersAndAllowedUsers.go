@@ -9,6 +9,7 @@ import (
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/TestInstructionAndTestInstuctionContainerTypes"
 	"github.com/sirupsen/logrus"
+	"time"
 )
 
 // PrepareSaveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers
@@ -58,7 +59,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 	err error) {
 
 	// Verify that Domain exists in database
-	err = fenixCloudDBObject.verifyDomainExistsInDatabase(
+	var domainServiceAccountRelation *domainServiceAccountRelationStruct
+	domainServiceAccountRelation, err = fenixCloudDBObject.verifyDomainExistsInDatabase(
 		dbTransaction,
 		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainHash)
 
@@ -67,10 +69,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 			"id":         "b248368c-efdf-475c-b2e3-8c4643a11c9d",
 			"domainHash": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainHash,
 			"error":      err,
-		}).Error("Domain does not exist in database")
+		}).Error("Domain does not exist in database or some error occurred when calling database")
 
 		return err
 	}
+
+	fmt.Println("************************************* domainServiceAccountRelation *************************************")
+	fmt.Println(domainServiceAccountRelation)
 
 	// Get saved message hash for Domain
 	var savedMessageHash string
@@ -96,6 +101,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 		return nil
 	}
 
+	// Verify Signed message to secure that sending worker is using correct Service Account
+	fmt.Println("************************************* Verify Signed message *************************************")
+
 	// When there is no Message Hash then just save the message in the database
 	// or when this is a new 'baseline' for the domains supported TestInstructions, TestInstructionContainers and Allowed Users
 	if savedMessageHash == "" ||
@@ -110,6 +118,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 			}).Info("No Message Hash found in database, so supported TestInstructions, TestInstructionContainers and Allowed Users will be saved")
 		}
 
+		// New forced 'baseline' for the domains supported TestInstructions, TestInstructionContainers and Allowed Users
 		if testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.
 			ForceNewBaseLineForTestInstructionsAndTestInstructionContainers == true {
 			common_config.Logger.WithFields(logrus.Fields{
@@ -119,7 +128,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 			}).Info("New forced 'baseline' for the domains supported TestInstructions, TestInstructionContainers and Allowed Users")
 		}
 
-		// Save supported TestInstructions, TestInstructionContainers and Allowed Users in Database
+		// Save supported TestInstructions, TestInstructionContainers and Allowed Users in Database due to New forced 'baseline'
 		err = fenixCloudDBObject.performSaveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
 			dbTransaction, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
 
@@ -160,11 +169,12 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyDomainExistsInDatabase(
 	dbTransaction pgx.Tx,
 	domainUUID string) (
+	domainServiceAccountRelation *domainServiceAccountRelationStruct,
 	err error) {
 
-	fmt.Println(" **** Verify that Domain exists in database ****")
+	domainServiceAccountRelation, err = fenixCloudDBObject.loadDomainBaseData(dbTransaction, domainUUID)
 
-	return err
+	return domainServiceAccountRelation, err
 }
 
 // Do the actual save for all supported TestInstructions, TestInstructionContainers and Allowed Users to database
@@ -188,9 +198,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyChangesToTestInstructi
 
 	// Load saved message for supported TestInstructions, TestInstructionContainers and Allowed Users from database
 	// To be used when comparing TestInstructions, TestInstructionContainers and Allowed Users
-	var testInstructionsAndTestInstructionContainersAndAllowedUsersMessageSavedInDB *TestInstructionAndTestInstuctionContainerTypes.
-		TestInstructionsAndTestInstructionsContainersStruct
-	testInstructionsAndTestInstructionContainersAndAllowedUsersMessageSavedInDB, err = fenixCloudDBObject.
+
+	var supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessage *supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessageStruct
+	supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessage, err = fenixCloudDBObject.
 		loadDomainSpecificPublishedSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsersMessage(
 			dbTransaction,
 			string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID))
@@ -206,6 +216,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyChangesToTestInstructi
 		return err
 
 	}
+
+	// Convert loaded message from database into message to be use below
+	var testInstructionsAndTestInstructionContainersAndAllowedUsersMessageSavedInDB *TestInstructionAndTestInstuctionContainerTypes.
+		TestInstructionsAndTestInstructionsContainersStruct
+	testInstructionsAndTestInstructionContainersAndAllowedUsersMessageSavedInDB, err = fenixCloudDBObject.
+		convertIntoTestInstructionsAndTestInstructionContainersFromGrpcBuilderMessage(
+			supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessage)
 
 	// Verify changes in TestInstructions
 	var correctNewChangesFoundInTestInstructions bool
@@ -544,4 +561,112 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyChangesToAllowedUsers(
 	correctNewChangesFoundInAllowedUsers = true
 
 	return correctNewChangesFoundInAllowedUsers, err
+}
+
+type domainServiceAccountRelationStruct struct {
+	domainUUID                 string
+	domainName                 string
+	serviceAccountUsedByWorker string
+}
+
+// When row is found the Domain exists and is allowed to use Fenix
+// Functions also returns Service Account that should be used by calling Worker
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainBaseData(
+	dbTransaction pgx.Tx,
+	domainUUID string) (
+	domainServiceAccountRelation *domainServiceAccountRelationStruct,
+	err error) {
+
+	common_config.Logger.WithFields(logrus.Fields{
+		"Id": "13b68d1e-1ecd-4bc6-8b72-cdf50391942c",
+	}).Debug("Entering: loadDomainBaseData()")
+
+	defer func() {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id": "57e50f73-3524-4cfd-8c43-dc52324a0140",
+		}).Debug("Exiting: loadDomainBaseData()")
+	}()
+
+	sqlToExecute := ""
+	sqlToExecute = sqlToExecute + "SELECT domain_uuid, domain_name, callingworkerserviceaccountname "
+	sqlToExecute = sqlToExecute + "FROM \"FenixDomainAdministration\".\"domains\" "
+	sqlToExecute = sqlToExecute + "WHERE activated = true AND deleted = false AND "
+	sqlToExecute = sqlToExecute + "domain_uuid = '" + domainUUID + "'"
+	sqlToExecute = sqlToExecute + ";"
+
+	// Query DB
+	var ctx context.Context
+	ctx, timeOutCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer timeOutCancel()
+
+	rows, err := fenixSyncShared.DbPool.Query(ctx, sqlToExecute)
+	defer rows.Close()
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "940b1066-507f-4ff4-bec7-51fdc33698a1",
+			"Error":        err,
+			"sqlToExecute": sqlToExecute,
+		}).Error("Something went wrong when processing result from database")
+
+		return nil, err
+	}
+
+	var rowsCounter int
+
+	// Extract data from DB result set
+	for rows.Next() {
+
+		err = rows.Scan(
+			&domainServiceAccountRelation.domainUUID,
+			&domainServiceAccountRelation.domainName,
+			&domainServiceAccountRelation.serviceAccountUsedByWorker,
+		)
+
+		if err != nil {
+			common_config.Logger.WithFields(logrus.Fields{
+				"Id":           "33359dae-cda8-45f3-a57e-8dab751be154",
+				"Error":        err,
+				"sqlToExecute": sqlToExecute,
+			}).Error("Something went wrong when processing result from database")
+
+			return nil, err
+		}
+
+		// Add to row counter; Max = 1
+		rowsCounter = rowsCounter + 1
+
+	}
+
+	// Check how many rows that were found
+	if rowsCounter > 1 {
+		// Shouldn't happen
+
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "427c2341-4d82-45a7-aeaf-dfbc6352e307",
+			"rowsCounter":  rowsCounter,
+			"sqlToExecute": sqlToExecute,
+		}).Error("More than 1 row was found in database")
+
+		newErrorMessage := errors.New("More than 1 row was found in database for domain=" + domainUUID)
+
+		return nil, newErrorMessage
+
+	} else if rowsCounter == 0 {
+		// Domain is not allowed to use Fenix
+
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "3b319f30-1ddd-4cab-b043-f86899d9df89",
+			"rowsCounter":  rowsCounter,
+			"sqlToExecute": sqlToExecute,
+			"domainUUID":   domainUUID,
+		}).Warning("Domain is not allowed to use Fenix")
+
+		newErrorMessage := errors.New("Domain is not allowed to use Fenix; DomainUUID=" + domainUUID)
+
+		return nil, newErrorMessage
+
+	}
+
+	return domainServiceAccountRelation, err
 }

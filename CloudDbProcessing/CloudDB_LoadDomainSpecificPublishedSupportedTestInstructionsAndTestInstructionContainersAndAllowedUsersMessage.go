@@ -3,12 +3,12 @@ package CloudDbProcessing
 import (
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
+	"encoding/json"
 	"errors"
 	"github.com/jackc/pgx/v4"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/TestInstructionAndTestInstuctionContainerTypes"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/protobuf/encoding/protojson"
 	"time"
 )
 
@@ -178,51 +178,27 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) convertIntoTestInstructionsA
 	err error) {
 
 	common_config.Logger.WithFields(logrus.Fields{
-		"Id": "6e5e9f62-b57a-40e2-8cd4-19b0c8ab1a7e",
-	}).Debug("Entering: loadDomainSpecificPublishedSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsersMessage()")
+		"Id": "7be30c64-e243-4111-80b2-feaaf5db9a66",
+	}).Debug("Entering: convertIntoTestInstructionsAndTestInstructionContainersFromGrpcBuilderMessage()")
 
 	defer func() {
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id": "b76c3b72-9f1e-4512-8aea-ac1ec740e6e8",
-		}).Debug("Exiting: loadDomainSpecificPublishedSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsersMessage()")
+			"Id": "cc1d80c2-3032-49f7-bf37-f4f9fb27c68d",
+		}).Debug("Exiting: convertIntoTestInstructionsAndTestInstructionContainersFromGrpcBuilderMessage()")
 	}()
 
 	// Convert json-strings into byte-arrays
-	tempTestCaseBasicInformationAsByteArray = []byte(tempTestCaseBasicInformationAsString)
-	tempTestInstructionsAsByteArray = []byte(tempTestInstructionsAsString)
-	tempTestInstructionContainersAsByteArray = []byte(tempTestInstructionContainersAsString)
-	tempTestCaseExtraInformationAsByteArray = []byte(tempTestCaseExtraInformationAsString)
+	tempTestCaseBasicInformationAsByteArray := []byte(supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessage.supportedTIAndTICAndAllowedUsersMessageAsJsonb)
 
-	// Convert json-byte-arrays into proto-messages
-	err = protojson.Unmarshal(tempTestCaseBasicInformationAsByteArray, &tempTestCaseBasicInformation)
+	// Convert json-byte-arrays into struct-messages
+	err = json.Unmarshal(tempTestCaseBasicInformationAsByteArray, &testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id":    "d315ea2b-8263-4ad8-9b96-d62da4acf35f",
+			"Id":    "31db6991-fc80-4958-bfdc-c034a8008aca",
 			"Error": err,
-		}).Error("Something went wrong when converting 'tempTestCaseBasicInformationAsByteArray' into proto-message")
+		}).Error("Something went wrong when converting 'tempTestCaseBasicInformationAsByteArray' into struct-message")
 
 		return nil, err
-	}
-
-	err = protojson.Unmarshal(tempTestInstructionsAsByteArray, &tempMatureTestInstructions)
-	if err != nil {
-		common_config.Logger.WithFields(logrus.Fields{
-			"Id":    "441a35b3-5139-4046-8aeb-a986a84827df",
-			"Error": err,
-		}).Error("Something went wrong when converting 'tempTestInstructionsAsByteArray' into proto-message")
-
-		return nil, err
-	}
-
-	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage = &TestInstructionAndTestInstuctionContainerTypes.
-		TestInstructionsAndTestInstructionsContainersStruct{
-		TestInstructions:          nil,
-		TestInstructionContainers: nil,
-		AllowedUsers:              nil,
-		MessageCreationTimeStamp:  time.Time{},
-		TestInstructionsAndTestInstructionsContainersAndUsersMessageHash: "",
-		ForceNewBaseLineForTestInstructionsAndTestInstructionContainers:  false,
-		ConnectorsDomain: TestInstructionAndTestInstuctionContainerTypes.ConnectorsDomainStruct{},
 	}
 
 	return testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage, err
