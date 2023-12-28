@@ -541,7 +541,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyChangesToTestInstructi
 	// Delete old data in database for Supported TestInstructions, TestInstructionContainers And Allowed Users
 	err = fenixCloudDBObject.performDeleteCurrentSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
 		dbTransaction,
-		string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID))
+		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
@@ -1010,6 +1010,45 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifySignatureFromWorker(
 // Delete old data in database for Supported TestInstructions, TestInstructionContainers And Allowed Users
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) performDeleteCurrentSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
 	dbTransaction pgx.Tx,
+	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage *TestInstructionAndTestInstuctionContainerTypes.
+		TestInstructionsAndTestInstructionsContainersStruct) (
+	err error) {
+
+	// Do the actual Delete for all supported TestInstructions, TestInstructionContainers to database
+	err = fenixCloudDBObject.performDeleteCurrentSupportedTestInstructionsAndTestInstructionContainers(
+		dbTransaction,
+		string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID))
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":                   "f85b3257-071b-4dd2-b371-95d1cb95e89b",
+			"err":                  err,
+			"connectorsDomainUUID": string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID),
+		}).Error("Got problems when deleting supported TestInstructions, TestInstructionContainers from database")
+
+		return err
+	}
+
+	// Do the actual Delete for Allowed Users to database
+	err = fenixCloudDBObject.performDeleteCurrentAllowedUsers(
+		dbTransaction,
+		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":  "59e80faa-bcb6-4d33-b54a-7a4e854dba96",
+			"err": err,
+		}).Error("Got problems when deleting supported Allowed Users from Database")
+
+		return err
+	}
+
+	return err
+}
+
+// Delete old data in database for Supported TestInstructions, TestInstructionContainers
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) performDeleteCurrentSupportedTestInstructionsAndTestInstructionContainers(
+	dbTransaction pgx.Tx,
 	connectorsDomainUUID string) (
 	err error) {
 
@@ -1056,6 +1095,85 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performDeleteCurrentSupporte
 	// Log response from CloudDB
 	common_config.Logger.WithFields(logrus.Fields{
 		"Id":                       "266ceec9-27b1-481b-914d-e127c5ca3f0f",
+		"comandTag.Insert()":       comandTag.Insert(),
+		"comandTag.Delete()":       comandTag.Delete(),
+		"comandTag.Select()":       comandTag.Select(),
+		"comandTag.Update()":       comandTag.Update(),
+		"comandTag.RowsAffected()": comandTag.RowsAffected(),
+		"comandTag.String()":       comandTag.String(),
+	}).Debug("Return data for SQL executed in database")
+
+	return err
+}
+
+// Delete old data in database for Supported TestInstructions, TestInstructionContainers
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) performDeleteCurrentAllowedUsers(
+	dbTransaction pgx.Tx,
+	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage *TestInstructionAndTestInstuctionContainerTypes.
+		TestInstructionsAndTestInstructionsContainersStruct) (
+	err error) {
+
+	common_config.Logger.WithFields(logrus.Fields{
+		"Id": "24827f66-869a-4a20-9e62-e9a6ae85a609",
+	}).Debug("Entering: performDeleteCurrentAllowedUsers()")
+
+	defer func() {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id": "34ce838b-88fc-404a-8ab0-8ee09c313b80",
+		}).Debug("Exiting: performDeleteCurrentAllowedUsers()")
+	}()
+
+	// Loop Allowed User
+	var tempUniqueIdHashesSlice []string
+	for _, allowedUser := range testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.AllowedUsers.AllowedUsers {
+
+		var tempUniqueIdHash string // concat(DomainUUID, UserIdOnComputer, GCPAuthenticatedUser)
+		var tempUniqueIdHashValuesSlice []string
+		tempUniqueIdHashValuesSlice = []string{
+			string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID),
+			allowedUser.UserIdOnComputer,
+			allowedUser.GCPAuthenticatedUser}
+
+		// Hash slice
+		tempUniqueIdHash = fenixSyncShared.HashValues(tempUniqueIdHashValuesSlice, true)
+
+		// Add to slice of UniqueIdHashes
+		tempUniqueIdHashesSlice = append(tempUniqueIdHashesSlice, tempUniqueIdHash)
+	}
+
+	sqlToExecute := ""
+	sqlToExecute = sqlToExecute + "DELETE FROM \"FenixDomainAdministration\".\"allowedusers\" au "
+	sqlToExecute = sqlToExecute + "WHERE au.\"uniqueidhash\" IN " + fenixCloudDBObject.generateSQLINArray(tempUniqueIdHashesSlice)
+	sqlToExecute = sqlToExecute + ";"
+
+	// Log SQL to be executed if Environment variable is true
+	if common_config.LogAllSQLs == true {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "6c90f1a5-cabf-4315-ad98-c7c4f5cd4e33",
+			"sqlToExecute": sqlToExecute,
+		}).Debug("SQL to be executed within 'performDeleteCurrentAllowedUsers'")
+	}
+
+	// Query DB
+	ctx, timeOutCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer timeOutCancel()
+
+	// Execute Query CloudDB
+	comandTag, err := dbTransaction.Exec(ctx, sqlToExecute)
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "0caed30f-502a-4b46-8d2f-4ba52578bbf1",
+			"Error":        err,
+			"sqlToExecute": sqlToExecute,
+		}).Error("Something went wrong when executing SQL")
+
+		return err
+	}
+
+	// Log response from CloudDB
+	common_config.Logger.WithFields(logrus.Fields{
+		"Id":                       "e4445ded-3e9c-4aed-bf9b-902bc102a612",
 		"comandTag.Insert()":       comandTag.Insert(),
 		"comandTag.Delete()":       comandTag.Delete(),
 		"comandTag.Select()":       comandTag.Select(),

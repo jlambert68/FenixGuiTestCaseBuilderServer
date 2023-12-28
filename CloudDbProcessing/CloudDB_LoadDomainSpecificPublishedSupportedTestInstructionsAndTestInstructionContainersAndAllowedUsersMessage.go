@@ -98,9 +98,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainSpecificPublishedS
 	}()
 
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "SELECT STITICAU.* "
-	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"SupportedTIAndTICAndAllowedUsers\" STITICAU "
-	sqlToExecute = sqlToExecute + "WHERE STITICAU.\"DomainUUID\" = '" + domainUUID + "'"
+	sqlToExecute = sqlToExecute + "SELECT * "
+	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"SupportedTIAndTICAndAllowedUsers\" "
+	sqlToExecute = sqlToExecute + "WHERE \"domainuuid\" = '" + domainUUID + "'"
 	sqlToExecute = sqlToExecute + ";"
 
 	// Query DB
@@ -123,19 +123,31 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainSpecificPublishedS
 
 	var rowsCounter int
 
+	var (
+		tempDomainUUID                                     string
+		tempDomainName                                     string
+		tempMessageHash                                    string
+		tempTestInstructionsHash                           string
+		tempTestInstructionContainersHash                  string
+		tempAllowedUsersHash                               string
+		tempSupportedTIAndTICAndAllowedUsersMessageAsJsonb string
+		tempUpdatedTimeStamp                               time.Time
+		tempLastPublishedTimeStamp                         time.Time
+	)
+
 	// Extract data from DB result set
 	for rows.Next() {
 
 		err = rows.Scan(
-			&supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessage.domainUUID,
-			&supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessage.domainName,
-			&supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessage.messageHash,
-			&supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessage.testInstructionsHash,
-			&supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessage.testInstructionContainersHash,
-			&supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessage.allowedUsersHash,
-			&supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessage.supportedTIAndTICAndAllowedUsersMessageAsJsonb,
-			&supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessage.updatedTimeStamp,
-			&supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessage.lastPublishedTimeStamp,
+			&tempDomainUUID,
+			&tempDomainName,
+			&tempMessageHash,
+			&tempTestInstructionsHash,
+			&tempTestInstructionContainersHash,
+			&tempAllowedUsersHash,
+			&tempSupportedTIAndTICAndAllowedUsersMessageAsJsonb,
+			&tempUpdatedTimeStamp,
+			&tempLastPublishedTimeStamp,
 		)
 
 		if err != nil {
@@ -146,6 +158,19 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainSpecificPublishedS
 			}).Error("Something went wrong when processing result from database")
 
 			return nil, err
+		}
+
+		// Convert into message to be returned
+		supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessage = &supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessageStruct{
+			domainUUID:                    tempDomainUUID,
+			domainName:                    tempDomainName,
+			messageHash:                   tempMessageHash,
+			testInstructionsHash:          tempTestInstructionsHash,
+			testInstructionContainersHash: tempTestInstructionContainersHash,
+			allowedUsersHash:              tempAllowedUsersHash,
+			supportedTIAndTICAndAllowedUsersMessageAsJsonb: tempSupportedTIAndTICAndAllowedUsersMessageAsJsonb,
+			updatedTimeStamp:       tempUpdatedTimeStamp,
+			lastPublishedTimeStamp: tempLastPublishedTimeStamp,
 		}
 
 		// Add to row counter; Max = 1
