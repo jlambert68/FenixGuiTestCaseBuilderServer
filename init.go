@@ -29,13 +29,13 @@ func init() {
 
 	switch executionLocation {
 	case "LOCALHOST_NODOCKER":
-		common_config.ExecutionLocationForClient = common_config.LocalhostNoDocker
+		common_config.ExecutionLocationForBuilderServer = common_config.LocalhostNoDocker
 
 	case "LOCALHOST_DOCKER":
-		common_config.ExecutionLocationForClient = common_config.LocalhostDocker
+		common_config.ExecutionLocationForBuilderServer = common_config.LocalhostDocker
 
 	case "GCP":
-		common_config.ExecutionLocationForClient = common_config.GCP
+		common_config.ExecutionLocationForBuilderServer = common_config.GCP
 
 	default:
 		fmt.Println("Unknown Execution location for FenixGuiServer: " + executionLocation + ". Expected one of the following: LOCALHOST_NODOCKER, LOCALHOST_DOCKER, GCP")
@@ -75,5 +75,8 @@ func init() {
 		os.Exit(0)
 	}
 	common_config.LogAllSQLs = tempBool
+
+	// Address to Local WorkerServer, when running full 'local'
+	common_config.LocalFenixWorkerServerAddressToDial = mustGetenv("LocalFenixWorkerServerAddressToDial")
 
 }

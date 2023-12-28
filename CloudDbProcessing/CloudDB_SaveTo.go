@@ -221,7 +221,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) generateSQLInsertValues(test
 				common_config.Logger.WithFields(logrus.Fields{
 					"id":    "53539786-cbb6-418d-8752-c2e337b9e962",
 					"value": value,
-				}).Fatal("Unhandled type, %valueType", valueType)
+				}).Fatal("Unhandled type, %valueType:", valueType)
 			}
 
 			// After the last value then add ')'

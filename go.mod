@@ -16,7 +16,8 @@ require (
 
 require (
 	github.com/jackc/pgx/v4 v4.18.1
-	github.com/jlambert68/FenixGrpcApi v0.0.0-20231228091629-c599b8acce3c
+	github.com/jlambert68/FenixGrpcApi v0.0.0-20231228125305-2a2c2ad5c8dd
+	google.golang.org/api v0.149.0
 	google.golang.org/protobuf v1.32.0
 )
 
@@ -44,7 +45,6 @@ require (
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gonum.org/v1/gonum v0.9.1 // indirect
-	google.golang.org/api v0.149.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto v0.0.0-20231212172506-995d672761c0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20231211222908-989df2bf70f3 // indirect

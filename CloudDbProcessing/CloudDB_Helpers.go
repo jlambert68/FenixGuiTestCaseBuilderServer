@@ -99,3 +99,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) getNexTestCaseVersion(testCa
 	return currentTestCaseVersion + 1, err
 
 }
+
+// GenerateDatetimeFromTimeInputForDB
+// Generate DataBaseTimeStamp, eg '2022-02-08 17:35:04.000000'
+func GenerateDatetimeFromTimeInputForDB(currentTime time.Time) (currentTimeStampAsString string) {
+
+	timeStampLayOut := "2006-01-02 15:04:05.000000 -0700" //milliseconds
+	currentTimeStampAsString = currentTime.Format(timeStampLayOut)
+
+	return currentTimeStampAsString
+}

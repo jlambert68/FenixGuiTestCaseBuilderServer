@@ -5,9 +5,6 @@ import "github.com/sirupsen/logrus"
 // ***********************************************************************************************************
 // The following variables receives their values from environment variables
 
-// Where is the client running
-var ExecutionLocationForClient ExecutionLocationTypeType
-
 // Where is the Fenix TestDataSync server running
 // LocationForFenixTestDataServer
 var ExecutionLocationForFenixTestDataServer ExecutionLocationTypeType

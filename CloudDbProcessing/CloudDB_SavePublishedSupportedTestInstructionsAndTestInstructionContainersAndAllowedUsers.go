@@ -2,18 +2,43 @@ package CloudDbProcessing
 
 import (
 	"FenixGuiTestCaseBuilderServer/common_config"
+	"FenixGuiTestCaseBuilderServer/messagesToWorkerServer"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/jackc/pgx/v4"
+	fenixExecutionWorkerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixExecutionServer/fenixExecutionWorkerGrpcApi/go_grpc_api"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/TestInstructionAndTestInstuctionContainerTypes"
-	"github.com/jlambert68/FenixTestInstructionsAdminShared/shared_code"
 	"github.com/sirupsen/logrus"
 	"time"
 )
+
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsersCommitOrRoleBack(
+	dbTransactionReference *pgx.Tx,
+	doCommitNotRoleBackReference *bool) {
+
+	dbTransaction := *dbTransactionReference
+	doCommitNotRoleBack := *doCommitNotRoleBackReference
+
+	if doCommitNotRoleBack == true {
+		dbTransaction.Commit(context.Background())
+
+		common_config.Logger.WithFields(logrus.Fields{
+			"id": "675d793a-403c-4626-a70f-bd7ccd747090",
+		}).Debug("Doing Commit for SQL  in 'saveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsersCommitOrRoleBack'")
+
+	} else {
+		dbTransaction.Rollback(context.Background())
+
+		common_config.Logger.WithFields(logrus.Fields{
+			"id": "d0a3d9d6-6ee3-423a-aba5-81ad53be07d3",
+		}).Info("Doing Rollback for SQL  in 'saveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsersCommitOrRoleBack'")
+
+	}
+}
 
 // PrepareSaveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers
 // Do initial preparations to be able to save all supported TestInstructions, TestInstructionContainers and Allowed Users
@@ -36,7 +61,16 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveSupportedTestInst
 
 	}
 
-	defer txn.Commit(context.Background())
+	// After all stuff is done, then Commit or Rollback depending on result
+	var doCommitNotRoleBack bool
+
+	// Standard is to do a Rollback
+	doCommitNotRoleBack = false
+
+	// When leaving then do the actual commit or rollback
+	defer fenixCloudDBObject.saveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsersCommitOrRoleBack(
+		&txn,
+		&doCommitNotRoleBack)
 
 	// Save  all supported TestInstructions, TestInstructionContainers and Allowed Users
 	err = fenixCloudDBObject.saveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
@@ -53,6 +87,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveSupportedTestInst
 
 		return err
 	}
+
+	doCommitNotRoleBack = true
 
 	return err
 }
@@ -108,7 +144,6 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 	// Verify Signed message to secure that sending worker is using correct Service Account
 	var verificationOfSignatureSucceeded bool
 	verificationOfSignatureSucceeded, err = fenixCloudDBObject.verifySignatureFromWorker(
-		string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID),
 		signedMessageByWorkerServiceAccountMessage,
 		domainServiceAccountRelation)
 
@@ -212,7 +247,44 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestInst
 		TestInstructionsAndTestInstructionsContainersStruct) (
 	err error) {
 
-	fmt.Println(" **** Do the actual save for all supported TestInstructions, TestInstructionContainers and Allowed Users to database ****")
+	// Do the actual save for all supported TestInstructions, TestInstructionContainers to database
+	err = fenixCloudDBObject.performSaveSupportedTestInstructionsAndTestInstructionContainers(
+		dbTransaction,
+		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":  "4aff6581-f81c-4a8e-ad00-7b966a62a3ee",
+			"err": err,
+		}).Error("Got problems when saving supported TestInstructions, TestInstructionContainers to database")
+
+		return err
+	}
+
+	// Do the actual save for Allowed Users to database
+	err = fenixCloudDBObject.performSaveSupportedAllowedUsers(
+		dbTransaction,
+		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":  "4ed84bb6-3f34-49c3-9b15-a867c5ce724d",
+			"err": err,
+		}).Error("Got problems when saving supported Allowed Users to Database")
+
+		return err
+	}
+
+	return err
+}
+
+// Do the actual save for all supported TestInstructions, TestInstructionContainers to database
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestInstructionsAndTestInstructionContainers(
+	dbTransaction pgx.Tx,
+	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage *TestInstructionAndTestInstuctionContainerTypes.
+		TestInstructionsAndTestInstructionsContainersStruct) (
+	err error) {
+
 	// Create Insert Statement for TestCaseExecution that will be put on ExecutionQueue
 	// Data to be inserted in the DB-table
 	var dataRowToBeInsertedMultiType []interface{}
@@ -223,15 +295,18 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestInst
 	var tempsupportedtiandticandallowedusersmessageasjsonbAsByteString []byte
 	tempsupportedtiandticandallowedusersmessageasjsonbAsByteString, err = json.Marshal(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
 
-	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID)
-	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainName)
+	var tempTimestampToBeUsed string
+	tempTimestampToBeUsed = common_config.GenerateDatetimeFromTimeInputForDB(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.MessageCreationTimeStamp)
+
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID))
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainName))
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.TestInstructionsAndTestInstructionsContainersAndUsersMessageHash)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.TestInstructions.TestInstructionsHash)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.TestInstructionContainers.TestInstructionContainersHash)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.AllowedUsers.AllowedUsersHash)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, string(tempsupportedtiandticandallowedusersmessageasjsonbAsByteString))
-	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.MessageCreationTimeStamp)
-	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.MessageCreationTimeStamp)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTimestampToBeUsed)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTimestampToBeUsed)
 
 	dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
 
@@ -239,7 +314,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestInst
 	sqlToExecute = sqlToExecute + "INSERT INTO \"FenixBuilder\".\"SupportedTIAndTICAndAllowedUsers\" "
 	sqlToExecute = sqlToExecute + "(\"domainuuid\", \"domainname\", \"messagehash\", \"testinstructionshash\", " +
 		"\"testinstructioncontainershash\", \"allowedusershash\", \"supportedtiandticandallowedusersmessageasjsonb\", " +
-		"\"updatedtimestamp\", \"lastpublishedtimestamp\", \"TestCaseExtraInformationAsJsonb\") "
+		"\"updatedtimestamp\", \"lastpublishedtimestamp\") "
 	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
 	sqlToExecute = sqlToExecute + ";"
 
@@ -248,7 +323,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestInst
 		common_config.Logger.WithFields(logrus.Fields{
 			"Id":           "3d66b86b-5d5b-45d3-8290-cb2338f2b8bf",
 			"sqlToExecute": sqlToExecute,
-		}).Debug("SQL to be executed within 'performSaveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers'")
+		}).Debug("SQL to be executed within 'performSaveSupportedTestInstructionsAndTestInstructionContainers'")
 	}
 
 	// Execute Query CloudDB
@@ -258,7 +333,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestInst
 		common_config.Logger.WithFields(logrus.Fields{
 			"Id":           "c8a6c3da-c83d-42ef-bcf7-f56adc03361a",
 			"sqlToExecute": sqlToExecute,
-		}).Error("Got some problem when executing SQL within 'performSaveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers'")
+		}).Error("Got some problem when executing SQL within 'performSaveSupportedTestInstructionsAndTestInstructionContainers'")
 
 		return err
 	}
@@ -266,6 +341,90 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestInst
 	// Log response from CloudDB
 	common_config.Logger.WithFields(logrus.Fields{
 		"Id":                       "10e10916-108f-48dc-96da-a84c4e7df835",
+		"comandTag.Insert()":       comandTag.Insert(),
+		"comandTag.Delete()":       comandTag.Delete(),
+		"comandTag.Select()":       comandTag.Select(),
+		"comandTag.Update()":       comandTag.Update(),
+		"comandTag.RowsAffected()": comandTag.RowsAffected(),
+		"comandTag.String()":       comandTag.String(),
+		"sqlToExecute":             sqlToExecute,
+	}).Debug("Return data for SQL executed in database")
+
+	// No errors occurred
+	return err
+}
+
+// Do the actual save for Allowed Users to database
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedAllowedUsers(
+	dbTransaction pgx.Tx,
+	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage *TestInstructionAndTestInstuctionContainerTypes.
+		TestInstructionsAndTestInstructionsContainersStruct) (
+	err error) {
+
+	// Create Insert Statement for TestCaseExecution that will be put on ExecutionQueue
+	// Data to be inserted in the DB-table
+	var dataRowToBeInsertedMultiType []interface{}
+	var dataRowsToBeInsertedMultiType [][]interface{}
+	dataRowsToBeInsertedMultiType = nil
+
+	// Loop Allowed User
+	for _, allowedUser := range testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.AllowedUsers.AllowedUsers {
+
+		dataRowToBeInsertedMultiType = nil
+
+		var tempUniqueIdHash string // concat(DomainUUID, UserIdOnComputer, GCPAuthenticatedUser)
+		var tempUniqueIdHashValuesSlice []string
+		tempUniqueIdHashValuesSlice = []string{
+			string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID),
+			allowedUser.UserIdOnComputer,
+			allowedUser.GCPAuthenticatedUser}
+
+		// Hash slice
+		tempUniqueIdHash = fenixSyncShared.HashValues(tempUniqueIdHashValuesSlice, true)
+
+		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempUniqueIdHash)
+		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID))
+		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainName))
+		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, allowedUser.UserIdOnComputer)
+		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, allowedUser.GCPAuthenticatedUser)
+		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, allowedUser.UserEmail)
+		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, allowedUser.UserFirstName)
+		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, allowedUser.UserLastName)
+
+		dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
+
+	}
+
+	sqlToExecute := ""
+	sqlToExecute = sqlToExecute + "INSERT INTO \"FenixDomainAdministration\".\"allowedusers\" "
+	sqlToExecute = sqlToExecute + "(\"uniqueidhash\", \"domainuuid\", \"domainname\", \"useridoncomputer\", " +
+		"\"gcpauthenticateduser\", \"useremail\", \"userfirstname\", \"userlastname\") "
+	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
+	sqlToExecute = sqlToExecute + ";"
+
+	// Log SQL to be executed if Environment variable is true
+	if common_config.LogAllSQLs == true {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "377a3597-ab10-41bb-a2b0-b4c0e2722b58",
+			"sqlToExecute": sqlToExecute,
+		}).Debug("SQL to be executed within 'performSaveSupportedAllowedUsers'")
+	}
+
+	// Execute Query CloudDB
+	comandTag, err := dbTransaction.Exec(context.Background(), sqlToExecute)
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "fd94e10e-3f4e-4dc8-a634-adbf94ac6c35",
+			"sqlToExecute": sqlToExecute,
+		}).Error("Got some problem when executing SQL within 'performSaveSupportedAllowedUsers'")
+
+		return err
+	}
+
+	// Log response from CloudDB
+	common_config.Logger.WithFields(logrus.Fields{
+		"Id":                       "66dec9fd-1f25-4162-beba-5e7116918189",
 		"comandTag.Insert()":       comandTag.Insert(),
 		"comandTag.Delete()":       comandTag.Delete(),
 		"comandTag.Select()":       comandTag.Select(),
@@ -673,6 +832,7 @@ type domainServiceAccountRelationStruct struct {
 	domainUUID                 string
 	domainName                 string
 	serviceAccountUsedByWorker string
+	workerAddressToDial        string
 }
 
 // When row is found the Domain exists and is allowed to use Fenix
@@ -694,10 +854,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainBaseData(
 	}()
 
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "SELECT domain_uuid, domain_name, callingworkerserviceaccountname "
-	sqlToExecute = sqlToExecute + "FROM \"FenixDomainAdministration\".\"domains\" "
-	sqlToExecute = sqlToExecute + "WHERE activated = true AND deleted = false AND "
-	sqlToExecute = sqlToExecute + "domain_uuid = '" + domainUUID + "'"
+	sqlToExecute = sqlToExecute + "SELECT fdad.domain_uuid, fdad.domain_name, fdad.workeraddress "
+	sqlToExecute = sqlToExecute + "FROM \"FenixDomainAdministration\".\"domains\" fdad "
+	sqlToExecute = sqlToExecute + "WHERE fdad.activated = true AND fdad.deleted = false AND "
+	sqlToExecute = sqlToExecute + "fdad.domain_uuid = '" + domainUUID + "'"
 	sqlToExecute = sqlToExecute + ";"
 
 	// Query DB
@@ -723,14 +883,15 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainBaseData(
 	// Extract data from DB result set
 	for rows.Next() {
 
+		// Temp parameters
 		var tempDomainUUID string
 		var tempDomainName string
-		var tempDomainServiceAccountRelation string
+		var tempWorkerAddressToDial string
 
 		err = rows.Scan(
 			&tempDomainUUID,
 			&tempDomainName,
-			&tempDomainServiceAccountRelation,
+			&tempWorkerAddressToDial,
 		)
 
 		if err != nil {
@@ -744,9 +905,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainBaseData(
 		}
 
 		domainServiceAccountRelation = &domainServiceAccountRelationStruct{
-			domainUUID:                 tempDomainUUID,
-			domainName:                 tempDomainName,
-			serviceAccountUsedByWorker: tempDomainServiceAccountRelation,
+			domainUUID:          tempDomainUUID,
+			domainName:          tempDomainName,
+			workerAddressToDial: tempWorkerAddressToDial,
 		}
 
 		// Add to row counter; Max = 1
@@ -789,52 +950,56 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainBaseData(
 
 // Do the signature verification of signature received from Worker
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifySignatureFromWorker(
-	domainUUID string,
 	signedMessageByWorkerServiceAccountMessage *fenixTestCaseBuilderServerGrpcApi.SignedMessageByWorkerServiceAccountMessage,
 	domainServiceAccountRelation *domainServiceAccountRelationStruct) (
 	verificationOfSignatureSucceeded bool,
 	err error) {
 
-	// Begin SQL Transaction
-	txn, err := fenixSyncShared.DbPool.Begin(context.Background())
+	// Set up temporary variable used when calling Worker over gRPC
+	var tempMessagesToWorkerServerObject *messagesToWorkerServer.MessagesToWorkerServerObjectStruct
+	tempMessagesToWorkerServerObject = &messagesToWorkerServer.MessagesToWorkerServerObjectStruct{Logger: common_config.Logger}
 
+	// Call Worker over gRPC
+	var signMessageResponse *fenixExecutionWorkerGrpcApi.SignMessageResponse
+	signMessageResponse, err = tempMessagesToWorkerServerObject.SendBuilderServerAskWorkerToSignMessage(
+		signedMessageByWorkerServiceAccountMessage.GetMessageToBeSigned(),
+		domainServiceAccountRelation.workerAddressToDial)
+
+	// Got some problem when doing gRPC-call to WorkerServer
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"id":    "d0a3d9d6-6ee3-423a-aba5-81ad53be07d3",
-			"error": err,
-		}).Error("Problem to do 'DbPool.Begin'  in 'VerifySignatureFromWorker'")
-
-		return false, err
-
-	}
-
-	defer txn.Commit(context.Background())
-
-	// Verify Signature sent by Worker
-	verificationOfSignatureSucceeded, err = shared_code.VerifySignatureFromSignedMessageToProveIdentityToBuilderServer(
-		signedMessageByWorkerServiceAccountMessage,
-		domainServiceAccountRelation.serviceAccountUsedByWorker)
-
-	if err != nil {
-		common_config.Logger.WithFields(logrus.Fields{
-			"id":                         "650997e0-9961-4857-9f0b-c56371e06e05",
-			"error":                      err,
-			"domainUUID":                 domainUUID,
-			"serviceAccountUsedByWorker": domainServiceAccountRelation.serviceAccountUsedByWorker,
-		}).Error("Got a problem when verifying Signature")
+			"id":                           "63858aac-491f-4162-9cbb-ed9d4b1c5ba6",
+			"error":                        err,
+			"domainServiceAccountRelation": domainServiceAccountRelation,
+		}).Error("Got a problem when calling WorkerServer over gRPC to verify signature")
 
 		return false, err
 	}
 
-	// Check if signature verification wasn't successful
-	if verificationOfSignatureSucceeded != true {
+	// Got some problem when doing gRPC-call to WorkerServer
+	if signMessageResponse.GetAckNackResponse().GetAckNack() == false {
 		common_config.Logger.WithFields(logrus.Fields{
-			"id":                         "650997e0-9961-4857-9f0b-c56371e06e05",
-			"error":                      err,
-			"domainUUID":                 domainUUID,
-			"serviceAccountUsedByWorker": domainServiceAccountRelation.serviceAccountUsedByWorker,
-		}).Warning("Signature verification wasn't successful")
+			"id":                           "09580908-dfbf-4f86-adb5-ca64e9a610b8",
+			"error":                        err,
+			"domainServiceAccountRelation": domainServiceAccountRelation,
+			"signMessageResponse":          signMessageResponse,
+		}).Error("Got a problem when calling WorkerServer over gRPC to verify signature")
 
+		var newError error
+		newError = errors.New(signMessageResponse.GetAckNackResponse().GetComments())
+
+		return false, newError
+	}
+
+	// Verify recreated signature with signature produced by Worker when sending published TI, TIC and Allowed Users
+	if signMessageResponse.GetSignedMessageByWorkerServiceAccount().
+		GetHashOfSignature() != signedMessageByWorkerServiceAccountMessage.HashOfSignature {
+		return false, err
+	}
+
+	// Verify recreated KeyId with KeyId produced by Worker
+	if signMessageResponse.GetSignedMessageByWorkerServiceAccount().
+		GetHashedKeyId() != signedMessageByWorkerServiceAccountMessage.HashedKeyId {
 		return false, err
 	}
 
