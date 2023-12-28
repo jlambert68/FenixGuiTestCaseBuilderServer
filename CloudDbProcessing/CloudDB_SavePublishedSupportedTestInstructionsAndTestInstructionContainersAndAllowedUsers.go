@@ -10,6 +10,7 @@ import (
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/TestInstructionAndTestInstuctionContainerTypes"
+	"github.com/jlambert68/FenixTestInstructionsAdminShared/shared_code"
 	"github.com/sirupsen/logrus"
 	"time"
 )
@@ -18,7 +19,9 @@ import (
 // Do initial preparations to be able to save all supported TestInstructions, TestInstructionContainers and Allowed Users
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
 	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage *TestInstructionAndTestInstuctionContainerTypes.
-		TestInstructionsAndTestInstructionsContainersStruct) (err error) {
+		TestInstructionsAndTestInstructionsContainersStruct,
+	signedMessageByWorkerServiceAccountMessage *fenixTestCaseBuilderServerGrpcApi.SignedMessageByWorkerServiceAccountMessage) (
+	err error) {
 
 	// Begin SQL Transaction
 	txn, err := fenixSyncShared.DbPool.Begin(context.Background())
@@ -38,7 +41,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveSupportedTestInst
 	// Save  all supported TestInstructions, TestInstructionContainers and Allowed Users
 	err = fenixCloudDBObject.saveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
 		txn,
-		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
+		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage,
+		signedMessageByWorkerServiceAccountMessage)
 
 	if err != nil {
 
@@ -57,7 +61,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveSupportedTestInst
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
 	dbTransaction pgx.Tx,
 	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage *TestInstructionAndTestInstuctionContainerTypes.
-		TestInstructionsAndTestInstructionsContainersStruct) (
+		TestInstructionsAndTestInstructionsContainersStruct,
+	signedMessageByWorkerServiceAccountMessage *fenixTestCaseBuilderServerGrpcApi.SignedMessageByWorkerServiceAccountMessage) (
 	err error) {
 
 	// Verify that Domain exists in database
@@ -75,9 +80,6 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 
 		return err
 	}
-
-	fmt.Println("************************************* domainServiceAccountRelation *************************************")
-	fmt.Println(domainServiceAccountRelation)
 
 	// Get saved message hash for Domain
 	var savedMessageHash string
@@ -104,9 +106,33 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 	}
 
 	// Verify Signed message to secure that sending worker is using correct Service Account
-	fmt.Println("************************************* Verify Signed message *************************************")
+	var verificationOfSignatureSucceeded bool
+	verificationOfSignatureSucceeded, err = fenixCloudDBObject.verifySignatureFromWorker(
+		string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID),
+		signedMessageByWorkerServiceAccountMessage,
+		domainServiceAccountRelation)
 
-	// When there is no Message Hash then just save the message in the database
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id":  "618180da-8de6-454d-b489-50eb24a7a41e",
+			"err": err,
+		}).Info("Got some problem when verifying Signature")
+
+		return err
+	}
+
+	// The signature couldn't be verified correctly
+	if verificationOfSignatureSucceeded == false {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id": "5624bb59-7ce9-4643-ad62-e36bd3ba319f",
+		}).Warning("The correctness of the signature couldn't be verified")
+
+		err = errors.New("the correctness of the signature couldn't be verified")
+
+		return err
+	}
+
+	// When there is no Message Hash in database then just save the message in the database
 	// or when this is a new 'baseline' for the domains supported TestInstructions, TestInstructionContainers and Allowed Users
 	if savedMessageHash == "" ||
 		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.
@@ -210,38 +236,36 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestInst
 	dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
 
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "INSERT INTO \"" + usedDBSchema + "\".\"TestCases\" "
-	sqlToExecute = sqlToExecute + "(\"DomainUuid\", \"DomainName\", \"TestCaseUuid\", \"TestCaseName\", \"TestCaseVersion\", " +
-		"\"TestCaseBasicInformationAsJsonb\", \"TestInstructionsAsJsonb\", \"TestInstructionContainersAsJsonb\", " +
-		"\"TestCaseHash\", \"TestCaseExtraInformationAsJsonb\") "
+	sqlToExecute = sqlToExecute + "INSERT INTO \"FenixBuilder\".\"SupportedTIAndTICAndAllowedUsers\" "
+	sqlToExecute = sqlToExecute + "(\"domainuuid\", \"domainname\", \"messagehash\", \"testinstructionshash\", " +
+		"\"testinstructioncontainershash\", \"allowedusershash\", \"supportedtiandticandallowedusersmessageasjsonb\", " +
+		"\"updatedtimestamp\", \"lastpublishedtimestamp\", \"TestCaseExtraInformationAsJsonb\") "
 	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
 	sqlToExecute = sqlToExecute + ";"
 
-	// Execute Query CloudDB
+	// Log SQL to be executed if Environment variable is true
+	if common_config.LogAllSQLs == true {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "3d66b86b-5d5b-45d3-8290-cb2338f2b8bf",
+			"sqlToExecute": sqlToExecute,
+		}).Debug("SQL to be executed within 'performSaveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers'")
+	}
+
 	// Execute Query CloudDB
 	comandTag, err := dbTransaction.Exec(context.Background(), sqlToExecute)
 
 	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "c8a6c3da-c83d-42ef-bcf7-f56adc03361a",
+			"sqlToExecute": sqlToExecute,
+		}).Error("Got some problem when executing SQL within 'performSaveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers'")
 
-		// Set Error codes to return message
-		var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
-		var errorCode fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
-
-		errorCode = fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM
-		errorCodes = append(errorCodes, errorCode)
-
-		// Create Return message
-		returnMessage = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-			AckNack:                      false,
-			Comments:                     "Problem when Loading TestCase Basic Information from database",
-			ErrorCodes:                   errorCodes,
-			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
-		}
+		return err
 	}
 
 	// Log response from CloudDB
 	common_config.Logger.WithFields(logrus.Fields{
-		"Id":                       "bea64662-3a70-4a5b-9e92-26d130983f63",
+		"Id":                       "10e10916-108f-48dc-96da-a84c4e7df835",
 		"comandTag.Insert()":       comandTag.Insert(),
 		"comandTag.Delete()":       comandTag.Delete(),
 		"comandTag.Select()":       comandTag.Select(),
@@ -252,13 +276,6 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestInst
 	}).Debug("Return data for SQL executed in database")
 
 	// No errors occurred
-	return &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-		AckNack:                      true,
-		Comments:                     "",
-		ErrorCodes:                   nil,
-		ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
-	}, nil
-
 	return err
 }
 
@@ -360,6 +377,22 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyChangesToTestInstructi
 			"correctNewChangesFoundInTestInstructionContainers": correctNewChangesFoundInTestInstructionContainers,
 			"correctNewChangesFoundInAllowedUsers":              correctNewChangesFoundInAllowedUsers,
 		}).Info("Found correct changes, so update supported TestInstructions, TestInstructionContainers and Allowed Users in database")
+	}
+
+	// Delete old data in database for Supported TestInstructions, TestInstructionContainers And Allowed Users
+	err = fenixCloudDBObject.performDeleteCurrentSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
+		dbTransaction,
+		string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID))
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id":         "d65868ff-251f-47ec-a3c2-c8cdc3fac90c",
+			"DomainHash": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainHash,
+			"DomainName": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainName,
+			"error":      err,
+		}).Error("Got some problem when deleting old data for supported TestInstructions, TestInstructionContainers and Allowed Users in database")
+
+		return err
 	}
 
 	// Save new message with supported TestInstructions, TestInstructionContainers and Allowed Users in database
@@ -752,4 +785,119 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainBaseData(
 	}
 
 	return domainServiceAccountRelation, err
+}
+
+// Do the signature verification of signature received from Worker
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifySignatureFromWorker(
+	domainUUID string,
+	signedMessageByWorkerServiceAccountMessage *fenixTestCaseBuilderServerGrpcApi.SignedMessageByWorkerServiceAccountMessage,
+	domainServiceAccountRelation *domainServiceAccountRelationStruct) (
+	verificationOfSignatureSucceeded bool,
+	err error) {
+
+	// Begin SQL Transaction
+	txn, err := fenixSyncShared.DbPool.Begin(context.Background())
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id":    "d0a3d9d6-6ee3-423a-aba5-81ad53be07d3",
+			"error": err,
+		}).Error("Problem to do 'DbPool.Begin'  in 'VerifySignatureFromWorker'")
+
+		return false, err
+
+	}
+
+	defer txn.Commit(context.Background())
+
+	// Verify Signature sent by Worker
+	verificationOfSignatureSucceeded, err = shared_code.VerifySignatureFromSignedMessageToProveIdentityToBuilderServer(
+		signedMessageByWorkerServiceAccountMessage,
+		domainServiceAccountRelation.serviceAccountUsedByWorker)
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id":                         "650997e0-9961-4857-9f0b-c56371e06e05",
+			"error":                      err,
+			"domainUUID":                 domainUUID,
+			"serviceAccountUsedByWorker": domainServiceAccountRelation.serviceAccountUsedByWorker,
+		}).Error("Got a problem when verifying Signature")
+
+		return false, err
+	}
+
+	// Check if signature verification wasn't successful
+	if verificationOfSignatureSucceeded != true {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id":                         "650997e0-9961-4857-9f0b-c56371e06e05",
+			"error":                      err,
+			"domainUUID":                 domainUUID,
+			"serviceAccountUsedByWorker": domainServiceAccountRelation.serviceAccountUsedByWorker,
+		}).Warning("Signature verification wasn't successful")
+
+		return false, err
+	}
+
+	// Success in signature verification
+	return true, err
+}
+
+// Delete old data in database for Supported TestInstructions, TestInstructionContainers And Allowed Users
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) performDeleteCurrentSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
+	dbTransaction pgx.Tx,
+	connectorsDomainUUID string) (
+	err error) {
+
+	common_config.Logger.WithFields(logrus.Fields{
+		"Id": "24827f66-869a-4a20-9e62-e9a6ae85a609",
+	}).Debug("Entering: performDeleteCurrentSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers()")
+
+	defer func() {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id": "90b01dc1-3eca-4b96-bdcb-c8e9f44ca054",
+		}).Debug("Exiting: performDeleteCurrentSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers()")
+	}()
+
+	sqlToExecute := ""
+	sqlToExecute = sqlToExecute + "DELETE FROM \"FenixBuilder\".\"SupportedTIAndTICAndAllowedUsers\" STITICAU "
+	sqlToExecute = sqlToExecute + "WHERE STITICAU.\"domainuuid\" = '" + connectorsDomainUUID + "' "
+	sqlToExecute = sqlToExecute + ";"
+
+	// Log SQL to be executed if Environment variable is true
+	if common_config.LogAllSQLs == true {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "dc1801a8-df60-463d-b2be-40ed1c05f018",
+			"sqlToExecute": sqlToExecute,
+		}).Debug("SQL to be executed within 'deleteTestInstructionMessagesReceivedByWrongInstanceFromDatabaseInCloudDB'")
+	}
+
+	// Query DB
+	ctx, timeOutCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer timeOutCancel()
+
+	// Execute Query CloudDB
+	comandTag, err := dbTransaction.Exec(ctx, sqlToExecute)
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "7d047414-29b9-4280-aef2-481598486932",
+			"Error":        err,
+			"sqlToExecute": sqlToExecute,
+		}).Error("Something went wrong when executing SQL")
+
+		return err
+	}
+
+	// Log response from CloudDB
+	common_config.Logger.WithFields(logrus.Fields{
+		"Id":                       "266ceec9-27b1-481b-914d-e127c5ca3f0f",
+		"comandTag.Insert()":       comandTag.Insert(),
+		"comandTag.Delete()":       comandTag.Delete(),
+		"comandTag.Select()":       comandTag.Select(),
+		"comandTag.Update()":       comandTag.Update(),
+		"comandTag.RowsAffected()": comandTag.RowsAffected(),
+		"comandTag.String()":       comandTag.String(),
+	}).Debug("Return data for SQL executed in database")
+
+	return err
 }

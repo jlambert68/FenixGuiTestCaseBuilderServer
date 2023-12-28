@@ -95,19 +95,12 @@ func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) PublishSuppor
 
 	// Save Published TestInstructions, TestInstructionContainers and Allowed Users to CloudDB
 
-	// Generate response when succeed to save to Database
-	returnMessage = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-		AckNack:                      true,
-		Comments:                     "",
-		ErrorCodes:                   []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{},
-		ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
-	}
-
 	// Save SupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers in CloudDB
 	// Save the TestCase
 	var fenixCloudDBObject *CloudDbProcessing.FenixCloudDBObjectStruct
 	err = fenixCloudDBObject.PrepareSaveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
-		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
+		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage,
+		supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersGrpcWorkerMessage.GetSignedMessageByWorkerServiceAccount())
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
@@ -131,6 +124,14 @@ func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) PublishSuppor
 		}
 
 		return returnMessage, nil
+	}
+
+	// Generate response when succeed to save to Database
+	returnMessage = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+		AckNack:                      true,
+		Comments:                     "",
+		ErrorCodes:                   []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{},
+		ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 	}
 
 	return returnMessage, nil
