@@ -10,7 +10,7 @@ import (
 )
 
 // Do initial preparations to be able to load all domains for a specific user
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) prepareLoadUsersDomains(
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersDomains(
 	gCPAuthenticatedUser string) (
 	domainUuidList []string,
 	err error) {
@@ -35,9 +35,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) prepareLoadUsersDomains(
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"id":             "2cd14dd8-0d44-4fc4-ae72-adaaaf37bacc",
-			"error":          err,
-			"domainUuidList": domainUuidList,
+			"id":                   "2cd14dd8-0d44-4fc4-ae72-adaaaf37bacc",
+			"error":                err,
+			"gCPAuthenticatedUser": gCPAuthenticatedUser,
 		}).Error("Couldn't load all Users Domains from CloudDB")
 
 		return nil, err

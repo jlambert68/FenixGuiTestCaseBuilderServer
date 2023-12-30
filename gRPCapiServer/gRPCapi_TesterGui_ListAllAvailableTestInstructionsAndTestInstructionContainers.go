@@ -5,6 +5,7 @@ import (
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
+	"github.com/jlambert68/FenixTestInstructionsAdminShared/TestInstructionAndTestInstuctionContainerTypes"
 	"github.com/sirupsen/logrus"
 )
 
@@ -25,8 +26,15 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 		"id": "27fb45fe-3266-41aa-a6af-958513977e28",
 	}).Debug("Outgoing 'gRPC - ListAllAvailableTestInstructionsAndTestContainers'")
 
+	var err error
+
+	// Current user
+	var gCPAuthenticatedUser string
+	gCPAuthenticatedUser = userIdentificationMessage.UserId
+
 	// Check if Client is using correct proto files version
-	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion("666", userIdentificationMessage.ProtoFileVersionUsedByClient)
+	var returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse
+	returnMessage = common_config.IsClientUsingCorrectTestDataProtoFileVersion(gCPAuthenticatedUser, userIdentificationMessage.ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 		// Not correct proto-file version is used
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
@@ -39,9 +47,6 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 		return responseMessage, nil
 	}
 
-	// Current user
-	userID := userIdentificationMessage.UserId
-
 	// Define variables to store data from DB in
 	var cloudDBImmatureTestInstructionItems []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage
 	var cloudDBImmatureTestInstructionContainerItems []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage
@@ -49,6 +54,79 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 	// Initiate object forCloudDB-processing
 	var fenixCloudDBObject *CloudDbProcessing.FenixCloudDBObjectStruct
 	fenixCloudDBObject = &CloudDbProcessing.FenixCloudDBObjectStruct{}
+
+	// Load Domains that User has access to
+	var domainUuidList []string
+	domainUuidList, err = fenixCloudDBObject.PrepareLoadUsersDomains(gCPAuthenticatedUser)
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id":                   "a9cdb129-0a67-4bec-adfc-ae8cba283c98",
+			"error":                err,
+			"gCPAuthenticatedUser": gCPAuthenticatedUser,
+		}).Error("Got some problem when loading users domains from database")
+
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.
+			AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
+			ImmatureTestInstructions:          nil,
+			ImmatureTestInstructionContainers: nil,
+			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+				AckNack:    false,
+				Comments:   err.Error(),
+				ErrorCodes: nil,
+				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
+					CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.
+						GetHighestFenixGuiBuilderProtoFileVersion()),
+			},
+		}
+
+		return responseMessage, err
+
+	}
+
+	// Load all Supported TestInstructions, TestInstructionContainers belonging to all domain in DomainList
+	var testInstructionsAndTestInstructionContainersFromGrpcBuilderMessages []*TestInstructionAndTestInstuctionContainerTypes.
+		TestInstructionsAndTestInstructionsContainersStruct
+	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessages, err = fenixCloudDBObject.
+		PrepareLoadDomainsSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(domainUuidList)
+
+	if err != nil {
+		if err != nil {
+			common_config.Logger.WithFields(logrus.Fields{
+				"id":                   "2ea14e8a-f0b6-423b-8f2b-79049fb444a8",
+				"error":                err,
+				"gCPAuthenticatedUser": gCPAuthenticatedUser,
+			}).Error("Got some problem when loading users published TestInstruction andTestInstructionContainers")
+
+			responseMessage = &fenixTestCaseBuilderServerGrpcApi.
+				AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
+				ImmatureTestInstructions:          nil,
+				ImmatureTestInstructionContainers: nil,
+				AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+					AckNack:    false,
+					Comments:   err.Error(),
+					ErrorCodes: nil,
+					ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
+						CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.
+							GetHighestFenixGuiBuilderProtoFileVersion()),
+				},
+			}
+
+			return responseMessage, err
+
+		}
+	}
+
+	// 	Loop all received messages from database and extract users ImmatureTestInstruction-data and ImmatureTestInstructionContainer-data
+	for _, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage := range testInstructionsAndTestInstructionContainersFromGrpcBuilderMessages {
+
+		// Loop all TestInstructions from 'this domain'
+		for _, tempTestInstruction := range testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.
+			TestInstructions.TestInstructionsMap {
+
+			tempTestInstruction.TestInstructionVersions[0].TestInstructionInstance.
+		}
+	}
 
 	// Get users ImmatureTestInstruction-data from CloudDB
 	cloudDBImmatureTestInstructionItems, err := fenixCloudDBObject.LoadClientsImmatureTestInstructionsFromCloudDB(userID)

@@ -11,7 +11,7 @@ import (
 )
 
 // Do initial preparations to be able to load all supported TestInstructions, TestInstructionContainers and Allowed Users for a list of domains
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) prepareLoadDomainsSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadDomainsSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
 	domainList []string) (
 	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessages []*TestInstructionAndTestInstuctionContainerTypes.
 		TestInstructionsAndTestInstructionsContainersStruct,
