@@ -121,49 +121,73 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 	for _, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage := range testInstructionsAndTestInstructionContainersFromGrpcBuilderMessages {
 
 		// Loop all TestInstructions from 'this domain'
-		for _, tempTestInstruction := range testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.
+		for _, tempTestInstructions := range testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.
 			TestInstructions.TestInstructionsMap {
 
-			tempTestInstruction.TestInstructionVersions[0].TestInstructionInstance.
-		}
-	}
+			// Convert TestInstruction. Slice position '0' is always the latest one so use that
+			var tempImmatureTestInstructionMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage
+			tempImmatureTestInstructionMessage, err = s.convertSupportedTestInstructionsIntoABBResultTI(tempTestInstructions.TestInstructionVersions[0].TestInstructionInstance)
 
-	// Get users ImmatureTestInstruction-data from CloudDB
-	cloudDBImmatureTestInstructionItems, err := fenixCloudDBObject.LoadClientsImmatureTestInstructionsFromCloudDB(userID)
-	if err != nil {
-		// Something went wrong so return an error to caller
-		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
-			ImmatureTestInstructions:          nil,
-			ImmatureTestInstructionContainers: nil,
-			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-				AckNack:                      false,
-				Comments:                     "Got some Error when retrieving ImmatureTestInstructions from database",
-				ErrorCodes:                   []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
-				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
-			},
-		}
+			if err != nil {
+				common_config.Logger.WithFields(logrus.Fields{
+					"Id":  "9a3be6ab-0486-47df-a8ef-9f1d30503817",
+					"err": err,
+					"tempTestInstructions.TestInstructionVersions[0].TestInstructionInstance": tempTestInstructions.TestInstructionVersions[0].TestInstructionInstance,
+				}).Error("Couldn't convert TestInstruction into gRPC version to be sent to TesterGui")
 
-		// Exiting
-		return responseMessage, nil
-	}
+				responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
+					ImmatureTestInstructions:          nil,
+					ImmatureTestInstructionContainers: nil,
+					AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+						AckNack:                      false,
+						Comments:                     "Couldn't convert TestInstruction into gRPC version to be sent to TesterGui",
+						ErrorCodes:                   []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
+						ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
+					},
+				}
 
-	// Get users ImmatureTestInstructionContainer-data from CloudDB
-	cloudDBImmatureTestInstructionContainerItems, err = fenixCloudDBObject.LoadClientsImmatureTestInstructionContainersFromCloudDB(userID)
-	if err != nil {
-		// Something went wrong so return an error to caller
-		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
-			ImmatureTestInstructions:          nil,
-			ImmatureTestInstructionContainers: nil,
-			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-				AckNack:                      false,
-				Comments:                     "Got some Error when retrieving ImmatureTestInstructionContainers from database",
-				ErrorCodes:                   []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
-				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
-			},
+				return responseMessage, err
+
+			}
+
+			// Append to list of TestInstructions to be sent to TesterGui
+			cloudDBImmatureTestInstructionItems = append(cloudDBImmatureTestInstructionItems, tempImmatureTestInstructionMessage)
+
 		}
 
-		// Exiting
-		return responseMessage, nil
+		// Loop all TestInstructionContainers from 'this domain'
+		for _, tempTestInstructionContainer := range testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.
+			TestInstructionContainers.TestInstructionContainersMap {
+
+			// Convert TestInstructionContainer. Slice position '0' is always the latest one so use that
+			var tempImmatureTestInstructionContainerMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage
+			tempImmatureTestInstructionContainerMessage, err = s.convertSupportedTestInstructionContainersIntoABBResultTIC(tempTestInstructionContainer.TestInstructionContainerVersions[0].TestInstructionContainerInstance)
+
+			if err != nil {
+				common_config.Logger.WithFields(logrus.Fields{
+					"Id":  "730c9ffd-f0fb-40d6-b5c9-335e82556520",
+					"err": err,
+					"tempTestInstructionContainer.TestInstructionContainerVersions[0].TestInstructionContainerInstance": tempTestInstructionContainer.TestInstructionContainerVersions[0].TestInstructionContainerInstance,
+				}).Error("Couldn't convert TestInstructionContainer into gRPC version to be sent to TesterGui")
+
+				responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
+					ImmatureTestInstructions:          nil,
+					ImmatureTestInstructionContainers: nil,
+					AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+						AckNack:                      false,
+						Comments:                     "Couldn't convert TestInstructionContainer into gRPC version to be sent to TesterGui",
+						ErrorCodes:                   []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
+						ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
+					},
+				}
+
+				return responseMessage, err
+			}
+
+			// Append to list of TestInstructions to be sent to TesterGui
+			cloudDBImmatureTestInstructionContainerItems = append(cloudDBImmatureTestInstructionContainerItems, tempImmatureTestInstructionContainerMessage)
+
+		}
 	}
 
 	// Create the response to caller
