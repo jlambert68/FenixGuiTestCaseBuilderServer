@@ -21,7 +21,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) GetTestCasesHashes(
 	}).Debug("Outgoing 'gRPC - GetTestCaseHashes'")
 
 	// Check if Client is using correct proto files version
-	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion(testCasesHashRequest.UserIdentification.UserId, testCasesHashRequest.UserIdentification.ProtoFileVersionUsedByClient)
+	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion(testCasesHashRequest.UserIdentification.UserIdOnComputer, testCasesHashRequest.UserIdentification.ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 
 		// Not correct proto-file version is used

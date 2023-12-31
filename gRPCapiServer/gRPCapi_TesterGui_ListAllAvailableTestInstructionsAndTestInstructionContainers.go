@@ -4,6 +4,7 @@ import (
 	"FenixGuiTestCaseBuilderServer/CloudDbProcessing"
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
+	"fmt"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/TestInstructionAndTestInstuctionContainerTypes"
 	"github.com/sirupsen/logrus"
@@ -30,7 +31,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 
 	// Current user
 	var gCPAuthenticatedUser string
-	gCPAuthenticatedUser = userIdentificationMessage.UserId
+	gCPAuthenticatedUser = userIdentificationMessage.GCPAuthenticatedUser
 
 	// Check if Client is using correct proto files version
 	var returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse
@@ -73,6 +74,31 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
 				AckNack:    false,
 				Comments:   err.Error(),
+				ErrorCodes: nil,
+				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
+					CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.
+						GetHighestFenixGuiBuilderProtoFileVersion()),
+			},
+		}
+
+		return responseMessage, err
+
+	}
+
+	// If user doesn't have access to any domains then exit with warning in log
+	if len(domainUuidList) == 0 {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id":                   "e9e86616-7484-4c6f-b7dd-96f223a24cb3",
+			"gCPAuthenticatedUser": gCPAuthenticatedUser,
+		}).Warning("User doesn't have access to any domains")
+
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.
+			AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
+			ImmatureTestInstructions:          nil,
+			ImmatureTestInstructionContainers: nil,
+			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+				AckNack:    false,
+				Comments:   fmt.Sprintf("User %s doesn't have access to any domains", gCPAuthenticatedUser),
 				ErrorCodes: nil,
 				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
 					CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.

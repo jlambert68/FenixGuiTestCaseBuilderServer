@@ -110,7 +110,9 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) convertSupportedTes
 			TestInstructionAttributeName: string(tempImmatureTestInstructionInformation.TestInstructionAttributeName),
 			AttributeValueAsString:       string(tempImmatureTestInstructionInformation.AttributeValueAsString),
 			AttributeValueUuid:           string(tempImmatureTestInstructionInformation.AttributeValueUUID),
-			AttributeActionCommand:       fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage_AttributeActionCommandEnum(tempImmatureTestInstructionInformation.AttributeActionCommand),
+			AttributeActionCommand: fenixTestCaseBuilderServerGrpcApi.
+				ImmatureTestInstructionInformationMessage_AvailableDropZoneMessage_DropZonePreSetTestInstructionAttributeMessage_AttributeActionCommandEnum(
+					tempImmatureTestInstructionInformation.AttributeActionCommand),
 		}
 
 		tempAvailableDropZoneToBeSentToTesterGui.DropZonePreSetTestInstructionAttributes = append(

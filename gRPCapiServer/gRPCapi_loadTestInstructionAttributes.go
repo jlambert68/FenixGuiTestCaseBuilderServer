@@ -38,13 +38,13 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllImmatureTest
 	}
 
 	// Current user
-	userID := userIdentificationMessage.UserId
+	gCPAuthenticatedUser := userIdentificationMessage.GCPAuthenticatedUser
 
 	// Define variables to store data from DB in
 	var testInstructionAttributesList []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage_TestInstructionAttributeMessage
 
 	// Get users ImmatureTestInstruction-data from CloudDB
-	testInstructionAttributesList, err := fenixGuiTestCaseBuilderServerObject.loadClientsImmatureTestInstructionAttributesFromCloudDB(userID)
+	testInstructionAttributesList, err := fenixGuiTestCaseBuilderServerObject.loadClientsImmatureTestInstructionAttributesFromCloudDB(gCPAuthenticatedUser)
 	if err != nil {
 		// Something went wrong so return an error to caller
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage{
@@ -75,7 +75,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllImmatureTest
 	return responseMessage, nil
 }
 
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadClientsImmatureTestInstructionAttributesFromCloudDB(userID string) (testInstructionAttributesMessage []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage_TestInstructionAttributeMessage, err error) {
+func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadClientsImmatureTestInstructionAttributesFromCloudDB(gCPAuthenticatedUser string) (testInstructionAttributesMessage []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage_TestInstructionAttributeMessage, err error) {
 
 	usedDBSchema := "FenixBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 

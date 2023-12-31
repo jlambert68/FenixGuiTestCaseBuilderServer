@@ -21,7 +21,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSavePinnedTestInstruc
 		common_config.Logger.WithFields(logrus.Fields{
 			"id":    "306edce0-7a5a-4a0f-992b-5c9b69b0bcc6",
 			"error": err,
-		}).Error("Problem to do 'DbPool.Begin' for user: ", pinnedTestInstructionsAndTestContainersMessage.UserId)
+		}).Error("Problem to do 'DbPool.Begin' for user: ", pinnedTestInstructionsAndTestContainersMessage.UserIdOnComputer)
 
 		// Set Error codes to return message
 		var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
@@ -49,7 +49,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSavePinnedTestInstruc
 		common_config.Logger.WithFields(logrus.Fields{
 			"id":    "07b91f77-db17-484f-8448-e53375df94ce",
 			"error": err,
-		}).Error("Couldn't Save Pinned TestInstructions and pre-created TestInstructionContainer to CloudDB for user: ", pinnedTestInstructionsAndTestContainersMessage.UserId)
+		}).Error("Couldn't Save Pinned TestInstructions and pre-created TestInstructionContainer to CloudDB for user: ", pinnedTestInstructionsAndTestContainersMessage.UserIdOnComputer)
 
 		// Stop process in and outgoing messages
 		// TODO implement stopping gRPC-api
@@ -100,7 +100,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) savePinnedTestInstructionsAn
 	}()
 
 	// Get current user
-	currentUserUuid := pinnedTestInstructionsAndTestContainersMessage.UserId
+	gCPAuthenticatedUser := pinnedTestInstructionsAndTestContainersMessage.GCPAuthenticatedUser
 
 	// Get a common dateTimeStamp to use
 	currentDataTimeStamp := fenixSyncShared.GenerateDatetimeTimeStampForDB()
@@ -123,7 +123,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) savePinnedTestInstructionsAn
 	*/
 	// Create Delete Statement for removing users all pinned TestInstructions and TestInstructionsContainers
 	sqlToExecute = sqlToExecute + "DELETE FROM \"" + usedDBSchema + "\".\"PinnedTestInstructionsAndPreCreatedTestInstructionContainers\" "
-	sqlToExecute = sqlToExecute + "WHERE \"UserId\" = '" + currentUserUuid + "'; "
+	sqlToExecute = sqlToExecute + "WHERE \"UserId\" = '" + gCPAuthenticatedUser + "'; "
 
 	// Create Insert Statement for users pinned TestInstructions
 	// Data to be inserted in the DB-table
@@ -133,7 +133,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) savePinnedTestInstructionsAn
 
 		dataRowToBeInsertedMultiType = nil
 
-		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, currentUserUuid)
+		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, gCPAuthenticatedUser)
 		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, pinnedTestInstructionMessage.TestInstructionUuid)
 		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, pinnedTestInstructionMessage.TestInstructionName)
 		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, 1) // 1 = TestInstructionType
@@ -149,7 +149,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) savePinnedTestInstructionsAn
 
 		dataRowToBeInsertedMultiType = nil
 
-		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, currentUserUuid)
+		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, gCPAuthenticatedUser)
 		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, pinnedTestInstructionContainerMessage.TestInstructionContainerUuid)
 		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, pinnedTestInstructionContainerMessage.TestInstructionContainerName)
 		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, 2) // 2 = TestInstructionContainerType

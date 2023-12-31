@@ -155,10 +155,18 @@ func GenerateTimeStampParserLayout(timeStampAsString string) (parserLayout strin
 	timeParts = strings.Split(timeStampParts[1], ".")
 
 	// Get number of decimals
-	numberOfDecimals = len(timeParts[1])
+	if len(timeParts) > 1 {
+		numberOfDecimals = len(timeParts[1])
 
-	// Add Decimals to Parser Layout
-	parserLayout = parserLayout + strings.Repeat("9", numberOfDecimals)
+		// Add Decimals to Parser Layout
+		parserLayout = parserLayout + strings.Repeat("9", numberOfDecimals)
+
+	} else {
+		numberOfDecimals = 0
+
+		// remove added '.' decimal divider
+		parserLayout = parserLayout[0 : len(parserLayout)-1]
+	}
 
 	// Add time zone, part 1, if that information exists
 	if len(timeStampParts) > 2 {

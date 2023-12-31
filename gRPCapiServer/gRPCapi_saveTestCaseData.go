@@ -46,7 +46,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) SaveFullTestCase(ct
 	}).Debug("Outgoing 'gRPC - SaveFullTestCase'")
 
 	// Check if Client is using correct proto files version
-	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion(fullTestCaseMessage.TestCaseBasicInformation.UserIdentification.UserId, fullTestCaseMessage.TestCaseBasicInformation.UserIdentification.ProtoFileVersionUsedByClient)
+	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion(fullTestCaseMessage.TestCaseBasicInformation.UserIdentification.UserIdOnComputer, fullTestCaseMessage.TestCaseBasicInformation.UserIdentification.ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 		// Not correct proto-file version is used
 		// Exiting

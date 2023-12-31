@@ -38,7 +38,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailablePin
 	}
 
 	// Current user
-	userID := userIdentificationMessage.UserId
+	userID := userIdentificationMessage.UserIdOnComputer
 
 	// Define variables to store data from DB in
 	var cloudDBPinnedTestInstructionMessages []*fenixTestCaseBuilderServerGrpcApi.AvailablePinnedTestInstructionMessage
@@ -114,7 +114,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) SaveAllPinnedTestIn
 	}).Debug("Outgoing 'gRPC - SavePinnedTestInstructionsAndTestContainers'")
 
 	// Check if Client is using correct proto files version
-	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion(pinnedTestInstructionsAndTestContainersMessage.UserId, pinnedTestInstructionsAndTestContainersMessage.ProtoFileVersionUsedByClient)
+	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion(pinnedTestInstructionsAndTestContainersMessage.UserIdOnComputer, pinnedTestInstructionsAndTestContainersMessage.ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 		// Not correct proto-file version is used
 		// Exiting

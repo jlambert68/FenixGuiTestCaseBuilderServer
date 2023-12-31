@@ -28,7 +28,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableBon
 	}).Debug("Outgoing 'gRPC - ListAllAvailableBonds'")
 
 	// Check if Client is using correct proto files version
-	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion(userIdentificationMessage.UserId, userIdentificationMessage.ProtoFileVersionUsedByClient)
+	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion(userIdentificationMessage.UserIdOnComputer, userIdentificationMessage.ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 		// Not correct proto-file version is used
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ImmatureBondsMessage{

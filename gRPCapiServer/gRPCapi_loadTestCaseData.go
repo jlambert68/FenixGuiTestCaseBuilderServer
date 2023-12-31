@@ -48,7 +48,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) GetDetailedTestCase
 	}).Debug("Outgoing 'gRPC - GetDetailedTestCase'")
 
 	// Check if Client is using correct proto files version
-	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion(getTestCaseRequestMessage.UserId, getTestCaseRequestMessage.ProtoFileVersionUsedByClient)
+	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion(getTestCaseRequestMessage.UserIdOnComputer, getTestCaseRequestMessage.ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 
 		// Not correct proto-file version is used
