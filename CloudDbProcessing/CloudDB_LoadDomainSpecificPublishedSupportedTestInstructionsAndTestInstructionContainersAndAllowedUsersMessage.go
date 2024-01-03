@@ -69,15 +69,20 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) prepareLoadDomainSpecificPub
 }
 
 type supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessageStruct struct {
-	domainUUID                                     string
-	domainName                                     string
-	messageHash                                    string
-	testInstructionsHash                           string
-	testInstructionContainersHash                  string
-	allowedUsersHash                               string
-	supportedTIAndTICAndAllowedUsersMessageAsJsonb string
-	updatedTimeStamp                               time.Time
-	lastPublishedTimeStamp                         time.Time
+	domainUUID                                                 string
+	domainName                                                 string
+	messageHash                                                string
+	testInstructionsHash                                       string
+	testInstructionContainersHash                              string
+	allowedUsersHash                                           string
+	supportedTIAndTICAndAllowedUsersMessageAsJsonb             string
+	updatedTimeStamp                                           time.Time
+	lastPublishedTimeStamp                                     time.Time
+	canListAndViewTestCaseOwnedByThisDomain                    int64
+	canBuildAndSaveTestCaseOwnedByThisDomain                   int64
+	canListAndViewTestCaseHavingTIandTICFromThisDomain         int64
+	canListAndViewTestCaseHavingTIandTICFromThisDomainExtended int64
+	canBuildAndSaveTestCaseHavingTIandTICFromThisDomain        int64
 }
 
 // Load all supported TestInstructions, TestInstructionContainers and Allowed Users for a specific domain
@@ -124,15 +129,20 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainSpecificPublishedS
 	var rowsCounter int
 
 	var (
-		tempDomainUUID                                     string
-		tempDomainName                                     string
-		tempMessageHash                                    string
-		tempTestInstructionsHash                           string
-		tempTestInstructionContainersHash                  string
-		tempAllowedUsersHash                               string
-		tempSupportedTIAndTICAndAllowedUsersMessageAsJsonb string
-		tempUpdatedTimeStamp                               time.Time
-		tempLastPublishedTimeStamp                         time.Time
+		tempDomainUUID                                                 string
+		tempDomainName                                                 string
+		tempMessageHash                                                string
+		tempTestInstructionsHash                                       string
+		tempTestInstructionContainersHash                              string
+		tempAllowedUsersHash                                           string
+		tempSupportedTIAndTICAndAllowedUsersMessageAsJsonb             string
+		tempUpdatedTimeStamp                                           time.Time
+		tempLastPublishedTimeStamp                                     time.Time
+		tempCanListAndViewTestCaseOwnedByThisDomain                    int64
+		tempCanBuildAndSaveTestCaseOwnedByThisDomain                   int64
+		tempCanListAndViewTestCaseHavingTIandTICFromThisDomain         int64
+		tempCanListAndViewTestCaseHavingTIandTICFromThisDomainExtended int64
+		tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain        int64
 	)
 
 	// Extract data from DB result set
@@ -148,6 +158,11 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainSpecificPublishedS
 			&tempSupportedTIAndTICAndAllowedUsersMessageAsJsonb,
 			&tempUpdatedTimeStamp,
 			&tempLastPublishedTimeStamp,
+			&tempCanListAndViewTestCaseOwnedByThisDomain,
+			&tempCanBuildAndSaveTestCaseOwnedByThisDomain,
+			&tempCanListAndViewTestCaseHavingTIandTICFromThisDomain,
+			&tempCanListAndViewTestCaseHavingTIandTICFromThisDomainExtended,
+			&tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain,
 		)
 
 		if err != nil {
@@ -169,8 +184,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainSpecificPublishedS
 			testInstructionContainersHash: tempTestInstructionContainersHash,
 			allowedUsersHash:              tempAllowedUsersHash,
 			supportedTIAndTICAndAllowedUsersMessageAsJsonb: tempSupportedTIAndTICAndAllowedUsersMessageAsJsonb,
-			updatedTimeStamp:       tempUpdatedTimeStamp,
-			lastPublishedTimeStamp: tempLastPublishedTimeStamp,
+			updatedTimeStamp:                                           tempUpdatedTimeStamp,
+			lastPublishedTimeStamp:                                     tempLastPublishedTimeStamp,
+			canListAndViewTestCaseOwnedByThisDomain:                    tempCanListAndViewTestCaseOwnedByThisDomain,
+			canBuildAndSaveTestCaseOwnedByThisDomain:                   tempCanBuildAndSaveTestCaseOwnedByThisDomain,
+			canListAndViewTestCaseHavingTIandTICFromThisDomain:         tempCanListAndViewTestCaseHavingTIandTICFromThisDomain,
+			canListAndViewTestCaseHavingTIandTICFromThisDomainExtended: tempCanListAndViewTestCaseHavingTIandTICFromThisDomainExtended,
+			canBuildAndSaveTestCaseHavingTIandTICFromThisDomain:        tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain,
 		}
 
 		// Add to row counter; Max = 1

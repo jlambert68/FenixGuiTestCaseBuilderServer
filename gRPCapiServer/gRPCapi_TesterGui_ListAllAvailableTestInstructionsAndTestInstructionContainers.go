@@ -57,8 +57,8 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 	fenixCloudDBObject = &CloudDbProcessing.FenixCloudDBObjectStruct{}
 
 	// Load Domains that User has access to
-	var domainUuidList []string
-	domainUuidList, err = fenixCloudDBObject.PrepareLoadUsersDomains(gCPAuthenticatedUser)
+	var domainAndAuthorizations []CloudDbProcessing.DomainAndAuthorizationsStruct
+	domainAndAuthorizations, err = fenixCloudDBObject.PrepareLoadUsersDomains(gCPAuthenticatedUser)
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
@@ -86,7 +86,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 	}
 
 	// If user doesn't have access to any domains then exit with warning in log
-	if len(domainUuidList) == 0 {
+	if len(domainAndAuthorizations) == 0 {
 		common_config.Logger.WithFields(logrus.Fields{
 			"id":                   "e9e86616-7484-4c6f-b7dd-96f223a24cb3",
 			"gCPAuthenticatedUser": gCPAuthenticatedUser,
@@ -114,7 +114,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 	var testInstructionsAndTestInstructionContainersFromGrpcBuilderMessages []*TestInstructionAndTestInstuctionContainerTypes.
 		TestInstructionsAndTestInstructionsContainersStruct
 	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessages, err = fenixCloudDBObject.
-		PrepareLoadDomainsSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(domainUuidList)
+		PrepareLoadDomainsSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(domainAndAuthorizations)
 
 	if err != nil {
 		if err != nil {

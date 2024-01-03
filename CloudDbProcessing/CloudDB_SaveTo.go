@@ -210,6 +210,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) generateSQLInsertValues(test
 			case int:
 				sqlInsertValuesString = sqlInsertValuesString + fmt.Sprint(value)
 
+			case int64:
+				sqlInsertValuesString = sqlInsertValuesString + fmt.Sprint(value)
+
 			case uint32:
 				sqlInsertValuesString = sqlInsertValuesString + fmt.Sprint(value)
 

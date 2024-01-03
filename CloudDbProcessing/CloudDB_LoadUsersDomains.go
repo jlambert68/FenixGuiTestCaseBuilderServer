@@ -12,7 +12,7 @@ import (
 // Do initial preparations to be able to load all domains for a specific user
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersDomains(
 	gCPAuthenticatedUser string) (
-	domainUuidList []string,
+	domainAndAuthorizations []DomainAndAuthorizationsStruct,
 	err error) {
 
 	// Begin SQL Transaction
@@ -31,26 +31,37 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersDomains(
 	defer txn.Commit(context.Background())
 
 	// Load all domains for a specific user
-	domainUuidList, err = fenixCloudDBObject.loadUsersDomains(txn, gCPAuthenticatedUser)
+	domainAndAuthorizations, err = fenixCloudDBObject.loadUsersDomains(txn, gCPAuthenticatedUser)
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
 			"id":                   "2cd14dd8-0d44-4fc4-ae72-adaaaf37bacc",
 			"error":                err,
-			"gCPAuthenticatedUser": gCPAuthenticatedUser,
+			"GCPAuthenticatedUser": gCPAuthenticatedUser,
 		}).Error("Couldn't load all Users Domains from CloudDB")
 
 		return nil, err
 	}
 
-	return domainUuidList, err
+	return domainAndAuthorizations, err
+}
+
+// Used for holding a Users domain and the Authorizations for that Domain
+type DomainAndAuthorizationsStruct struct {
+	GCPAuthenticatedUser                                       string
+	DomainUuid                                                 string
+	CanListAndViewTestCaseOwnedByThisDomain                    int64
+	CanBuildAndSaveTestCaseOwnedByThisDomain                   int64
+	CanListAndViewTestCaseHavingTIandTICFromThisDomain         int64
+	CanListAndViewTestCaseHavingTIandTICFromThisDomainExtended int64
+	CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain        int64
 }
 
 // Load all domains for a specific user
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersDomains(
 	dbTransaction pgx.Tx,
 	gCPAuthenticatedUser string) (
-	domainUuidList []string,
+	domainAndAuthorizations []DomainAndAuthorizationsStruct,
 	err error) {
 
 	common_config.Logger.WithFields(logrus.Fields{
@@ -64,7 +75,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersDomains(
 	}()
 
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "SELECT domainuuid "
+	sqlToExecute = sqlToExecute + "SELECT domainuuid, canlistandviewtestcaseownedbythisdomain, " +
+		"canbuildandsavetestcaseownedbythisdomain, canlistandviewtestcasehavingtiandticfromthisdomain, " +
+		"canlistandviewtestcasehavingtiandticfromthisdomainextended, canbuildandsavetestcasehavingtiandticfromthisdomain "
 	sqlToExecute = sqlToExecute + "FROM \"FenixDomainAdministration\".\"allowedusers\" "
 	sqlToExecute = sqlToExecute + "WHERE \"gcpauthenticateduser\" = '" + gCPAuthenticatedUser + "'"
 	sqlToExecute = sqlToExecute + ";"
@@ -90,10 +103,15 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersDomains(
 	// Extract data from DB result set
 	for rows.Next() {
 
-		var tempDomainUuid string
+		var tempDomainAndAuthorizations DomainAndAuthorizationsStruct
 
 		err = rows.Scan(
-			&tempDomainUuid,
+			&tempDomainAndAuthorizations.DomainUuid,
+			&tempDomainAndAuthorizations.CanListAndViewTestCaseOwnedByThisDomain,
+			&tempDomainAndAuthorizations.CanBuildAndSaveTestCaseOwnedByThisDomain,
+			&tempDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain,
+			&tempDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomainExtended,
+			&tempDomainAndAuthorizations.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain,
 		)
 
 		if err != nil {
@@ -106,10 +124,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersDomains(
 			return nil, err
 		}
 
+		// Add user to the row-data
+		tempDomainAndAuthorizations.GCPAuthenticatedUser = gCPAuthenticatedUser
+
 		// Append DomainUuid to list of Domains
-		domainUuidList = append(domainUuidList, tempDomainUuid)
+		domainAndAuthorizations = append(domainAndAuthorizations, tempDomainAndAuthorizations)
 
 	}
 
-	return domainUuidList, err
+	return domainAndAuthorizations, err
 }

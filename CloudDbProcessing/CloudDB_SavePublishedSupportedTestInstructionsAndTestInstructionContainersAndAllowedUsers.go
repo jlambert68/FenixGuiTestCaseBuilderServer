@@ -102,8 +102,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 	err error) {
 
 	// Verify that Domain exists in database
-	var domainServiceAccountRelation *domainServiceAccountRelationStruct
-	domainServiceAccountRelation, err = fenixCloudDBObject.verifyDomainExistsInDatabase(
+	var domainBaseData *domainBaseDataStruct
+	domainBaseData, err = fenixCloudDBObject.verifyDomainExistsInDatabase(
 		dbTransaction,
 		string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID))
 
@@ -145,7 +145,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 	var verificationOfSignatureSucceeded bool
 	verificationOfSignatureSucceeded, err = fenixCloudDBObject.verifySignatureFromWorker(
 		signedMessageByWorkerServiceAccountMessage,
-		domainServiceAccountRelation)
+		domainBaseData)
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
@@ -193,7 +193,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 
 		// Save supported TestInstructions, TestInstructionContainers and Allowed Users in Database due to New forced 'baseline'
 		err = fenixCloudDBObject.performSaveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
-			dbTransaction, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
+			dbTransaction, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage,
+			domainBaseData)
 
 		if err != nil {
 			common_config.Logger.WithFields(logrus.Fields{
@@ -212,7 +213,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 	// Verify changes to TestInstructions, TestInstructionContainers and Allowed Users separately
 	err = fenixCloudDBObject.verifyChangesToTestInstructionsAndTestInstructionContainersAndAllowedUsersSeparately(
 		dbTransaction,
-		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
+		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage,
+		domainBaseData)
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
@@ -232,25 +234,27 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyDomainExistsInDatabase(
 	dbTransaction pgx.Tx,
 	domainUUID string) (
-	domainServiceAccountRelation *domainServiceAccountRelationStruct,
+	domainBaseData *domainBaseDataStruct,
 	err error) {
 
-	domainServiceAccountRelation, err = fenixCloudDBObject.loadDomainBaseData(dbTransaction, domainUUID)
+	domainBaseData, err = fenixCloudDBObject.loadDomainBaseData(dbTransaction, domainUUID)
 
-	return domainServiceAccountRelation, err
+	return domainBaseData, err
 }
 
 // Do the actual save for all supported TestInstructions, TestInstructionContainers and Allowed Users to database
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
 	dbTransaction pgx.Tx,
 	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage *TestInstructionAndTestInstuctionContainerTypes.
-		TestInstructionsAndTestInstructionsContainersStruct) (
+		TestInstructionsAndTestInstructionsContainersStruct,
+	domainBaseData *domainBaseDataStruct) (
 	err error) {
 
 	// Do the actual save for all supported TestInstructions, TestInstructionContainers to database
 	err = fenixCloudDBObject.performSaveSupportedTestInstructionsAndTestInstructionContainers(
 		dbTransaction,
-		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
+		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage,
+		domainBaseData)
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
@@ -264,7 +268,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestInst
 	// Do the actual save for Allowed Users to database
 	err = fenixCloudDBObject.performSaveSupportedAllowedUsers(
 		dbTransaction,
-		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
+		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage,
+		domainBaseData)
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
@@ -282,7 +287,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestInst
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestInstructionsAndTestInstructionContainers(
 	dbTransaction pgx.Tx,
 	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage *TestInstructionAndTestInstuctionContainerTypes.
-		TestInstructionsAndTestInstructionsContainersStruct) (
+		TestInstructionsAndTestInstructionsContainersStruct,
+	domainBaseData *domainBaseDataStruct) (
 	err error) {
 
 	// Create Insert Statement for TestCaseExecution that will be put on ExecutionQueue
@@ -307,14 +313,22 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestInst
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, string(tempsupportedtiandticandallowedusersmessageasjsonbAsByteString))
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTimestampToBeUsed)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTimestampToBeUsed)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, domainBaseData.bitNumberValue)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, domainBaseData.bitNumberValue)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, domainBaseData.bitNumberValue)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, domainBaseData.bitNumberValue)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, domainBaseData.bitNumberValue)
 
 	dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
 
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "INSERT INTO \"FenixBuilder\".\"SupportedTIAndTICAndAllowedUsers\" "
+	sqlToExecute = sqlToExecute + "INSERT INTO \"FenixBuilder\".\"SupportedTIAndTICAndAllowedUsers\"  "
 	sqlToExecute = sqlToExecute + "(\"domainuuid\", \"domainname\", \"messagehash\", \"testinstructionshash\", " +
 		"\"testinstructioncontainershash\", \"allowedusershash\", \"supportedtiandticandallowedusersmessageasjsonb\", " +
-		"\"updatedtimestamp\", \"lastpublishedtimestamp\") "
+		"\"updatedtimestamp\", \"lastpublishedtimestamp\", " +
+		"canlistandviewtestcaseownedbythisdomain, canbuildandsavetestcaseownedbythisdomain, " +
+		"canlistandviewtestcasehavingtiandticfromthisdomain, canlistandviewtestcasehavingtiandticfromthisdomainextended, " +
+		"canbuildandsavetestcasehavingtiandticfromthisdomain) "
 	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
 	sqlToExecute = sqlToExecute + ";"
 
@@ -358,7 +372,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestInst
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedAllowedUsers(
 	dbTransaction pgx.Tx,
 	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage *TestInstructionAndTestInstuctionContainerTypes.
-		TestInstructionsAndTestInstructionsContainersStruct) (
+		TestInstructionsAndTestInstructionsContainersStruct,
+	domainBaseData *domainBaseDataStruct) (
 	err error) {
 
 	// Create Insert Statement for TestCaseExecution that will be put on ExecutionQueue
@@ -379,6 +394,36 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedAllowedU
 			allowedUser.UserIdOnComputer,
 			allowedUser.GCPAuthenticatedUser}
 
+		// Convert 'CanListAndViewTestCaseOwnedByThisDomain'-bool into value based on 'domainBaseData.bitNumberValue'
+		var tempCanListAndViewTestCaseOwnedByThisDomain int64
+		if allowedUser.UserAuthorizationRights.CanListAndViewTestCaseOwnedByThisDomain == true {
+			tempCanListAndViewTestCaseOwnedByThisDomain = domainBaseData.bitNumberValue
+		}
+
+		// Convert 'CanBuildAndSaveTestCaseOwnedByThisDomain'-bool into value based on 'domainBaseData.bitNumberValue'
+		var tempCanBuildAndSaveTestCaseOwnedByThisDomain int64
+		if allowedUser.UserAuthorizationRights.CanBuildAndSaveTestCaseOwnedByThisDomain == true {
+			tempCanBuildAndSaveTestCaseOwnedByThisDomain = domainBaseData.bitNumberValue
+		}
+
+		// Convert 'CanListAndViewTestCaseHavingTIandTICFromThisDomain'-bool into value based on 'domainBaseData.bitNumberValue'
+		var tempCanListAndViewTestCaseHavingTIandTICFromThisDomain int64
+		if allowedUser.UserAuthorizationRights.CanListAndViewTestCaseHavingTIandTICFromThisDomain == true {
+			tempCanListAndViewTestCaseHavingTIandTICFromThisDomain = domainBaseData.bitNumberValue
+		}
+
+		// Convert 'CanListAndViewTestCaseHavingTIandTICFromThisDomainExtended'-bool into value based on 'domainBaseData.bitNumberValue'
+		var tempCanListAndViewTestCaseHavingTIandTICFromThisDomainExtendedn int64
+		if allowedUser.UserAuthorizationRights.CanListAndViewTestCaseHavingTIandTICFromThisDomainExtended == true {
+			tempCanListAndViewTestCaseHavingTIandTICFromThisDomainExtendedn = domainBaseData.bitNumberValue
+		}
+
+		// Convert 'CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain'-bool into value based on 'domainBaseData.bitNumberValue'
+		var tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain int64
+		if allowedUser.UserAuthorizationRights.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain == true {
+			tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain = domainBaseData.bitNumberValue
+		}
+
 		// Hash slice
 		tempUniqueIdHash = fenixSyncShared.HashValues(tempUniqueIdHashValuesSlice, true)
 
@@ -390,6 +435,11 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedAllowedU
 		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, allowedUser.UserEmail)
 		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, allowedUser.UserFirstName)
 		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, allowedUser.UserLastName)
+		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempCanListAndViewTestCaseOwnedByThisDomain)
+		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempCanBuildAndSaveTestCaseOwnedByThisDomain)
+		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempCanListAndViewTestCaseHavingTIandTICFromThisDomain)
+		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempCanListAndViewTestCaseHavingTIandTICFromThisDomainExtendedn)
+		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain)
 
 		dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
 
@@ -398,7 +448,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedAllowedU
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "INSERT INTO \"FenixDomainAdministration\".\"allowedusers\" "
 	sqlToExecute = sqlToExecute + "(\"uniqueidhash\", \"domainuuid\", \"domainname\", \"useridoncomputer\", " +
-		"\"gcpauthenticateduser\", \"useremail\", \"userfirstname\", \"userlastname\") "
+		"\"gcpauthenticateduser\", \"useremail\", \"userfirstname\", \"userlastname\" ," +
+		"canlistandviewtestcaseownedbythisdomain, canbuildandsavetestcaseownedbythisdomain, " +
+		"canlistandviewtestcasehavingtiandticfromthisdomain, canlistandviewtestcasehavingtiandticfromthisdomainextended, " +
+		"canbuildandsavetestcasehavingtiandticfromthisdomain)"
 	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
 	sqlToExecute = sqlToExecute + ";"
 
@@ -442,7 +495,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedAllowedU
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyChangesToTestInstructionsAndTestInstructionContainersAndAllowedUsersSeparately(
 	dbTransaction pgx.Tx,
 	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage *TestInstructionAndTestInstuctionContainerTypes.
-		TestInstructionsAndTestInstructionsContainersStruct) (
+		TestInstructionsAndTestInstructionsContainersStruct,
+	domainBaseData *domainBaseDataStruct) (
 	err error) {
 
 	// Load saved message for supported TestInstructions, TestInstructionContainers and Allowed Users from database
@@ -557,7 +611,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyChangesToTestInstructi
 	// Save new message with supported TestInstructions, TestInstructionContainers and Allowed Users in database
 	err = fenixCloudDBObject.performSaveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
 		dbTransaction,
-		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
+		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage,
+		domainBaseData)
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
@@ -828,11 +883,11 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyChangesToAllowedUsers(
 	return correctNewChangesFoundInAllowedUsers, err
 }
 
-type domainServiceAccountRelationStruct struct {
-	domainUUID                 string
-	domainName                 string
-	serviceAccountUsedByWorker string
-	workerAddressToDial        string
+type domainBaseDataStruct struct {
+	domainUUID          string
+	domainName          string
+	workerAddressToDial string
+	bitNumberValue      int64
 }
 
 // When row is found the Domain exists and is allowed to use Fenix
@@ -840,7 +895,7 @@ type domainServiceAccountRelationStruct struct {
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainBaseData(
 	dbTransaction pgx.Tx,
 	domainUUID string) (
-	domainServiceAccountRelation *domainServiceAccountRelationStruct,
+	domainBaseData *domainBaseDataStruct,
 	err error) {
 
 	common_config.Logger.WithFields(logrus.Fields{
@@ -854,10 +909,12 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainBaseData(
 	}()
 
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "SELECT fdad.domain_uuid, fdad.domain_name, fdad.workeraddress "
-	sqlToExecute = sqlToExecute + "FROM \"FenixDomainAdministration\".\"domains\" fdad "
+	sqlToExecute = sqlToExecute + "SELECT fdad.domain_uuid, fdad.domain_name, fdad.workeraddress, dbpe.bitnumbervalue "
+	sqlToExecute = sqlToExecute + "FROM \"FenixDomainAdministration\".\"domains\" fdad, " +
+		"\"FenixDomainAdministration\".\"domainbitpositionenum\" dbpe "
 	sqlToExecute = sqlToExecute + "WHERE fdad.activated = true AND fdad.deleted = false AND "
-	sqlToExecute = sqlToExecute + "fdad.domain_uuid = '" + domainUUID + "'"
+	sqlToExecute = sqlToExecute + "fdad.domain_uuid = '" + domainUUID + "' AND "
+	sqlToExecute = sqlToExecute + "fdad.bitnumbername = dbpe.bitnumbername "
 	sqlToExecute = sqlToExecute + ";"
 
 	// Query DB
@@ -887,11 +944,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainBaseData(
 		var tempDomainUUID string
 		var tempDomainName string
 		var tempWorkerAddressToDial string
+		var tempBitNumberValue int64
 
 		err = rows.Scan(
 			&tempDomainUUID,
 			&tempDomainName,
 			&tempWorkerAddressToDial,
+			&tempBitNumberValue,
 		)
 
 		if err != nil {
@@ -904,10 +963,11 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainBaseData(
 			return nil, err
 		}
 
-		domainServiceAccountRelation = &domainServiceAccountRelationStruct{
+		domainBaseData = &domainBaseDataStruct{
 			domainUUID:          tempDomainUUID,
 			domainName:          tempDomainName,
 			workerAddressToDial: tempWorkerAddressToDial,
+			bitNumberValue:      tempBitNumberValue,
 		}
 
 		// Add to row counter; Max = 1
@@ -945,13 +1005,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainBaseData(
 
 	}
 
-	return domainServiceAccountRelation, err
+	return domainBaseData, err
 }
 
 // Do the signature verification of signature received from Worker
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifySignatureFromWorker(
 	signedMessageByWorkerServiceAccountMessage *fenixTestCaseBuilderServerGrpcApi.SignedMessageByWorkerServiceAccountMessage,
-	domainServiceAccountRelation *domainServiceAccountRelationStruct) (
+	domainBaseData *domainBaseDataStruct) (
 	verificationOfSignatureSucceeded bool,
 	err error) {
 
@@ -963,14 +1023,14 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifySignatureFromWorker(
 	var signMessageResponse *fenixExecutionWorkerGrpcApi.SignMessageResponse
 	signMessageResponse, err = tempMessagesToWorkerServerObject.SendBuilderServerAskWorkerToSignMessage(
 		signedMessageByWorkerServiceAccountMessage.GetMessageToBeSigned(),
-		domainServiceAccountRelation.workerAddressToDial)
+		domainBaseData.workerAddressToDial)
 
 	// Got some problem when doing gRPC-call to WorkerServer
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"id":                           "63858aac-491f-4162-9cbb-ed9d4b1c5ba6",
-			"error":                        err,
-			"domainServiceAccountRelation": domainServiceAccountRelation,
+			"id":             "63858aac-491f-4162-9cbb-ed9d4b1c5ba6",
+			"error":          err,
+			"domainBaseData": domainBaseData,
 		}).Error("Got a problem when calling WorkerServer over gRPC to verify signature")
 
 		return false, err
@@ -979,10 +1039,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifySignatureFromWorker(
 	// Got some problem when doing gRPC-call to WorkerServer
 	if signMessageResponse.GetAckNackResponse().GetAckNack() == false {
 		common_config.Logger.WithFields(logrus.Fields{
-			"id":                           "09580908-dfbf-4f86-adb5-ca64e9a610b8",
-			"error":                        err,
-			"domainServiceAccountRelation": domainServiceAccountRelation,
-			"signMessageResponse":          signMessageResponse,
+			"id":                  "09580908-dfbf-4f86-adb5-ca64e9a610b8",
+			"error":               err,
+			"domainBaseData":      domainBaseData,
+			"signMessageResponse": signMessageResponse,
 		}).Error("Got a problem when calling WorkerServer over gRPC to verify signature")
 
 		var newError error

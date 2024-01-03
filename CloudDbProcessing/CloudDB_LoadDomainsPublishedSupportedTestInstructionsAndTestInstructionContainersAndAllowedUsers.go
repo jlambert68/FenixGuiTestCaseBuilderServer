@@ -7,12 +7,13 @@ import (
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/TestInstructionAndTestInstuctionContainerTypes"
 	"github.com/sirupsen/logrus"
+	"strconv"
 	"time"
 )
 
 // Do initial preparations to be able to load all supported TestInstructions, TestInstructionContainers and Allowed Users for a list of domains
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadDomainsSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
-	domainList []string) (
+	domainAndAuthorizations []DomainAndAuthorizationsStruct) (
 	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessages []*TestInstructionAndTestInstuctionContainerTypes.
 		TestInstructionsAndTestInstructionsContainersStruct,
 	err error) {
@@ -37,13 +38,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadDomainsSupportedT
 	supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessages, err = fenixCloudDBObject.
 		loadDomainsSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
 			txn,
-			domainList)
+			domainAndAuthorizations)
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"id":         "7e3e96ae-2e16-407f-956a-f6c66d3ddb93",
-			"error":      err,
-			"domainList": domainList,
+			"id":                      "7e3e96ae-2e16-407f-956a-f6c66d3ddb93",
+			"error":                   err,
+			"domainAndAuthorizations": domainAndAuthorizations,
 		}).Error("Couldn't load all supported TestInstructions, TestInstructionContainers and Allowed Users from CloudDB")
 
 		return testInstructionsAndTestInstructionContainersFromGrpcBuilderMessages, err
@@ -62,9 +63,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadDomainsSupportedT
 
 		if err != nil {
 			common_config.Logger.WithFields(logrus.Fields{
-				"id":         "0fe873a5-02b0-40e6-9689-1b2ae2576169",
-				"error":      err,
-				"domainList": domainList,
+				"id":                      "0fe873a5-02b0-40e6-9689-1b2ae2576169",
+				"error":                   err,
+				"domainAndAuthorizations": domainAndAuthorizations,
 			}).Error("Couldn't convert into a 'testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage'")
 
 			return nil, err
@@ -82,7 +83,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadDomainsSupportedT
 // Load  all supported TestInstructions, TestInstructionContainers and Allowed Users for a list of domains
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainsSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
 	dbTransaction pgx.Tx,
-	domainList []string) (
+	domainAndAuthorizations []DomainAndAuthorizationsStruct) (
 	supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessages []*supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersDbMessageStruct,
 	err error) {
 
@@ -96,10 +97,49 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainsSupportedTestInst
 		}).Debug("Exiting: loadDomainsSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers()")
 	}()
 
+	// Generate a Domains list and Calculate the Authorization requirements
+	var tempCalculatedDomainAndAuthorizations DomainAndAuthorizationsStruct
+	var domainList []string
+	for _, domainAndAuthorization := range domainAndAuthorizations {
+		// Add to DomainList
+		domainList = append(domainList, domainAndAuthorization.DomainUuid)
+
+		// Calculate the Authorization requirements for...
+		// CanBuildAndSaveTestCaseOwnedByThisDomain
+		tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOwnedByThisDomain =
+			tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOwnedByThisDomain +
+				domainAndAuthorization.CanBuildAndSaveTestCaseOwnedByThisDomain
+
+		// CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain
+		tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain =
+			tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain +
+				domainAndAuthorization.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain
+	}
+
+	// Convert Values into string for CanBuildAndSaveTestCaseOwnedByThisDomain
+	var tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomainAsString string
+	tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomainAsString = strconv.FormatInt(
+		tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain, 10)
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":    "d502db9f-8814-42c9-a62d-2e83de0ea688",
+			"Error": err,
+			"tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOwnedByThisDomain": tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOwnedByThisDomain,
+		}).Error("Couldn't convert into string representation")
+
+		return nil, err
+	}
+
+	// Rule:(t.doman_krav & a.doman_behorighet) = t.doman_krav
+
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "SELECT * "
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"SupportedTIAndTICAndAllowedUsers\" "
 	sqlToExecute = sqlToExecute + "WHERE \"domainuuid\" IN " + common_config.GenerateSQLINArray(domainList) + " "
+	sqlToExecute = sqlToExecute + "AND "
+	sqlToExecute = sqlToExecute + "(canbuildandsavetestcasehavingtiandticfromthisdomain & " + tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomainAsString + ")"
+	sqlToExecute = sqlToExecute + "= canbuildandsavetestcasehavingtiandticfromthisdomain "
 	sqlToExecute = sqlToExecute + ";"
 
 	// Query DB
@@ -121,15 +161,20 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainsSupportedTestInst
 	}
 
 	var (
-		tempDomainUUID                                     string
-		tempDomainName                                     string
-		tempMessageHash                                    string
-		tempTestInstructionsHash                           string
-		tempTestInstructionContainersHash                  string
-		tempAllowedUsersHash                               string
-		tempSupportedTIAndTICAndAllowedUsersMessageAsJsonb string
-		tempUpdatedTimeStamp                               time.Time
-		tempLastPublishedTimeStamp                         time.Time
+		tempDomainUUID                                                 string
+		tempDomainName                                                 string
+		tempMessageHash                                                string
+		tempTestInstructionsHash                                       string
+		tempTestInstructionContainersHash                              string
+		tempAllowedUsersHash                                           string
+		tempSupportedTIAndTICAndAllowedUsersMessageAsJsonb             string
+		tempUpdatedTimeStamp                                           time.Time
+		tempLastPublishedTimeStamp                                     time.Time
+		tempCanListAndViewTestCaseOwnedByThisDomain                    int64
+		tempCanBuildAndSaveTestCaseOwnedByThisDomain                   int64
+		tempCanListAndViewTestCaseHavingTIandTICFromThisDomain         int64
+		tempCanListAndViewTestCaseHavingTIandTICFromThisDomainExtended int64
+		tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain        int64
 	)
 
 	// Extract data from DB result set
@@ -145,6 +190,11 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainsSupportedTestInst
 			&tempSupportedTIAndTICAndAllowedUsersMessageAsJsonb,
 			&tempUpdatedTimeStamp,
 			&tempLastPublishedTimeStamp,
+			&tempCanListAndViewTestCaseOwnedByThisDomain,
+			&tempCanBuildAndSaveTestCaseOwnedByThisDomain,
+			&tempCanListAndViewTestCaseHavingTIandTICFromThisDomain,
+			&tempCanListAndViewTestCaseHavingTIandTICFromThisDomainExtended,
+			&tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain,
 		)
 
 		if err != nil {
@@ -167,8 +217,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainsSupportedTestInst
 			testInstructionContainersHash: tempTestInstructionContainersHash,
 			allowedUsersHash:              tempAllowedUsersHash,
 			supportedTIAndTICAndAllowedUsersMessageAsJsonb: tempSupportedTIAndTICAndAllowedUsersMessageAsJsonb,
-			updatedTimeStamp:       tempUpdatedTimeStamp,
-			lastPublishedTimeStamp: tempLastPublishedTimeStamp,
+			updatedTimeStamp:                                           tempUpdatedTimeStamp,
+			lastPublishedTimeStamp:                                     tempLastPublishedTimeStamp,
+			canListAndViewTestCaseOwnedByThisDomain:                    tempCanListAndViewTestCaseOwnedByThisDomain,
+			canBuildAndSaveTestCaseOwnedByThisDomain:                   tempCanBuildAndSaveTestCaseOwnedByThisDomain,
+			canListAndViewTestCaseHavingTIandTICFromThisDomain:         tempCanListAndViewTestCaseHavingTIandTICFromThisDomain,
+			canListAndViewTestCaseHavingTIandTICFromThisDomainExtended: tempCanListAndViewTestCaseHavingTIandTICFromThisDomainExtended,
+			canBuildAndSaveTestCaseHavingTIandTICFromThisDomain:        tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain,
 		}
 
 		// Append message to list of messages

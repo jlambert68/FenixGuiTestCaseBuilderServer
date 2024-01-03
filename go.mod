@@ -7,7 +7,7 @@ toolchain go1.21.5
 require (
 	github.com/go-gota/gota v0.12.0 // indirect
 	github.com/jlambert68/FenixSyncShared v0.0.0-20231023123349-e891692cede8
-	github.com/jlambert68/FenixTestInstructionsAdminShared v0.0.0-20231228103948-fee2b6705f73
+	github.com/jlambert68/FenixTestInstructionsAdminShared v0.0.0-20240103135859-01e613300ea3
 	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/net v0.19.0
 	golang.org/x/oauth2 v0.15.0
@@ -16,7 +16,7 @@ require (
 
 require (
 	github.com/jackc/pgx/v4 v4.18.1
-	github.com/jlambert68/FenixGrpcApi v0.0.0-20231231152935-237f70eb1e33
+	github.com/jlambert68/FenixGrpcApi v0.0.0-20240103122135-2db908f6e1ac
 	google.golang.org/api v0.149.0
 	google.golang.org/protobuf v1.32.0
 )
