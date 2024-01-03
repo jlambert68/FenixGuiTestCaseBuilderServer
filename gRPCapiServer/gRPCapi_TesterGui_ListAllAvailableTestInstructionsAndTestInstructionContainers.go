@@ -14,10 +14,7 @@ import (
 // The TestCase Builder asks for all TestInstructions and Pre-defined TestInstructionContainer that the user can add to a TestCase
 func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTestInstructionsAndTestInstructionContainers(
 	ctx context.Context, userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (
-	*fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage, error) {
-
-	// Define the response message
-	var responseMessage *fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage
+	responseMessage *fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage, err error) {
 
 	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "a55f9c82-1d74-44a5-8662-058b8bc9e48f",
@@ -27,15 +24,15 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 		"id": "27fb45fe-3266-41aa-a6af-958513977e28",
 	}).Debug("Outgoing 'gRPC - ListAllAvailableTestInstructionsAndTestContainers'")
 
-	var err error
-
 	// Current user
 	var gCPAuthenticatedUser string
+	var userIdOnComputer string
 	gCPAuthenticatedUser = userIdentificationMessage.GCPAuthenticatedUser
+	userIdOnComputer = userIdentificationMessage.UserIdOnComputer
 
 	// Check if Client is using correct proto files version
 	var returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse
-	returnMessage = common_config.IsClientUsingCorrectTestDataProtoFileVersion(gCPAuthenticatedUser, userIdentificationMessage.ProtoFileVersionUsedByClient)
+	returnMessage = common_config.IsClientUsingCorrectTestDataProtoFileVersion(userIdOnComputer, userIdentificationMessage.ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 		// Not correct proto-file version is used
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
@@ -216,8 +213,27 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 		}
 	}
 
+	// Extract User's Domains that can own a TestCase by looping Domains and check which one that can own a TestCase
+	var domainsThatCanOwnTheTestCase []*fenixTestCaseBuilderServerGrpcApi.DomainsThatCanOwnTheTestCaseMessage
+
+	for _, domainAndAuthorization := range domainAndAuthorizations {
+		if domainAndAuthorization.CanBuildAndSaveTestCaseOwnedByThisDomain > 0 {
+
+			// When value is set then the Domain can own a TestCase
+			var tempDomainsThatCanOwnTheTestCase *fenixTestCaseBuilderServerGrpcApi.DomainsThatCanOwnTheTestCaseMessage
+			tempDomainsThatCanOwnTheTestCase = &fenixTestCaseBuilderServerGrpcApi.DomainsThatCanOwnTheTestCaseMessage{
+				DomainUuid: domainAndAuthorization.DomainUuid,
+				DomainName: domainAndAuthorization.DomainName,
+			}
+
+			// Add to lists of Domains that can own a TestCase
+			domainsThatCanOwnTheTestCase = append(domainsThatCanOwnTheTestCase, tempDomainsThatCanOwnTheTestCase)
+		}
+	}
+
 	// Create the response to caller
 	responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
+		DomainsThatCanOwnTheTestCase:      domainsThatCanOwnTheTestCase,
 		ImmatureTestInstructions:          cloudDBImmatureTestInstructionItems,
 		ImmatureTestInstructionContainers: cloudDBImmatureTestInstructionContainerItems,
 		AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{

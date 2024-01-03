@@ -50,6 +50,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersDomains(
 type DomainAndAuthorizationsStruct struct {
 	GCPAuthenticatedUser                                       string
 	DomainUuid                                                 string
+	DomainName                                                 string
 	CanListAndViewTestCaseOwnedByThisDomain                    int64
 	CanBuildAndSaveTestCaseOwnedByThisDomain                   int64
 	CanListAndViewTestCaseHavingTIandTICFromThisDomain         int64
@@ -75,7 +76,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersDomains(
 	}()
 
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "SELECT domainuuid, canlistandviewtestcaseownedbythisdomain, " +
+	sqlToExecute = sqlToExecute + "SELECT domainuuid, domainname, canlistandviewtestcaseownedbythisdomain, " +
 		"canbuildandsavetestcaseownedbythisdomain, canlistandviewtestcasehavingtiandticfromthisdomain, " +
 		"canlistandviewtestcasehavingtiandticfromthisdomainextended, canbuildandsavetestcasehavingtiandticfromthisdomain "
 	sqlToExecute = sqlToExecute + "FROM \"FenixDomainAdministration\".\"allowedusers\" "
@@ -107,6 +108,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersDomains(
 
 		err = rows.Scan(
 			&tempDomainAndAuthorizations.DomainUuid,
+			&tempDomainAndAuthorizations.DomainName,
 			&tempDomainAndAuthorizations.CanListAndViewTestCaseOwnedByThisDomain,
 			&tempDomainAndAuthorizations.CanBuildAndSaveTestCaseOwnedByThisDomain,
 			&tempDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain,
