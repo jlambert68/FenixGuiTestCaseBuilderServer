@@ -582,8 +582,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyChangesToTestInstructi
 	}
 
 	// Found correct changes, so update supported TestInstructions, TestInstructionContainers and Allowed Users in database
-	if correctNewChangesFoundInTestInstructions == true || correctNewChangesFoundInTestInstructionContainers ||
-		correctNewChangesFoundInAllowedUsers {
+	// Can only be done when ForceNewBaseLineForTestInstructionsAndTestInstructionContainers==true
+	if (correctNewChangesFoundInTestInstructions == true || correctNewChangesFoundInTestInstructionContainers ||
+		correctNewChangesFoundInAllowedUsers) && testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.
+		ForceNewBaseLineForTestInstructionsAndTestInstructionContainers == false {
 		common_config.Logger.WithFields(logrus.Fields{
 			"id": "83536474-a037-4b67-85fc-2818f9181e38",
 			"correctNewChangesFoundInTestInstructions":          correctNewChangesFoundInTestInstructions,
@@ -637,7 +639,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyChangesToTestInstructi
 	correctNewChangesFoundInTestInstructions bool, err error) {
 
 	// No TestInstructions
-	if testInstructionsMessage != nil {
+	if testInstructionsMessage == nil {
 
 		return correctNewChangesFoundInTestInstructions, err
 	}
@@ -750,7 +752,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyChangesToTestInstructi
 	correctNewChangesFoundInTestInstructionContainers bool, err error) {
 
 	// No TestInstructionContainers
-	if testInstructionContainersMessage != nil {
+	if testInstructionContainersMessage == nil {
 
 		return correctNewChangesFoundInTestInstructionContainers, err
 	}

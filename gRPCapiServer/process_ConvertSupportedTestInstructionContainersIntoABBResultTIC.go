@@ -170,6 +170,8 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) convertSupportedTes
 			NonEditableInformation: &fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionContainerInformationMessage_NonEditableBasicInformationMessage{
 				DomainUuid:                       string(supportedTestInstructionContainerInstance.TestInstructionContainer.DomainUUID),
 				DomainName:                       string(supportedTestInstructionContainerInstance.TestInstructionContainer.DomainName),
+				TestInstructionContainerUuid:     string(supportedTestInstructionContainerInstance.BasicTestInstructionContainerInformation.TestInstructionContainerUUID),
+				TestInstructionContainerName:     string(supportedTestInstructionContainerInstance.BasicTestInstructionContainerInformation.TestInstructionContainerName),
 				TestInstructionContainerTypeUuid: string(supportedTestInstructionContainerInstance.TestInstructionContainer.TestInstructionContainerTypeUUID),
 				TestInstructionContainerTypeName: string(supportedTestInstructionContainerInstance.TestInstructionContainer.TestInstructionContainerTypeName),
 				Deprecated:                       supportedTestInstructionContainerInstance.TestInstructionContainer.Deprecated,
@@ -187,6 +189,9 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) convertSupportedTes
 			InvisibleBasicInformation: &fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionContainerInformationMessage_InvisibleBasicInformationMessage{
 				Enabled: supportedTestInstructionContainerInstance.BasicTestInstructionContainerInformation.Enabled,
 			},
+			EditableTestInstructionContainerAttributes: &fenixTestCaseBuilderServerGrpcApi.
+				BasicTestInstructionContainerInformationMessage_EditableTestInstructionContainerAttributesMessage{
+				TestInstructionContainerExecutionType: fenixTestCaseBuilderServerGrpcApi.TestInstructionContainerExecutionTypeEnum(fenixTestCaseBuilderServerGrpcApi.TestInstructionContainerExecutionTypeEnum_value[string(supportedTestInstructionContainerInstance.BasicTestInstructionContainerInformation.TestInstructionContainerExecutionType)])},
 		},
 		ImmatureTestInstructionContainerInformation: &fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerInformationMessage{
 			AvailableDropZones: tempAvailableDropZonesToBeSentToTesterGui,

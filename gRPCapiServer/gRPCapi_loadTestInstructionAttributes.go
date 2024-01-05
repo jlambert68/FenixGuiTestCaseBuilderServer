@@ -1,31 +1,38 @@
 package gRPCapiServer
 
 import (
+	"FenixGuiTestCaseBuilderServer/CloudDbProcessing"
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
+	"fmt"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
-	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
+	"github.com/jlambert68/FenixTestInstructionsAdminShared/TestInstructionAndTestInstuctionContainerTypes"
 	"github.com/sirupsen/logrus"
-	"time"
 )
 
 // ListAllImmatureTestInstructionAttributes - *********************************************************************
 // The TestCase Builder asks for all TestInstructions Attributes that the user must add values to in TestCase
-func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllImmatureTestInstructionAttributes(ctx context.Context, userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage, error) {
-
-	// Define the response message
-	var responseMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage
+func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllImmatureTestInstructionAttributes(
+	ctx context.Context,
+	userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (
+	responseMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage, err error) {
 
 	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
-		"id": "a55f9c82-1d74-44a5-8662-058b8bc9e48f",
-	}).Debug("Incoming 'gRPC - ListAllAvailableTestInstructionsAndTestContainers'")
+		"id": "4a40306f-a431-4498-914f-1a7d92e5b856",
+	}).Debug("Incoming 'gRPC - ListAllImmatureTestInstructionAttributes'")
 
 	defer fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
-		"id": "27fb45fe-3266-41aa-a6af-958513977e28",
-	}).Debug("Outgoing 'gRPC - ListAllAvailableTestInstructionsAndTestContainers'")
+		"id": "ae43d1a6-80a1-48de-a879-00184e154184",
+	}).Debug("Outgoing 'gRPC - ListAllImmatureTestInstructionAttributes'")
+
+	// Current user
+	var gCPAuthenticatedUser string
+	var userIdOnComputer string
+	gCPAuthenticatedUser = userIdentificationMessage.GCPAuthenticatedUser
+	userIdOnComputer = userIdentificationMessage.UserIdOnComputer
 
 	// Check if Client is using correct proto files version
-	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion("666", userIdentificationMessage.ProtoFileVersionUsedByClient)
+	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion(userIdOnComputer, userIdentificationMessage.ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 		// Not correct proto-file version is used
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage{
@@ -37,117 +44,133 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllImmatureTest
 		return responseMessage, nil
 	}
 
-	// Current user
-	gCPAuthenticatedUser := userIdentificationMessage.GCPAuthenticatedUser
+	// Initiate object forCloudDB-processing
+	var fenixCloudDBObject *CloudDbProcessing.FenixCloudDBObjectStruct
+	fenixCloudDBObject = &CloudDbProcessing.FenixCloudDBObjectStruct{}
 
-	// Define variables to store data from DB in
+	// Load Domains that User has access to
+	var domainAndAuthorizations []CloudDbProcessing.DomainAndAuthorizationsStruct
+	domainAndAuthorizations, err = fenixCloudDBObject.PrepareLoadUsersDomains(gCPAuthenticatedUser)
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id":                   "4cebdec1-86d2-46d5-9c2d-9bfd343c03ec",
+			"error":                err,
+			"gCPAuthenticatedUser": gCPAuthenticatedUser,
+		}).Error("Got some problem when loading users domains from database")
+
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.
+			ImmatureTestInstructionAttributesMessage{
+			TestInstructionAttributesList: nil,
+			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+				AckNack:    false,
+				Comments:   err.Error(),
+				ErrorCodes: nil,
+				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
+					CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.
+						GetHighestFenixGuiBuilderProtoFileVersion()),
+			},
+		}
+
+		return responseMessage, err
+
+	}
+
+	// If user doesn't have access to any domains then exit with warning in log
+	if len(domainAndAuthorizations) == 0 {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id":                   "02a762dc-932b-4edd-a8b5-a6d0a53ba36b",
+			"gCPAuthenticatedUser": gCPAuthenticatedUser,
+		}).Warning("User doesn't have access to any domains")
+
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.
+			ImmatureTestInstructionAttributesMessage{
+			TestInstructionAttributesList: nil,
+			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+				AckNack:    false,
+				Comments:   fmt.Sprintf("User %s doesn't have access to any domains", gCPAuthenticatedUser),
+				ErrorCodes: nil,
+				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
+					CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.
+						GetHighestFenixGuiBuilderProtoFileVersion()),
+			},
+		}
+
+		return responseMessage, err
+
+	}
+
+	// Load all Supported TestInstructions, TestInstructionContainers belonging to all domain in DomainList
+	var testInstructionsAndTestInstructionContainersFromGrpcBuilderMessages []*TestInstructionAndTestInstuctionContainerTypes.
+		TestInstructionsAndTestInstructionsContainersStruct
+	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessages, err = fenixCloudDBObject.
+		PrepareLoadDomainsSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(domainAndAuthorizations)
+
+	if err != nil {
+		if err != nil {
+			common_config.Logger.WithFields(logrus.Fields{
+				"id":                   "4b98acbc-31fb-49f6-9a75-3f7d16f50704",
+				"error":                err,
+				"gCPAuthenticatedUser": gCPAuthenticatedUser,
+			}).Error("Got some problem when loading users published TestInstruction andTestInstructionContainers")
+
+			responseMessage = &fenixTestCaseBuilderServerGrpcApi.
+				ImmatureTestInstructionAttributesMessage{
+				TestInstructionAttributesList: nil,
+				AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+					AckNack:    false,
+					Comments:   err.Error(),
+					ErrorCodes: nil,
+					ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
+						CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.
+							GetHighestFenixGuiBuilderProtoFileVersion()),
+				},
+			}
+
+			return responseMessage, err
+
+		}
+	}
+
+	// Define variables to store Attribute data from DB in
 	var testInstructionAttributesList []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage_TestInstructionAttributeMessage
 
-	// Get users ImmatureTestInstruction-data from CloudDB
-	testInstructionAttributesList, err := fenixGuiTestCaseBuilderServerObject.loadClientsImmatureTestInstructionAttributesFromCloudDB(gCPAuthenticatedUser)
+	// Convert structured TestInstructionAttributes data into "raw" list of supported attributes
+	testInstructionAttributesList, err = s.convertSupportedTestInstructionsAttributesIntoAttributesList(
+		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessages)
+
 	if err != nil {
-		// Something went wrong so return an error to caller
-		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage{
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":  "cb607ccf-c9c9-4f2c-b788-a5b113fc885c",
+			"err": err,
+		}).Error("Couldn't convert Attributes belonging to TestInstructions into gRPC version to be sent to TesterGui")
+
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.
+			ImmatureTestInstructionAttributesMessage{
 			TestInstructionAttributesList: nil,
 			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
 				AckNack:                      false,
-				Comments:                     "Got some Error when retrieving ImmatureTestInstructionAttributes from database",
+				Comments:                     "Couldn't convert Attributes belonging to TestInstructions into gRPC version to be sent to TesterGui",
 				ErrorCodes:                   []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
 				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 			},
 		}
 
-		// Exiting
-		return responseMessage, nil
+		return responseMessage, err
+
 	}
 
 	// Create the response to caller
 	responseMessage = &fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage{
 		TestInstructionAttributesList: testInstructionAttributesList,
 		AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-			AckNack:                      true,
-			Comments:                     "",
-			ErrorCodes:                   nil,
-			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
+			AckNack:    true,
+			Comments:   "",
+			ErrorCodes: nil,
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(
+				common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		},
 	}
 
 	return responseMessage, nil
-}
-
-func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectStruct) loadClientsImmatureTestInstructionAttributesFromCloudDB(gCPAuthenticatedUser string) (testInstructionAttributesMessage []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage_TestInstructionAttributeMessage, err error) {
-
-	usedDBSchema := "FenixBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
-
-	// **** BasicTestInstructionInformation **** **** BasicTestInstructionInformation **** **** BasicTestInstructionInformation ****
-	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "SELECT TIATTR.* "
-	sqlToExecute = sqlToExecute + "FROM \"" + usedDBSchema + "\".\"TestInstructionAttributes\" TIATTR "
-	sqlToExecute = sqlToExecute + "ORDER BY TIATTR.\"DomainUuid\" ASC, TIATTR.\"TestInstructionUuid\" ASC, TIATTR.\"TestInstructionAttributeUuid\" ASC; "
-
-	// Query DB
-	var ctx context.Context
-	ctx, timeOutCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer timeOutCancel()
-
-	rows, err := fenixSyncShared.DbPool.Query(ctx, sqlToExecute)
-	defer rows.Close()
-
-	if err != nil {
-		fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
-			"Id":           "5f769af2-f75a-4ea6-8c3d-2108c9dfb9b7",
-			"Error":        err,
-			"sqlToExecute": sqlToExecute,
-		}).Error("Something went wrong when executing SQL")
-
-		return nil, err
-	}
-
-	// Variables to used when extract data from result set
-	var tempTestInstructionAttributeInputMask string
-
-	// Extract data from DB result set
-	for rows.Next() {
-
-		// Initiate a new variable to store the data
-		immatureTestInstructionAttribute := fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage_TestInstructionAttributeMessage{}
-
-		err := rows.Scan(
-			&immatureTestInstructionAttribute.DomainUuid,
-			&immatureTestInstructionAttribute.DomainName,
-			&immatureTestInstructionAttribute.TestInstructionUuid,
-			&immatureTestInstructionAttribute.TestInstructionName,
-			&immatureTestInstructionAttribute.TestInstructionAttributeUuid,
-			&immatureTestInstructionAttribute.TestInstructionAttributeName,
-			&immatureTestInstructionAttribute.TestInstructionAttributeDescription,
-			&immatureTestInstructionAttribute.TestInstructionAttributeMouseOver,
-			&immatureTestInstructionAttribute.TestInstructionAttributeTypeUuid,
-			&immatureTestInstructionAttribute.TestInstructionAttributeTypeName,
-			&immatureTestInstructionAttribute.TestInstructionAttributeValueAsString,
-			&immatureTestInstructionAttribute.TestInstructionAttributeValueUuid,
-			&immatureTestInstructionAttribute.TestInstructionAttributeVisible,
-			&immatureTestInstructionAttribute.TestInstructionAttributeEnable,
-			&immatureTestInstructionAttribute.TestInstructionAttributeMandatory,
-			&immatureTestInstructionAttribute.TestInstructionAttributeVisibleInTestCaseArea,
-			&immatureTestInstructionAttribute.TestInstructionAttributeIsDeprecated,
-			&tempTestInstructionAttributeInputMask,
-			&immatureTestInstructionAttribute.TestInstructionAttributeUIType,
-		)
-
-		if err != nil {
-			fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
-				"Id":           "7cd322cb-2219-4c4d-a8c8-2770a42b0c23",
-				"Error":        err,
-				"sqlToExecute": sqlToExecute,
-			}).Error("Something went wrong when processing result from database")
-
-			return nil, err
-		}
-
-		// Add BondAttribute to BondsAttributes
-		testInstructionAttributesMessage = append(testInstructionAttributesMessage, &immatureTestInstructionAttribute)
-
-	}
-
-	return testInstructionAttributesMessage, err
 }

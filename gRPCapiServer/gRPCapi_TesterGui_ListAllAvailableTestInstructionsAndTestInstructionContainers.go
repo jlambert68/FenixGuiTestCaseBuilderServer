@@ -14,7 +14,8 @@ import (
 // The TestCase Builder asks for all TestInstructions and Pre-defined TestInstructionContainer that the user can add to a TestCase
 func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTestInstructionsAndTestInstructionContainers(
 	ctx context.Context, userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (
-	responseMessage *fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage, err error) {
+	responseMessage *fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage,
+	err error) {
 
 	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "a55f9c82-1d74-44a5-8662-058b8bc9e48f",
