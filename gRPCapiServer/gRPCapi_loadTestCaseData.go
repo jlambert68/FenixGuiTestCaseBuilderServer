@@ -68,7 +68,9 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) GetDetailedTestCase
 
 	// Load Full TestCase from Database
 	var responseMessage *fenixTestCaseBuilderServerGrpcApi.GetDetailedTestCaseResponse
-	responseMessage = fenixCloudDBObject.PrepareLoadFullTestCase(getTestCaseRequestMessage.TestCaseUuid)
+	responseMessage = fenixCloudDBObject.PrepareLoadFullTestCase(
+		getTestCaseRequestMessage.TestCaseUuid,
+		getTestCaseRequestMessage.GetGCPAuthenticatedUser())
 
 	return responseMessage, nil
 }

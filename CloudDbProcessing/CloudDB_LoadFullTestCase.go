@@ -9,11 +9,12 @@ import (
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/encoding/protojson"
+	"strconv"
 	"time"
 )
 
 // Load Full TestCase from Database
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadFullTestCase(testCaseUuidToLoad string) (responseMessage *fenixTestCaseBuilderServerGrpcApi.GetDetailedTestCaseResponse) {
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadFullTestCase(testCaseUuidToLoad string, gCPAuthenticatedUser string) (responseMessage *fenixTestCaseBuilderServerGrpcApi.GetDetailedTestCaseResponse) {
 
 	// Begin SQL Transaction
 	txn, err := fenixSyncShared.DbPool.Begin(context.Background())
@@ -50,9 +51,38 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadFullTestCase(test
 
 	defer txn.Commit(context.Background())
 
+	// Load Domains that User has access to
+	var domainAndAuthorizations []DomainAndAuthorizationsStruct
+	domainAndAuthorizations, err = fenixCloudDBObject.PrepareLoadUsersDomains(gCPAuthenticatedUser)
+
+	// If user doesn't have access to any domains then exit with warning in log
+	if len(domainAndAuthorizations) == 0 {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id":                   "02a762dc-932b-4edd-a8b5-a6d0a53ba36b",
+			"gCPAuthenticatedUser": gCPAuthenticatedUser,
+		}).Warning("User doesn't have access to any domains")
+
+		// Create response message
+		var ackNackResponse *fenixTestCaseBuilderServerGrpcApi.AckNackResponse
+		ackNackResponse = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+			AckNack:                      false,
+			Comments:                     fmt.Sprintf("User %s doesn't have access to any domains", gCPAuthenticatedUser),
+			ErrorCodes:                   nil,
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
+		}
+
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.GetDetailedTestCaseResponse{
+			AckNackResponse:  ackNackResponse,
+			DetailedTestCase: nil,
+		}
+
+		return responseMessage
+
+	}
+
 	// Load the TestCase
 	var fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage
-	fullTestCaseMessage, err = fenixCloudDBObject.loadFullTestCase(txn, testCaseUuidToLoad)
+	fullTestCaseMessage, err = fenixCloudDBObject.loadFullTestCase(txn, testCaseUuidToLoad, domainAndAuthorizations)
 
 	// Error when retrieving TestCase
 	if err != nil {
@@ -94,7 +124,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadFullTestCase(test
 		var ackNackResponse *fenixTestCaseBuilderServerGrpcApi.AckNackResponse
 		ackNackResponse = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
 			AckNack:                      false,
-			Comments:                     "TestCase couldn't be found in Database",
+			Comments:                     "TestCase couldn't be found in Database or the user doesn't have access to the TestCase",
 			ErrorCodes:                   errorCodes,
 			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		}
@@ -135,8 +165,59 @@ LIMIT 1;
 
 // Load All Domains and their address information
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
-	dbTransaction pgx.Tx, testCaseUuidToLoad string) (
+	dbTransaction pgx.Tx,
+	testCaseUuidToLoad string,
+	domainAndAuthorizations []DomainAndAuthorizationsStruct) (
 	fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage, err error) {
+
+	// Generate a Domains list and Calculate the Authorization requirements
+	var tempCalculatedDomainAndAuthorizations DomainAndAuthorizationsStruct
+	var domainList []string
+	for _, domainAndAuthorization := range domainAndAuthorizations {
+		// Add to DomainList
+		domainList = append(domainList, domainAndAuthorization.DomainUuid)
+
+		// Calculate the Authorization requirements for...
+		// TestCaseAuthorizationLevelOwnedByDomain
+		tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOwnedByThisDomain =
+			tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOwnedByThisDomain +
+				domainAndAuthorization.CanListAndViewTestCaseOwnedByThisDomain
+
+		// TestCaseAuthorizationLevelHavingTiAndTicWithDomain
+		tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain =
+			tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain +
+				domainAndAuthorization.CanListAndViewTestCaseHavingTIandTICFromThisDomain
+	}
+
+	// Convert Values into string for TestCaseAuthorizationLevelOwnedByDomain
+	var tempCanListAndViewTestCaseOwnedByThisDomainAsString string
+	tempCanListAndViewTestCaseOwnedByThisDomainAsString = strconv.FormatInt(
+		tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain, 10)
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":    "938e364a-5ab7-4248-bb39-217b283407b8",
+			"Error": err,
+			"tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain": tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain,
+		}).Error("Couldn't convert into string representation")
+
+		return nil, err
+	}
+
+	// Convert Values into string for TestCaseAuthorizationLevelOwnedByDomain
+	var tempCanListAndViewTestCaseHavingTIandTICfromThisDomainAsString string
+	tempCanListAndViewTestCaseHavingTIandTICfromThisDomainAsString = strconv.FormatInt(
+		tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain, 10)
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":    "938e364a-5ab7-4248-bb39-217b283407b8",
+			"Error": err,
+			"tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain": tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain,
+		}).Error("Couldn't convert into string representation")
+
+		return nil, err
+	}
 
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "SELECT TC.\"TestCaseBasicInformationAsJsonb\", " +
@@ -144,8 +225,19 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 		"TC.\"TestCaseHash\", TC.\"TestCaseExtraInformationAsJsonb\" "
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" TC "
 	sqlToExecute = sqlToExecute + fmt.Sprintf("WHERE TC.\"TestCaseUuid\" = '%s' ", testCaseUuidToLoad)
-	sqlToExecute = sqlToExecute + "ORDER BY TC.\"TestCaseVersion\" DESC "
-	sqlToExecute = sqlToExecute + "LIMIT 1; "
+	sqlToExecute = sqlToExecute + "AND "
+	sqlToExecute = sqlToExecute + "(TC.\"CanListAndViewTestCaseAuthorizationLevelOwnedByDomain\" & " + tempCanListAndViewTestCaseOwnedByThisDomainAsString + ")"
+	sqlToExecute = sqlToExecute + "= TC.\"CanListAndViewTestCaseAuthorizationLevelOwnedByDomain\" "
+	sqlToExecute = sqlToExecute + "AND "
+	sqlToExecute = sqlToExecute + "(TC.\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomain\" & " + tempCanListAndViewTestCaseHavingTIandTICfromThisDomainAsString + ")"
+	sqlToExecute = sqlToExecute + "= TC.\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomain\" "
+	sqlToExecute = sqlToExecute + "AND "
+	sqlToExecute = sqlToExecute + "TC.\"TestCaseVersion\" = (SELECT MAX(\"TestCaseVersion\") "
+	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" tc2 "
+	sqlToExecute = sqlToExecute + fmt.Sprintf("WHERE tc2.\"TestCaseUuid\" = '%s' ", testCaseUuidToLoad)
+	sqlToExecute = sqlToExecute + "AND "
+	sqlToExecute = sqlToExecute + "tc2.\"TestCaseIsDeleted\" = false )"
+	sqlToExecute = sqlToExecute + "; "
 
 	// Log SQL to be executed if Environment variable is true
 	if common_config.LogAllSQLs == true {

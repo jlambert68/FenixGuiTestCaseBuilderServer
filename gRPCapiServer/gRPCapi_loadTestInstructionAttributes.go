@@ -44,7 +44,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllImmatureTest
 		return responseMessage, nil
 	}
 
-	// Initiate object forCloudDB-processing
+	// Initiate object for CloudDB-processing
 	var fenixCloudDBObject *CloudDbProcessing.FenixCloudDBObjectStruct
 	fenixCloudDBObject = &CloudDbProcessing.FenixCloudDBObjectStruct{}
 
