@@ -191,6 +191,22 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 			}).Info("New forced 'baseline' for the domains supported TestInstructions, TestInstructionContainers and Allowed Users")
 		}
 
+		// Delete old data in database for Supported TestInstructions, TestInstructionContainers And Allowed Users
+		err = fenixCloudDBObject.performDeleteCurrentSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
+			dbTransaction,
+			testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
+
+		if err != nil {
+			common_config.Logger.WithFields(logrus.Fields{
+				"id":         "d65868ff-251f-47ec-a3c2-c8cdc3fac90c",
+				"DomainHash": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainHash,
+				"DomainName": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainName,
+				"error":      err,
+			}).Error("Got some problem when deleting old data for supported TestInstructions, TestInstructionContainers and Allowed Users in database")
+
+			return err
+		}
+
 		// Save supported TestInstructions, TestInstructionContainers and Allowed Users in Database due to New forced 'baseline'
 		err = fenixCloudDBObject.performSaveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
 			dbTransaction, testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage,
@@ -583,9 +599,23 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyChangesToTestInstructi
 
 	// Found correct changes, so update supported TestInstructions, TestInstructionContainers and Allowed Users in database
 	// Can only be done when ForceNewBaseLineForTestInstructionsAndTestInstructionContainers==true
-	if (correctNewChangesFoundInTestInstructions == true || correctNewChangesFoundInTestInstructionContainers ||
-		correctNewChangesFoundInAllowedUsers) && testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.
+	if (correctNewChangesFoundInTestInstructions == true || correctNewChangesFoundInTestInstructionContainers == true ||
+		correctNewChangesFoundInAllowedUsers == true) && testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.
 		ForceNewBaseLineForTestInstructionsAndTestInstructionContainers == false {
+
+		common_config.Logger.WithFields(logrus.Fields{
+			"id": "83536474-a037-4b67-85fc-2818f9181e38",
+			"correctNewChangesFoundInTestInstructions":          correctNewChangesFoundInTestInstructions,
+			"correctNewChangesFoundInTestInstructionContainers": correctNewChangesFoundInTestInstructionContainers,
+			"correctNewChangesFoundInAllowedUsers":              correctNewChangesFoundInAllowedUsers,
+		}).Warning("Found correct changes for TI, TIC and Allowed Users, but 'ForceNewBaseLineForTestInstructionsAndTestInstructionContainers' is 'false'. Do no update of database")
+
+		err = errors.New("found correct changes for TI, TIC or Allowed Users, but 'ForceNewBaseLineForTestInstructionsAndTestInstructionContainers' is 'false'. Do no update of database")
+
+		return err
+
+	} else {
+
 		common_config.Logger.WithFields(logrus.Fields{
 			"id": "83536474-a037-4b67-85fc-2818f9181e38",
 			"correctNewChangesFoundInTestInstructions":          correctNewChangesFoundInTestInstructions,
