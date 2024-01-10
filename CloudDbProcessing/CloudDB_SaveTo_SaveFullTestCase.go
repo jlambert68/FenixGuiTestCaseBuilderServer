@@ -86,7 +86,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestCase(full
 
 	// Verify that User is allowed to Save TestCase
 	var userIsAllowedToSaveTestCase bool
-	userIsAllowedToSaveTestCase, err = fenixCloudDBObject.verifyThatUserIsAllowedToSaveTestCase(
+	var authorizationValueForOwnerDomain int64
+	var authorizationValueForAllDomainsInTestCase int64
+	userIsAllowedToSaveTestCase, authorizationValueForOwnerDomain,
+		authorizationValueForAllDomainsInTestCase, err = fenixCloudDBObject.verifyThatUserIsAllowedToSaveTestCase(
 		txn, ownerDomainForTestCase, allDomainsWithinTestCase, usersDomainsAndAuthorizations)
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
@@ -138,7 +141,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestCase(full
 	}
 
 	// Save the TestCase
-	returnMessage, err = fenixCloudDBObject.saveFullTestCase(txn, fullTestCaseMessage)
+	returnMessage, err = fenixCloudDBObject.saveFullTestCase(
+		txn, fullTestCaseMessage, authorizationValueForOwnerDomain, authorizationValueForAllDomainsInTestCase)
 
 	return returnMessage
 }
@@ -170,6 +174,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) extractAllDomainsWithinTestC
 	fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (
 	allDomainsWithinTestCase []domainForTestCaseStruct) {
 
+	var tempDomainsMap map[string]string
+	var existsInDomainsMap bool
+	tempDomainsMap = make(map[string]string)
+
 	// Extract the Domain for each TestInstruction
 	for _, tempMatureTestInstruction := range fullTestCaseMessage.GetMatureTestInstructions().
 		GetMatureTestInstructions() {
@@ -182,8 +190,18 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) extractAllDomainsWithinTestC
 				GetDomainName(),
 		}
 
-		// Add Domain to slice of alla Domains within TestCase
-		allDomainsWithinTestCase = append(allDomainsWithinTestCase, tempDomainsWithinTestCase)
+		// Check if the Domain already exists in 'tempDomainsMap'
+		_, existsInDomainsMap = tempDomainsMap[tempDomainsWithinTestCase.domainUuid]
+
+		// Only store the Domain is missing in map
+		if existsInDomainsMap == false {
+
+			// Add to Map
+			tempDomainsMap[tempDomainsWithinTestCase.domainUuid] = tempDomainsWithinTestCase.domainUuid
+
+			// Add Domain to slice of alla Domains within TestCase
+			allDomainsWithinTestCase = append(allDomainsWithinTestCase, tempDomainsWithinTestCase)
+		}
 	}
 
 	// Extract the Domain for each TestInstructionContainer
@@ -198,8 +216,18 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) extractAllDomainsWithinTestC
 				GetNonEditableInformation().GetDomainName(),
 		}
 
-		// Add Domain to slice of alla Domains within TestCase
-		allDomainsWithinTestCase = append(allDomainsWithinTestCase, tempDomainsWithinTestCase)
+		// Check if the Domain already exists in 'tempDomainsMap'
+		_, existsInDomainsMap = tempDomainsMap[tempDomainsWithinTestCase.domainUuid]
+
+		// Only store the Domain is missing in map
+		if existsInDomainsMap == false {
+
+			// Add to Map
+			tempDomainsMap[tempDomainsWithinTestCase.domainUuid] = tempDomainsWithinTestCase.domainUuid
+
+			// Add Domain to slice of alla Domains within TestCase
+			allDomainsWithinTestCase = append(allDomainsWithinTestCase, tempDomainsWithinTestCase)
+		}
 	}
 
 	return allDomainsWithinTestCase
@@ -212,10 +240,11 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyThatUserIsAllowedToSav
 	allDomainsWithinTestCase []domainForTestCaseStruct,
 	usersDomainsAndAuthorizations []DomainAndAuthorizationsStruct) (
 	userIsAllowedToSaveTestCase bool,
+	authorizationValueForOwnerDomain int64,
+	authorizationValueForAllDomainsInTestCase int64,
 	err error) {
 
 	// List Authorization value for 'OwnerDomain' from database
-	var authorizationValueForOwnerDomain int64
 	authorizationValueForOwnerDomain, err = fenixCloudDBObject.loadAuthorizationValueBasedOnDomainList(
 		dbTransaction, []domainForTestCaseStruct{ownerDomainForTestCase})
 
@@ -226,11 +255,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyThatUserIsAllowedToSav
 			"ownerDomainForTestCase": ownerDomainForTestCase,
 		}).Error("Couldn't load Authorization vale based on Owner Domain")
 
-		return false, err
+		return false,
+			0,
+			0,
+			err
 	}
 
 	// List Authorization value for all domains within TestCase from Database
-	var authorizationValueForAllDomainsInTestCase int64
 	authorizationValueForAllDomainsInTestCase, err = fenixCloudDBObject.loadAuthorizationValueBasedOnDomainList(
 		dbTransaction, allDomainsWithinTestCase)
 	if err != nil {
@@ -240,7 +271,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyThatUserIsAllowedToSav
 			"allDomainsWithinTestCase": allDomainsWithinTestCase,
 		}).Error("Couldn't load Authorization vale based on Owner Domain")
 
-		return false, err
+		return false,
+			0,
+			0,
+			err
 	}
 
 	// Calculate the Authorization requirements
@@ -277,7 +311,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyThatUserIsAllowedToSav
 	// Are both control 'true'
 	userIsAllowedToSaveTestCase = userCanBuildAndSaveTestCaseOwnedByThisDomain && userCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain
 
-	return userIsAllowedToSaveTestCase, err
+	return userIsAllowedToSaveTestCase,
+		authorizationValueForOwnerDomain,
+		authorizationValueForAllDomainsInTestCase,
+		err
 }
 
 // Load Authorization value based on Domain List
@@ -365,7 +402,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadAuthorizationValueBasedO
 }
 
 // Save the full TestCase to CloudDB
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(dbTransaction pgx.Tx, fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse, err error) {
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(
+	dbTransaction pgx.Tx,
+	fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage,
+	authorizationValueForOwnerDomain int64,
+	authorizationValueForAllDomainsInTestCase int64) (
+	returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse,
+	err error) {
 
 	usedDBSchema := "FenixBuilder" // TODO should this env variable be used? fenixSyncShared.GetDBSchemaName()
 
@@ -427,6 +470,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(dbTransacti
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestInstructionContainersAsJsonb)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempDomainHash)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestCaseExtraInformationAsJsonb)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, authorizationValueForOwnerDomain)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, authorizationValueForAllDomainsInTestCase)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, false)
 
 	dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
 
@@ -434,11 +480,11 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(dbTransacti
 	sqlToExecute = sqlToExecute + "INSERT INTO \"" + usedDBSchema + "\".\"TestCases\" "
 	sqlToExecute = sqlToExecute + "(\"DomainUuid\", \"DomainName\", \"TestCaseUuid\", \"TestCaseName\", \"TestCaseVersion\", " +
 		"\"TestCaseBasicInformationAsJsonb\", \"TestInstructionsAsJsonb\", \"TestInstructionContainersAsJsonb\", " +
-		"\"TestCaseHash\", \"TestCaseExtraInformationAsJsonb\") "
+		"\"TestCaseHash\", \"TestCaseExtraInformationAsJsonb\", \"CanListAndViewTestCaseAuthorizationLevelOwnedByDomain\", " +
+		"\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomai\", \"TestCaseIsDeleted\") "
 	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
 	sqlToExecute = sqlToExecute + ";"
 
-	// Execute Query CloudDB
 	// Execute Query CloudDB
 	comandTag, err := dbTransaction.Exec(context.Background(), sqlToExecute)
 
