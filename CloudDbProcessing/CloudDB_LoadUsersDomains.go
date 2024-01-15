@@ -71,7 +71,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersDomains(
 
 	defer func() {
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id": "860b9b49-4d94-4f03-bf84-5b77f095ac7b",
+			"Id":                      "860b9b49-4d94-4f03-bf84-5b77f095ac7b",
+			"domainAndAuthorizations": domainAndAuthorizations,
 		}).Debug("Exiting: loadUsersDomains()")
 	}()
 
@@ -82,6 +83,14 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersDomains(
 	sqlToExecute = sqlToExecute + "FROM \"FenixDomainAdministration\".\"allowedusers\" "
 	sqlToExecute = sqlToExecute + "WHERE \"gcpauthenticateduser\" = '" + gCPAuthenticatedUser + "'"
 	sqlToExecute = sqlToExecute + ";"
+
+	// Log SQL to be executed if Environment variable is true
+	if common_config.LogAllSQLs == true {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "d72d1a9c-079c-442f-bc0e-f95b557fd443",
+			"sqlToExecute": sqlToExecute,
+		}).Debug("SQL to be executed within 'loadUsersDomains'")
+	}
 
 	// Query DB
 	var ctx context.Context

@@ -330,7 +330,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadAuthorizationValueBasedO
 
 	defer func() {
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id": "47c7f7b3-9dce-4230-89c8-dd66605b5f7a",
+			"Id":                 "47c7f7b3-9dce-4230-89c8-dd66605b5f7a",
+			"authorizationValue": authorizationValue,
 		}).Debug("Exiting: loadAuthorizationValueBasedOnDomainList()")
 	}()
 
@@ -358,6 +359,14 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadAuthorizationValueBasedO
 	sqlToExecute = sqlToExecute + " AND "
 	sqlToExecute = sqlToExecute + "dom.bitnumbername = authvalue.bitnumbername "
 	sqlToExecute = sqlToExecute + ";"
+
+	// Log SQL to be executed if Environment variable is true
+	if common_config.LogAllSQLs == true {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "4a118124-af61-4699-8d59-ce31e7611f7e",
+			"sqlToExecute": sqlToExecute,
+		}).Debug("SQL to be executed within 'loadUsersDomains'")
+	}
 
 	// Query DB
 	var ctx context.Context
