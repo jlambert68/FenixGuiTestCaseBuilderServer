@@ -76,7 +76,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) processTestInstructionsBasic
 			// NonEditableInformation
 			&nonEditableInformation.DomainUuid,
 			&nonEditableInformation.DomainName,
-			&nonEditableInformation.TestInstructionOrignalUuid,
+			&nonEditableInformation.TestInstructionOriginalUuid,
 			&nonEditableInformation.TestInstructionOriginalName,
 			&nonEditableInformation.TestInstructionTypeUuid,
 			&nonEditableInformation.TestInstructionTypeName,
@@ -116,7 +116,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) processTestInstructionsBasic
 		//editableTestInstructionAttribute.TestInstructionExecutionType = fenixTestCaseBuilderServerGrpcApi.TestInstructionExecutionTypeEnum(fenixTestCaseBuilderServerGrpcApi.TestInstructionExecutionTypeEnum_value[tempTestInstructionExecutionType])
 
 		// Add 'basicTestInstructionInformation' to map
-		testInstructionUuid := nonEditableInformation.TestInstructionOrignalUuid
+		testInstructionUuid := nonEditableInformation.TestInstructionOriginalUuid
 
 		_, existsInMap := immatureTestInstructionMessageMap[testInstructionUuid]
 		// testInstructionUuid shouldn't exist in map. If so then there is a problem
@@ -134,7 +134,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) processTestInstructionsBasic
 			NonEditableInformation: &fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_NonEditableBasicInformationMessage{
 				DomainUuid:                  nonEditableInformation.DomainUuid,
 				DomainName:                  nonEditableInformation.DomainName,
-				TestInstructionOrignalUuid:  nonEditableInformation.TestInstructionOrignalUuid,
+				TestInstructionOriginalUuid: nonEditableInformation.TestInstructionOriginalUuid,
 				TestInstructionOriginalName: nonEditableInformation.TestInstructionOriginalName,
 				TestInstructionTypeUuid:     nonEditableInformation.TestInstructionTypeUuid,
 				TestInstructionTypeName:     nonEditableInformation.TestInstructionTypeName,

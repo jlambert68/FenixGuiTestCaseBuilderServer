@@ -178,7 +178,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) convertSupportedTes
 			NonEditableInformation: &fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_NonEditableBasicInformationMessage{
 				DomainUuid:                  string(supportedTestInstructionInstance.TestInstruction.DomainUUID),
 				DomainName:                  string(supportedTestInstructionInstance.TestInstruction.DomainName),
-				TestInstructionOrignalUuid:  string(supportedTestInstructionInstance.TestInstruction.TestInstructionUUID),
+				TestInstructionOriginalUuid: string(supportedTestInstructionInstance.TestInstruction.TestInstructionUUID),
 				TestInstructionOriginalName: string(supportedTestInstructionInstance.TestInstruction.TestInstructionName),
 				TestInstructionTypeUuid:     string(supportedTestInstructionInstance.TestInstruction.TestInstructionTypeUUID),
 				TestInstructionTypeName:     string(supportedTestInstructionInstance.TestInstruction.TestInstructionTypeName),
