@@ -7,7 +7,7 @@ toolchain go1.21.5
 require (
 	github.com/go-gota/gota v0.12.0 // indirect
 	github.com/jlambert68/FenixSyncShared v0.0.0-20231023123349-e891692cede8
-	github.com/jlambert68/FenixTestInstructionsAdminShared v0.0.0-20240122135958-5f199d20b20a
+	github.com/jlambert68/FenixTestInstructionsAdminShared v0.0.0-20240129172215-b8cfdc2adfaf
 	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/net v0.19.0
 	golang.org/x/oauth2 v0.15.0
@@ -16,7 +16,7 @@ require (
 
 require (
 	github.com/jackc/pgx/v4 v4.18.1
-	github.com/jlambert68/FenixGrpcApi v0.0.0-20240122123718-97a7a27310aa
+	github.com/jlambert68/FenixGrpcApi v0.0.0-20240129152625-acb237e2fb83
 	google.golang.org/api v0.149.0
 	google.golang.org/protobuf v1.32.0
 )
@@ -46,7 +46,7 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	gonum.org/v1/gonum v0.9.1 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto v0.0.0-20231212172506-995d672761c0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20231211222908-989df2bf70f3 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20231211222908-989df2bf70f3 // indirect
+	google.golang.org/genproto v0.0.0-20240125205218-1f4bbc51befe // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240116215550-a9fa1716bcac // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240116215550-a9fa1716bcac // indirect
 )

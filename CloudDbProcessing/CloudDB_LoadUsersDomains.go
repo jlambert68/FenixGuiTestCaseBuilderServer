@@ -30,9 +30,21 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersDomains(
 
 	defer txn.Commit(context.Background())
 
+	// Load all domains open for every one to use in some way
+	var domainsOpenForEveryOneToUse []DomainAndAuthorizationsStruct
+	domainsOpenForEveryOneToUse, err = fenixCloudDBObject.loadDomainsOpenForEveryOneToUse(txn, gCPAuthenticatedUser)
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id":                   "10f536b6-e3ff-4241-9973-996f86f92cd6",
+			"error":                err,
+			"GCPAuthenticatedUser": gCPAuthenticatedUser,
+		}).Error("Couldn't load all Domains open for every one to use from CloudDB")
+
+		return nil, err
+	}
+
 	// Load all domains for a specific user
 	domainAndAuthorizations, err = fenixCloudDBObject.loadUsersDomains(txn, gCPAuthenticatedUser)
-
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
 			"id":                   "2cd14dd8-0d44-4fc4-ae72-adaaaf37bacc",
@@ -41,6 +53,40 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersDomains(
 		}).Error("Couldn't load all Users Domains from CloudDB")
 
 		return nil, err
+	}
+
+	// Concatenate Domains and Authorizations
+	var domainMap map[string]DomainAndAuthorizationsStruct
+	domainMap = make(map[string]DomainAndAuthorizationsStruct)
+
+	// Loop 'domainAndAuthorizations' and add to Map
+	for _, termpDomainAndAuthorization := range domainAndAuthorizations {
+		domainMap[termpDomainAndAuthorization.DomainUuid] = termpDomainAndAuthorization
+	}
+
+	// Loop 'domainsOpenForEveryOneToUse' and add to Map if they don't already exist, if so then replace certain values
+	var existsInMap bool
+	var termpDomainAndAuthorization DomainAndAuthorizationsStruct
+	for _, tempdomainOpenForEveryOneToUse := range domainsOpenForEveryOneToUse {
+
+		termpDomainAndAuthorization, existsInMap = domainMap[tempdomainOpenForEveryOneToUse.DomainUuid]
+		if existsInMap == false {
+			// Add to Map
+			domainMap[tempdomainOpenForEveryOneToUse.DomainUuid] = tempdomainOpenForEveryOneToUse
+
+		} else {
+			// Replace values
+			termpDomainAndAuthorization.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain =
+				tempdomainOpenForEveryOneToUse.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain
+			termpDomainAndAuthorization.CanListAndViewTestCaseHavingTIandTICFromThisDomain =
+				tempdomainOpenForEveryOneToUse.CanListAndViewTestCaseHavingTIandTICFromThisDomain
+		}
+	}
+
+	// Clear and rebuild 'domainAndAuthorizations'
+	domainAndAuthorizations = nil
+	for _, tempDomainAndAuthorizations := range domainMap {
+		domainAndAuthorizations = append(domainAndAuthorizations, tempDomainAndAuthorizations)
 	}
 
 	return domainAndAuthorizations, err
@@ -144,4 +190,107 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersDomains(
 	}
 
 	return domainAndAuthorizations, err
+}
+
+// Load all domains open for every one to use in some way
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainsOpenForEveryOneToUse(
+	dbTransaction pgx.Tx,
+	gCPAuthenticatedUser string) (
+	domainsOpenForEveryOneToUse []DomainAndAuthorizationsStruct,
+	err error) {
+
+	common_config.Logger.WithFields(logrus.Fields{
+		"Id": "a7634a49-d32e-4b15-b2ca-68e86f7a6983",
+	}).Debug("Entering: loadDomainsOpenForEveryOneToUse()")
+
+	defer func() {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":                          "2c8b80dc-1058-4dd2-bb50-277b5952e731",
+			"domainsOpenForEveryOneToUse": domainsOpenForEveryOneToUse,
+		}).Debug("Exiting: loadDomainsOpenForEveryOneToUse()")
+	}()
+
+	sqlToExecute := ""
+	sqlToExecute = sqlToExecute + "SELECT dom.domain_uuid, dom.domain_name, " +
+		"dom.\"AllUsersCanListAndViewTestCaseHavingTIandTICFromThisDomain\", " +
+		"dom.\"AllUsersCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain\", dbpn.bitNumberValue "
+	sqlToExecute = sqlToExecute + "FROM \"FenixDomainAdministration\".\"domains\" dom, " +
+		"\"FenixDomainAdministration\".\"domainbitpositionenum\" dbpn "
+	sqlToExecute = sqlToExecute + "WHERE (\"AllUsersCanListAndViewTestCaseHavingTIandTICFromThisDomain\" = true OR "
+	sqlToExecute = sqlToExecute + "\"AllUsersCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain\" = true) AND "
+	sqlToExecute = sqlToExecute + "dom.\"bitnumbername\" = dbpn.\"bitnumbername\" "
+	sqlToExecute = sqlToExecute + ";"
+
+	// Log SQL to be executed if Environment variable is true
+	if common_config.LogAllSQLs == true {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "9ac11b92-7536-4234-af11-7ee112f620d9",
+			"sqlToExecute": sqlToExecute,
+		}).Debug("SQL to be executed within 'loadDomainsOpenForEveryOneToUse'")
+	}
+
+	// Query DB
+	var ctx context.Context
+	ctx, timeOutCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer timeOutCancel()
+
+	rows, err := fenixSyncShared.DbPool.Query(ctx, sqlToExecute)
+	defer rows.Close()
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "54e8c6d1-490b-4576-bdd6-cb453013f21d",
+			"Error":        err,
+			"sqlToExecute": sqlToExecute,
+		}).Error("Something went wrong when processing result from database")
+
+		return nil, err
+	}
+
+	var tempCanListAndViewTestCaseHavingTIandTICFromThisDomain bool
+	var tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain bool
+	var bitNumberValue int64
+
+	// Extract data from DB result set
+	for rows.Next() {
+
+		var tempDomainAndAuthorizations DomainAndAuthorizationsStruct
+
+		err = rows.Scan(
+			&tempDomainAndAuthorizations.DomainUuid,
+			&tempDomainAndAuthorizations.DomainName,
+			&tempCanListAndViewTestCaseHavingTIandTICFromThisDomain,
+			&tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain,
+			&bitNumberValue,
+		)
+
+		if err != nil {
+			common_config.Logger.WithFields(logrus.Fields{
+				"Id":           "ede844c1-1f90-479e-8032-c0365f5bfb97",
+				"Error":        err,
+				"sqlToExecute": sqlToExecute,
+			}).Error("Something went wrong when processing result from database")
+
+			return nil, err
+		}
+
+		// Convert bool to int64 for 'tempCanListAndViewTestCaseHavingTIandTICFromThisDomain'
+		if tempCanListAndViewTestCaseHavingTIandTICFromThisDomain == true {
+			tempDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain = bitNumberValue
+		}
+
+		// Convert bool to int64 for 'tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain'
+		if tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain == true {
+			tempDomainAndAuthorizations.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain = bitNumberValue
+		}
+
+		// Add user to the row-data
+		tempDomainAndAuthorizations.GCPAuthenticatedUser = gCPAuthenticatedUser
+
+		// Append DomainUuid to list of Domains
+		domainsOpenForEveryOneToUse = append(domainsOpenForEveryOneToUse, tempDomainAndAuthorizations)
+
+	}
+
+	return domainsOpenForEveryOneToUse, err
 }

@@ -300,13 +300,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyThatUserIsAllowedToSav
 	var userCanBuildAndSaveTestCaseOwnedByThisDomain bool
 	userCanBuildAndSaveTestCaseOwnedByThisDomain =
 		(tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOwnedByThisDomain & authorizationValueForOwnerDomain) ==
-			tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOwnedByThisDomain
+			authorizationValueForOwnerDomain
 
 	// Check if User canSave TestCase due to 'CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain'
 	var userCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain bool
 	userCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain =
 		(tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain & authorizationValueForAllDomainsInTestCase) ==
-			tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOwnedByThisDomain
+			authorizationValueForAllDomainsInTestCase
 
 	// Are both control 'true'
 	userIsAllowedToSaveTestCase = userCanBuildAndSaveTestCaseOwnedByThisDomain && userCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain

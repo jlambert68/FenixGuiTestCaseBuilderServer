@@ -136,7 +136,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 
 	// When the saved Message Hash is equal to the incoming Message Hash then nothing is change, which is the base case
 	if savedMessageHash == testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.
-		TestInstructionsAndTestInstructionsContainersAndUsersMessageHash {
+		TestInstructionsAndTestInstructionsContainersAndUsersMessageHash &&
+		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.
+			ForceNewBaseLineForTestInstructionsAndTestInstructionContainers == false {
 
 		return nil
 	}
@@ -397,6 +399,11 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedAllowedU
 	var dataRowToBeInsertedMultiType []interface{}
 	var dataRowsToBeInsertedMultiType [][]interface{}
 	dataRowsToBeInsertedMultiType = nil
+
+	// Exist if now users are specified
+	if len(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.AllowedUsers.AllowedUsers) == 0 {
+		return err
+	}
 
 	// Loop Allowed User
 	for _, allowedUser := range testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.AllowedUsers.AllowedUsers {
@@ -1235,7 +1242,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performDeleteCurrentAllowedU
 
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "DELETE FROM \"FenixDomainAdministration\".\"allowedusers\" au "
-	sqlToExecute = sqlToExecute + "WHERE au.\"uniqueidhash\" IN " + fenixCloudDBObject.generateSQLINArray(tempUniqueIdHashesSlice)
+	sqlToExecute = sqlToExecute + "WHERE au.\"domainuuid\" = '" +
+		string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID) + "' "
+	//sqlToExecute = sqlToExecute + "WHERE au.\"uniqueidhash\" IN " + fenixCloudDBObject.generateSQLINArray(tempUniqueIdHashesSlice)
 	sqlToExecute = sqlToExecute + ";"
 
 	// Log SQL to be executed if Environment variable is true
