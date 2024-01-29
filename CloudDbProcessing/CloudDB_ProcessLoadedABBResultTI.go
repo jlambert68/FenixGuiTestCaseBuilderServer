@@ -134,6 +134,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) processTestInstructionsBasic
 			NonEditableInformation: &fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_NonEditableBasicInformationMessage{
 				DomainUuid:                  nonEditableInformation.DomainUuid,
 				DomainName:                  nonEditableInformation.DomainName,
+				ExecutionDomainUuid:         nonEditableInformation.ExecutionDomainUuid,
+				ExecutionDomainName:         nonEditableInformation.ExecutionDomainName,
 				TestInstructionOriginalUuid: nonEditableInformation.TestInstructionOriginalUuid,
 				TestInstructionOriginalName: nonEditableInformation.TestInstructionOriginalName,
 				TestInstructionTypeUuid:     nonEditableInformation.TestInstructionTypeUuid,
