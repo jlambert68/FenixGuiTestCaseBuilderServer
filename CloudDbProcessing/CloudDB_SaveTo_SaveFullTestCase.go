@@ -58,7 +58,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestCase(full
 
 	// Load Users all Domains
 	var usersDomainsAndAuthorizations []DomainAndAuthorizationsStruct
-	usersDomainsAndAuthorizations, err = fenixCloudDBObject.loadUsersDomains(
+	usersDomainsAndAuthorizations, err = fenixCloudDBObject.concatenateUsersDomainsAndDomainOpenToEveryOneToUse(
 		txn, fullTestCaseMessage.TestCaseBasicInformation.GetUserIdentification().GetGCPAuthenticatedUser())
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{

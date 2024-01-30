@@ -30,12 +30,59 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersDomains(
 
 	defer txn.Commit(context.Background())
 
-	// Load all domains open for every one to use in some way
-	var domainsOpenForEveryOneToUse []DomainAndAuthorizationsStruct
-	domainsOpenForEveryOneToUse, err = fenixCloudDBObject.loadDomainsOpenForEveryOneToUse(txn, gCPAuthenticatedUser)
+	// Concatenate Users specific Domains and Domains open for every one to use
+	domainAndAuthorizations, err = fenixCloudDBObject.concatenateUsersDomainsAndDomainOpenToEveryOneToUse(
+		txn, gCPAuthenticatedUser)
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"id":                   "10f536b6-e3ff-4241-9973-996f86f92cd6",
+			"id":                   "7fb5b108-b74d-485d-8eb4-401bc77a2ee4",
+			"error":                err,
+			"gCPAuthenticatedUser": gCPAuthenticatedUser,
+		}).Error("Got problem extracting users Domains")
+
+		return nil, err
+
+	}
+
+	return domainAndAuthorizations, err
+}
+
+// Used for holding a Users domain and the Authorizations for that Domain
+type DomainAndAuthorizationsStruct struct {
+	GCPAuthenticatedUser                                       string
+	DomainUuid                                                 string
+	DomainName                                                 string
+	CanListAndViewTestCaseOwnedByThisDomain                    int64
+	CanBuildAndSaveTestCaseOwnedByThisDomain                   int64
+	CanListAndViewTestCaseHavingTIandTICFromThisDomain         int64
+	CanListAndViewTestCaseHavingTIandTICFromThisDomainExtended int64
+	CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain        int64
+}
+
+// Concatenate Users specific Domains and Domains open for every one to use
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) concatenateUsersDomainsAndDomainOpenToEveryOneToUse(
+	dbTransaction pgx.Tx,
+	gCPAuthenticatedUser string) (
+	domainAndAuthorizations []DomainAndAuthorizationsStruct,
+	err error) {
+
+	common_config.Logger.WithFields(logrus.Fields{
+		"Id": "687e4d77-3ff3-4fc6-acdc-da39b6b05bc0",
+	}).Debug("Entering: concatenateUsersDomainsAndDomainOpenToEveryOneToUse()")
+
+	defer func() {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":                      "1dd6aa13-1b6a-454e-8a9b-4ab4f1280f95",
+			"domainAndAuthorizations": domainAndAuthorizations,
+		}).Debug("Exiting: concatenateUsersDomainsAndDomainOpenToEveryOneToUse()")
+	}()
+
+	// Load all domains open for every one to use in some way
+	var domainsOpenForEveryOneToUse []DomainAndAuthorizationsStruct
+	domainsOpenForEveryOneToUse, err = fenixCloudDBObject.loadDomainsOpenForEveryOneToUse(dbTransaction, gCPAuthenticatedUser)
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id":                   "c3d160ea-9122-46fc-a483-0afa54ba45d2",
 			"error":                err,
 			"GCPAuthenticatedUser": gCPAuthenticatedUser,
 		}).Error("Couldn't load all Domains open for every one to use from CloudDB")
@@ -44,10 +91,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersDomains(
 	}
 
 	// Load all domains for a specific user
-	domainAndAuthorizations, err = fenixCloudDBObject.loadUsersDomains(txn, gCPAuthenticatedUser)
+	domainAndAuthorizations, err = fenixCloudDBObject.loadUsersDomains(dbTransaction, gCPAuthenticatedUser)
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"id":                   "2cd14dd8-0d44-4fc4-ae72-adaaaf37bacc",
+			"id":                   "b3a80162-e78e-48c2-a7a1-796a4d2df9f2",
 			"error":                err,
 			"GCPAuthenticatedUser": gCPAuthenticatedUser,
 		}).Error("Couldn't load all Users Domains from CloudDB")
@@ -90,18 +137,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersDomains(
 	}
 
 	return domainAndAuthorizations, err
-}
 
-// Used for holding a Users domain and the Authorizations for that Domain
-type DomainAndAuthorizationsStruct struct {
-	GCPAuthenticatedUser                                       string
-	DomainUuid                                                 string
-	DomainName                                                 string
-	CanListAndViewTestCaseOwnedByThisDomain                    int64
-	CanBuildAndSaveTestCaseOwnedByThisDomain                   int64
-	CanListAndViewTestCaseHavingTIandTICFromThisDomain         int64
-	CanListAndViewTestCaseHavingTIandTICFromThisDomainExtended int64
-	CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain        int64
 }
 
 // Load all domains for a specific user
