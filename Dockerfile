@@ -1,5 +1,5 @@
 # Compile stage
-FROM golang:1.19 AS build-env
+FROM golang:1.21 AS build-env
 
 ADD . /dockerdev
 WORKDIR /dockerdev
@@ -11,7 +11,7 @@ RUN go build -o /fenixGuiBuilderServer .
 
 
 # Final stage
-FROM debian:buster
+FROM debian:bullseye
 #FROM golang:1.13.8
 
 EXPOSE 6670

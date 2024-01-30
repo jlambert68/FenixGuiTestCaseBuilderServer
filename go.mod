@@ -2,7 +2,7 @@ module FenixGuiTestCaseBuilderServer
 
 go 1.21
 
-toolchain go1.21.5
+//toolchain go1.21.5
 
 require (
 	github.com/go-gota/gota v0.12.0 // indirect
