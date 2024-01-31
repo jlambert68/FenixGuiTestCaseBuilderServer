@@ -3,6 +3,7 @@ package gRPCapiServer
 import (
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
+	uuidGenerator "github.com/google/uuid"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	"github.com/sirupsen/logrus"
 )
@@ -15,12 +16,16 @@ func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) GetMessageToS
 	getMessageToSignToProveCallerIdentityResponse *fenixTestCaseBuilderServerGrpcApi.GetMessageToSignToProveCallerIdentityResponse,
 	err error) {
 
+	var messageToSign string
+	messageToSign = uuidGenerator.New().String()
+
 	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "a0381a07-7482-4ee6-acc6-8acc72112c66",
 	}).Debug("Incoming 'gRPC - GetMessageToSignToProveCallerIdentity'")
 
 	defer fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
-		"id": "d1f8394e-c100-4e39-9a4f-3c633db1a4ea",
+		"id":            "d1f8394e-c100-4e39-9a4f-3c633db1a4ea",
+		"messageToSign": messageToSign,
 	}).Debug("Outgoing 'gRPC - GetMessageToSignToProveCallerIdentity'")
 
 	callingUser := "WorkerServer"
@@ -47,7 +52,7 @@ func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) GetMessageToS
 			ErrorCodes:                   nil,
 			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		},
-		MessageToSign: common_config.MessageToSign, //TODO Make it dynamic
+		MessageToSign: messageToSign,
 	}
 
 	return getMessageToSignToProveCallerIdentityResponse, nil

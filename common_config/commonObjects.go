@@ -40,5 +40,3 @@ var LogAllSQLs bool
 var highestFenixProtoFileVersion int32 = -1
 
 var Logger *logrus.Logger
-
-const MessageToSign string = "53997d24-69bb-47db-b129-42c36ad20de4"
