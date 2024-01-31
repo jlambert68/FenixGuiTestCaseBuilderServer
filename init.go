@@ -77,6 +77,8 @@ func init() {
 	common_config.LogAllSQLs = tempBool
 
 	// Address to Local WorkerServer, when running full 'local'
-	common_config.LocalFenixWorkerServerAddressToDial = mustGetenv("LocalFenixWorkerServerAddressToDial")
+	if common_config.ExecutionLocationForBuilderServer == common_config.LocalhostNoDocker {
+		common_config.LocalFenixWorkerServerAddressToDial = mustGetenv("LocalFenixWorkerServerAddressToDial")
+	}
 
 }

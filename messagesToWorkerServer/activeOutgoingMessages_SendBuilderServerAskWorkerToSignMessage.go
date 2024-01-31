@@ -29,7 +29,7 @@ func (messagesToWorkerServerObject *MessagesToWorkerServerObjectStruct) SendBuil
 
 	// Set up connection to BuilderServer, if that is not already done
 	if messagesToWorkerServerObject.connectionToWorkerServerInitiated == false {
-		err = messagesToWorkerServerObject.SetConnectionToFenixGuiBuilderServer(workerAddressToDial)
+		err = messagesToWorkerServerObject.SetConnectionToWorkerServer(workerAddressToDial)
 		if err != nil {
 			return nil, err
 		}

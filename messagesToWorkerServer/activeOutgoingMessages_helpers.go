@@ -17,8 +17,8 @@ import (
 
 // ********************************************************************************************************************
 
-// SetConnectionToFenixGuiBuilderServer - Set upp connection and Dial to FenixExecutionServer
-func (messagesToWorkerServerObject *MessagesToWorkerServerObjectStruct) SetConnectionToFenixGuiBuilderServer(
+// SetConnectionToWorkerServer - Set upp connection and Dial to FenixExecutionServer
+func (messagesToWorkerServerObject *MessagesToWorkerServerObjectStruct) SetConnectionToWorkerServer(
 	workerServerAddressToDial string) (err error) {
 
 	// slice with sleep time, in milliseconds, between each attempt to Dial to Server
