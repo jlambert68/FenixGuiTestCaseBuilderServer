@@ -11,7 +11,7 @@ RUN go build -o /fenixGuiBuilderServer .
 
 
 # Final stage
-FROM debian:bullseye
+FROM debian:bookworm
 #FROM golang:1.13.8
 
 EXPOSE 6670
