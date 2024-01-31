@@ -7,17 +7,17 @@ go 1.21
 require (
 	github.com/go-gota/gota v0.12.0 // indirect
 	github.com/jlambert68/FenixSyncShared v0.0.0-20231023123349-e891692cede8
-	github.com/jlambert68/FenixTestInstructionsAdminShared v0.0.0-20240129172215-b8cfdc2adfaf
+	github.com/jlambert68/FenixTestInstructionsAdminShared v0.0.0-20240131120548-f60bf60fd032
 	github.com/sirupsen/logrus v1.9.3
-	golang.org/x/net v0.19.0
-	golang.org/x/oauth2 v0.15.0
-	google.golang.org/grpc v1.60.1
+	golang.org/x/net v0.20.0
+	golang.org/x/oauth2 v0.16.0
+	google.golang.org/grpc v1.61.0
 )
 
 require (
 	github.com/jackc/pgx/v4 v4.18.1
 	github.com/jlambert68/FenixGrpcApi v0.0.0-20240129152625-acb237e2fb83
-	google.golang.org/api v0.149.0
+	google.golang.org/api v0.161.0
 	google.golang.org/protobuf v1.32.0
 )
 
@@ -40,9 +40,9 @@ require (
 	github.com/jackc/puddle v1.3.0 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	golang.org/x/crypto v0.16.0 // indirect
-	golang.org/x/sync v0.4.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/crypto v0.18.0 // indirect
+	golang.org/x/sync v0.6.0 // indirect
+	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gonum.org/v1/gonum v0.9.1 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
