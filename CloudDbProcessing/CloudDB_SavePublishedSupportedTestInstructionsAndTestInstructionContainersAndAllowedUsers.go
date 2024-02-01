@@ -1009,6 +1009,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainBaseData(
 			bitNumberValue:      tempBitNumberValue,
 		}
 
+		// Add port number to "worker address to dial"
+		domainBaseData.workerAddressToDial = domainBaseData.workerAddressToDial + ":443"
+
 		// Add to row counter; Max = 1
 		rowsCounter = rowsCounter + 1
 
