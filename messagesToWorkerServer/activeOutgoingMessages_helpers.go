@@ -52,6 +52,10 @@ func (messagesToWorkerServerObject *MessagesToWorkerServerObjectStruct) SetConne
 		// When run on GCP, use credentials
 		if common_config.ExecutionLocationForBuilderServer == common_config.GCP {
 			// Run on GCP
+
+			// Add port number to "worker address to dial"
+			workerServerAddressToDial = workerServerAddressToDial + ":443"
+
 			remoteFenixWorkerServerConnection, err = grpc.Dial(workerServerAddressToDial, opts...)
 
 			if err != nil {
