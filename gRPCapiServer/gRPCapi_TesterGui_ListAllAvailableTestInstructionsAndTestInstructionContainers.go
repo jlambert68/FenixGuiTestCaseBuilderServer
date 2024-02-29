@@ -150,7 +150,9 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 
 			// Convert TestInstruction. Slice position '0' is always the latest one so use that
 			var tempImmatureTestInstructionMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage
-			tempImmatureTestInstructionMessage, err = s.convertSupportedTestInstructionsIntoABBResultTI(tempTestInstructions.TestInstructionVersions[0].TestInstructionInstance)
+			tempImmatureTestInstructionMessage, err = s.convertSupportedTestInstructionsIntoABBResultTI(
+				tempTestInstructions.TestInstructionVersions[0].TestInstructionInstance,
+				tempTestInstructions.TestInstructionVersions[0].ResponseVariablesMapStructure)
 
 			if err != nil {
 				common_config.Logger.WithFields(logrus.Fields{

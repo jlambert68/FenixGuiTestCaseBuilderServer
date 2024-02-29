@@ -14,7 +14,8 @@ import (
 
 // Convert message from SupportedTestInstructions into ABBResultTI used for sending to TesterGui
 func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) convertSupportedTestInstructionsIntoABBResultTI(
-	supportedTestInstructionInstance *TestInstructionAndTestInstuctionContainerTypes.TestInstructionStruct) (
+	supportedTestInstructionInstance *TestInstructionAndTestInstuctionContainerTypes.TestInstructionStruct,
+	responseVariablesMapStructure *TestInstructionAndTestInstuctionContainerTypes.ResponseVariablesMapStructureStruct) (
 	immatureTestInstructionMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage,
 	err error) {
 
@@ -173,6 +174,30 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) convertSupportedTes
 
 	}
 
+	// Add ResponseVariables
+	var responseVariablesMapForGrpc map[string]*fenixTestCaseBuilderServerGrpcApi.ResponseVariableMessage
+	responseVariablesMapForGrpc = make(map[string]*fenixTestCaseBuilderServerGrpcApi.ResponseVariableMessage)
+
+	// Loop Response Variable Map and convert
+	if responseVariablesMapStructure != nil {
+		for responseVariableUuid, tempResponseVariables := range responseVariablesMapStructure.ResponseVariablesMap {
+
+			var responseVariableMessageForGrpc *fenixTestCaseBuilderServerGrpcApi.ResponseVariableMessage
+			responseVariableMessageForGrpc = &fenixTestCaseBuilderServerGrpcApi.ResponseVariableMessage{
+				ResponseVariableUuid:        string(tempResponseVariables.ResponseVariable.ResponseVariableUuid),
+				ResponseVariableName:        string(tempResponseVariables.ResponseVariable.ResponseVariableName),
+				ResponseVariableDescription: string(tempResponseVariables.ResponseVariable.ResponseVariableDescription),
+				ResponseVariableIsMandatory: bool(tempResponseVariables.ResponseVariable.ResponseVariableIsMandatory),
+				ResponseVariableTypeUuid:    string(tempResponseVariables.ResponseVariable.ResponseVariableTypeUuid),
+				ResponseVariableTypeName:    string(tempResponseVariables.ResponseVariable.ResponseVariableTypeName),
+			}
+
+			// Add to gRPC-map
+			responseVariablesMapForGrpc[string(responseVariableUuid)] = responseVariableMessageForGrpc
+		}
+	}
+
+	// Create the Immature TestInstruction
 	immatureTestInstructionMessage = &fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage{
 		BasicTestInstructionInformation: &fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage{
 			NonEditableInformation: &fenixTestCaseBuilderServerGrpcApi.BasicTestInstructionInformationMessage_NonEditableBasicInformationMessage{
@@ -207,6 +232,8 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) convertSupportedTes
 			FirstImmatureElementUuid: string(supportedTestInstructionInstance.ImmatureElementModel[0].TopImmatureElementUUID),
 			TestCaseModelElements:    tempTestCaseModelElements,
 		},
+		ResponseVariablesMapStructure: &fenixTestCaseBuilderServerGrpcApi.ImmatureResponseVariablesMapStructureMessage{
+			ResponseVariablesMap: responseVariablesMapForGrpc},
 	}
 
 	return immatureTestInstructionMessage, err
