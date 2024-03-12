@@ -16,9 +16,9 @@ require (
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/jackc/pgx/v4 v4.18.2
-	github.com/jlambert68/FenixGrpcApi v0.0.0-20240304142949-bbeeceaf08cc
-	google.golang.org/api v0.168.0
+	github.com/jackc/pgx/v4 v4.18.3
+	github.com/jlambert68/FenixGrpcApi v0.0.0-20240306175605-aff905beac2d
+	google.golang.org/api v0.169.0
 	google.golang.org/protobuf v1.33.0
 )
 
@@ -57,5 +57,5 @@ require (
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240213162025-012b6fc9bca9 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240304212257-790db918fca8 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240311173647-c811ad7063a7 // indirect
 )
