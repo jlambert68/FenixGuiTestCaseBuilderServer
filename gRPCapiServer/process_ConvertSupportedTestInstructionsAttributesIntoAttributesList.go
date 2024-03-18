@@ -45,6 +45,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) convertSupportedTes
 					TestInstructionAttributeValueAsString:         string(tempTestInstructionAttribute.TestInstructionAttributeValueAsString),
 					TestInstructionAttributeValueUuid:             string(tempTestInstructionAttribute.TestInstructionAttributeValueUUID),
 					TestInstructionAttributeUIType:                string(tempTestInstructionAttribute.TestInstructionAttributeType),
+					TestInstructionAttributeInputMask:             string(tempTestInstructionAttribute.TestInstructionAttributeInputMask),
 				}
 
 				// Add Attribute to list of Attributes

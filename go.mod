@@ -7,7 +7,7 @@ go 1.21
 require (
 	github.com/go-gota/gota v0.12.0 // indirect
 	github.com/jlambert68/FenixSyncShared v0.0.0-20240215140904-db0840b5d70a
-	github.com/jlambert68/FenixTestInstructionsAdminShared v0.0.0-20240219141728-8af453f0932d
+	github.com/jlambert68/FenixTestInstructionsAdminShared v0.0.0-20240312181725-d712a9d80efe
 	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/net v0.22.0
 	golang.org/x/oauth2 v0.18.0
@@ -17,13 +17,13 @@ require (
 require (
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v4 v4.18.3
-	github.com/jlambert68/FenixGrpcApi v0.0.0-20240306175605-aff905beac2d
-	google.golang.org/api v0.169.0
+	github.com/jlambert68/FenixGrpcApi v0.0.0-20240317082845-a3c5eb77b8cd
+	google.golang.org/api v0.170.0
 	google.golang.org/protobuf v1.33.0
 )
 
 require (
-	cloud.google.com/go/compute v1.24.0 // indirect
+	cloud.google.com/go/compute v1.25.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.6 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
@@ -53,9 +53,9 @@ require (
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	gonum.org/v1/gonum v0.14.0 // indirect
+	gonum.org/v1/gonum v0.15.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240213162025-012b6fc9bca9 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240311173647-c811ad7063a7 // indirect
+	google.golang.org/genproto v0.0.0-20240311173647-c811ad7063a7 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240311132316-a219d84964c2 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240314234333-6e1732d8331c // indirect
 )
