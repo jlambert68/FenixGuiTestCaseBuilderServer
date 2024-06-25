@@ -17,8 +17,8 @@ require (
 require (
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v4 v4.18.3
-	github.com/jlambert68/FenixGrpcApi v0.0.0-20240317082845-a3c5eb77b8cd
-	google.golang.org/api v0.170.0
+	github.com/jlambert68/FenixGrpcApi v0.0.0-20240625063049-78bc2fe079cd
+	google.golang.org/api v0.171.0
 	google.golang.org/protobuf v1.33.0
 )
 
@@ -33,7 +33,7 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
-	github.com/googleapis/gax-go/v2 v2.12.2 // indirect
+	github.com/googleapis/gax-go/v2 v2.12.3 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.14.3 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
