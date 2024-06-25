@@ -268,6 +268,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveTemplateRepositor
 		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, templateRepositoryConnectionParameters.GetRepositoryPath())
 		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, templateRepositoryConnectionParameters.GetGitHubApiKey())
 		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTimestampToBeUsed)
+		dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, templateRepositoryConnectionParameters.GetRepositoryApiUrlName())
 
 		dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
 
@@ -276,7 +277,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveTemplateRepositor
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "INSERT INTO \"FenixBuilder\".\"TemplateRepositoryConnectionParameters\" "
 	sqlToExecute = sqlToExecute + "(\"DomainUuid\", \"DomainName\", \"RepositoryApiUrl\", \"RepositoryOwner\", " +
-		"\"RepositoryName\", \"RepositoryPath\", \"GitHubApiKey\", \"UpdateTimeStamp\")"
+		"\"RepositoryName\", \"RepositoryPath\", \"GitHubApiKey\", \"UpdateTimeStamp\", \"RepositoryApiUrlName\") "
 	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
 	sqlToExecute = sqlToExecute + ";"
 

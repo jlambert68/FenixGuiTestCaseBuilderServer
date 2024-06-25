@@ -16,8 +16,8 @@ require (
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/jackc/pgx/v4 v4.18.3
-	github.com/jlambert68/FenixGrpcApi v0.0.0-20240625063049-78bc2fe079cd
+	github.com/jackc/pgx/v4 v4.18.2
+	github.com/jlambert68/FenixGrpcApi v0.0.0-20240625130155-b04ecf198517
 	google.golang.org/api v0.171.0
 	google.golang.org/protobuf v1.33.0
 )
