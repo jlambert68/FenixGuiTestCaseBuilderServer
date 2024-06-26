@@ -299,21 +299,20 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersTemplateRepositoryU
 	}
 
 	var tempDomainUuid, tempDomainName string
+	var repositoryApiUrl, repositoryOwner, repositoryName, repositoryPath, gitHubApiKey, repositoryApiUrlName string
 
 	// Extract data from DB result set
 	for rows.Next() {
 
-		var templateRepository *fenixTestCaseBuilderServerGrpcApi.TemplateRepositoryConnectionParameters
-
 		err = rows.Scan(
 			&tempDomainUuid,
 			&tempDomainName,
-			&templateRepository.RepositoryApiUrl,
-			&templateRepository.RepositoryOwner,
-			&templateRepository.RepositoryName,
-			&templateRepository.RepositoryPath,
-			&templateRepository.GitHubApiKey,
-			&templateRepository.RepositoryApiUrlName,
+			&repositoryApiUrl,
+			&repositoryOwner,
+			&repositoryName,
+			&repositoryPath,
+			&gitHubApiKey,
+			&repositoryApiUrlName,
 		)
 
 		if err != nil {
@@ -324,6 +323,16 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersTemplateRepositoryU
 			}).Error("Something went wrong when processing result from database")
 
 			return nil, err
+		}
+
+		var templateRepository *fenixTestCaseBuilderServerGrpcApi.TemplateRepositoryConnectionParameters
+		templateRepository = &fenixTestCaseBuilderServerGrpcApi.TemplateRepositoryConnectionParameters{
+			RepositoryApiUrlName: repositoryApiUrlName,
+			RepositoryApiUrl:     repositoryApiUrl,
+			RepositoryOwner:      repositoryOwner,
+			RepositoryName:       repositoryName,
+			RepositoryPath:       repositoryPath,
+			GitHubApiKey:         gitHubApiKey,
 		}
 
 		// Add TemplateRepositoryConnectionParameters to list
