@@ -16,8 +16,7 @@ const templateApiUrlBase string = "%s/%s/%s/contents%s"
 // Do initial preparations to be able to load all domains for a specific user
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTemplateRepositoryUrls(
 	gCPAuthenticatedUser string) (
-	allRepositoryApiUrlsResponseMessage *fenixTestCaseBuilderServerGrpcApi.ListAllRepositoryApiUrlsResponseMessage,
-	err error) {
+	allRepositoryApiUrlsResponseMessage *fenixTestCaseBuilderServerGrpcApi.ListAllRepositoryApiUrlsResponseMessage) {
 
 	// Begin SQL Transaction
 	txn, err := fenixSyncShared.DbPool.Begin(context.Background())
@@ -28,7 +27,20 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTemplateRepo
 			"error": err,
 		}).Error("Problem to do 'DbPool.Begin'  in 'PrepareLoadUsersTemplateRepositoryUrls'")
 
-		return nil, err
+		allRepositoryApiUrlsResponseMessage = &fenixTestCaseBuilderServerGrpcApi.
+			ListAllRepositoryApiUrlsResponseMessage{
+			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+				AckNack:    false,
+				Comments:   err.Error(),
+				ErrorCodes: nil,
+				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
+					CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.
+						GetHighestFenixGuiBuilderProtoFileVersion()),
+			},
+			RepositoryApiUrls: nil,
+		}
+
+		return allRepositoryApiUrlsResponseMessage
 
 	}
 
@@ -58,7 +70,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTemplateRepo
 			RepositoryApiUrls: nil,
 		}
 
-		return allRepositoryApiUrlsResponseMessage, err
+		return allRepositoryApiUrlsResponseMessage
 
 	}
 
@@ -82,7 +94,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTemplateRepo
 			RepositoryApiUrls: nil,
 		}
 
-		return allRepositoryApiUrlsResponseMessage, err
+		return allRepositoryApiUrlsResponseMessage
 
 	}
 
@@ -124,7 +136,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTemplateRepo
 			RepositoryApiUrls: nil,
 		}
 
-		return allRepositoryApiUrlsResponseMessage, err
+		return allRepositoryApiUrlsResponseMessage
 
 	}
 
@@ -153,7 +165,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTemplateRepo
 			RepositoryApiUrls: nil,
 		}
 
-		return allRepositoryApiUrlsResponseMessage, err
+		return allRepositoryApiUrlsResponseMessage
 	}
 
 	// Check if any template-parameters was found in database
@@ -176,7 +188,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTemplateRepo
 			RepositoryApiUrls: nil,
 		}
 
-		return allRepositoryApiUrlsResponseMessage, err
+		return allRepositoryApiUrlsResponseMessage
 	}
 
 	// Build Template-Urls to be sent back to TesterGui
@@ -219,7 +231,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTemplateRepo
 		RepositoryApiUrls: repositoryApiUrlResponseMessages,
 	}
 
-	return allRepositoryApiUrlsResponseMessage, err
+	return allRepositoryApiUrlsResponseMessage
 
 }
 
@@ -231,30 +243,41 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersTemplateRepositoryU
 	err error) {
 
 	common_config.Logger.WithFields(logrus.Fields{
-		"Id": "8cbb9338-bb1e-45a0-b01b-ac7cb28fc52a",
-	}).Debug("Entering: loadUsersDomains()")
+		"Id":                            "86a9312b-3df6-4441-bdf8-69d799c38b1f",
+		"domainsToGetTemplateApiUrlFor": domainsToGetTemplateApiUrlFor,
+	}).Debug("Entering: loadUsersTemplateRepositoryUrlParameters")
 
 	defer func() {
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id":                      "860b9b49-4d94-4f03-bf84-5b77f095ac7b",
-			"domainAndAuthorizations": domainAndAuthorizations,
-		}).Debug("Exiting: loadUsersDomains()")
+			"Id": "faf9a8a5-c5ff-4ee3-9f0c-6f37fb6c37d8",
+		}).Debug("Exiting: loadUsersTemplateRepositoryUrlParameters")
 	}()
 
+	// Generate SQLINArray containing DomainUuids
+	var sQLINArray string
+	var domainSlice []string
+
+	// Loop Domains and add to dataSlice
+	for _, domainsTemplateApiUrl := range domainsToGetTemplateApiUrlFor {
+		domainSlice = append(domainSlice, domainsTemplateApiUrl.GetDomainUuid())
+	}
+
+	// create the IN-array...('sdada', 'adadadf')
+	sQLINArray = fenixCloudDBObject.generateSQLINArray(domainSlice)
+
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "SELECT domainuuid, domainname, canlistandviewtestcaseownedbythisdomain, " +
-		"canbuildandsavetestcaseownedbythisdomain, canlistandviewtestcasehavingtiandticfromthisdomain, " +
-		"canlistandviewtestcasehavingtiandticfromthisdomainextended, canbuildandsavetestcasehavingtiandticfromthisdomain "
-	sqlToExecute = sqlToExecute + "FROM \"FenixDomainAdministration\".\"allowedusers\" "
-	sqlToExecute = sqlToExecute + "WHERE \"gcpauthenticateduser\" = '" + gCPAuthenticatedUser + "'"
+	sqlToExecute = sqlToExecute + "SELECT \"DomainUuid\", \"DomainName\", \"RepositoryApiUrl\", \"RepositoryOwner\", " +
+		"\"RepositoryName\", \"RepositoryPath\", \"GitHubApiKey\", \"RepositoryApiUrlName\" "
+	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TemplateRepositoryConnectionParameters\" "
+	sqlToExecute = sqlToExecute + "WHERE \"DomainUuid\" IN " + sQLINArray + ""
 	sqlToExecute = sqlToExecute + ";"
 
 	// Log SQL to be executed if Environment variable is true
 	if common_config.LogAllSQLs == true {
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id":           "d72d1a9c-079c-442f-bc0e-f95b557fd443",
+			"Id":           "dfc692f2-479f-4cd1-8914-b06fc3293b34",
 			"sqlToExecute": sqlToExecute,
-		}).Debug("SQL to be executed within 'loadUsersDomains'")
+		}).Debug("SQL to be executed within 'loadUsersTemplateRepositoryUrlParameters'")
 	}
 
 	// Query DB
@@ -267,7 +290,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersTemplateRepositoryU
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id":           "9177c263-04d0-411d-8ac2-148279038fb3",
+			"Id":           "b521b9b0-0c9f-4171-a4d0-3e374f710f8b",
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
 		}).Error("Something went wrong when processing result from database")
@@ -275,24 +298,27 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersTemplateRepositoryU
 		return nil, err
 	}
 
+	var tempDomainUuid, tempDomainName string
+
 	// Extract data from DB result set
 	for rows.Next() {
 
-		var tempDomainAndAuthorizations DomainAndAuthorizationsStruct
+		var templateRepository *fenixTestCaseBuilderServerGrpcApi.TemplateRepositoryConnectionParameters
 
 		err = rows.Scan(
-			&tempDomainAndAuthorizations.DomainUuid,
-			&tempDomainAndAuthorizations.DomainName,
-			&tempDomainAndAuthorizations.CanListAndViewTestCaseOwnedByThisDomain,
-			&tempDomainAndAuthorizations.CanBuildAndSaveTestCaseOwnedByThisDomain,
-			&tempDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain,
-			&tempDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomainExtended,
-			&tempDomainAndAuthorizations.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain,
+			&tempDomainUuid,
+			&tempDomainName,
+			&templateRepository.RepositoryApiUrl,
+			&templateRepository.RepositoryOwner,
+			&templateRepository.RepositoryName,
+			&templateRepository.RepositoryPath,
+			&templateRepository.GitHubApiKey,
+			&templateRepository.RepositoryApiUrlName,
 		)
 
 		if err != nil {
 			common_config.Logger.WithFields(logrus.Fields{
-				"Id":           "b5ae17c4-fce1-4627-abd0-a6450cb17dd7",
+				"Id":           "ebd97836-c185-4af2-a25a-74036d49528a",
 				"Error":        err,
 				"sqlToExecute": sqlToExecute,
 			}).Error("Something went wrong when processing result from database")
@@ -300,13 +326,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersTemplateRepositoryU
 			return nil, err
 		}
 
-		// Add user to the row-data
-		tempDomainAndAuthorizations.GCPAuthenticatedUser = gCPAuthenticatedUser
-
-		// Append DomainUuid to list of Domains
-		domainAndAuthorizations = append(domainAndAuthorizations, tempDomainAndAuthorizations)
+		// Add TemplateRepositoryConnectionParameters to list
+		templateRepositoryConnectionParameters = append(templateRepositoryConnectionParameters, templateRepository)
 
 	}
 
-	return domainAndAuthorizations, err
+	return templateRepositoryConnectionParameters, err
 }

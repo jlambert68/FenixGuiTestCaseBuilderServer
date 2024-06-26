@@ -44,7 +44,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllRepositoryAp
 
 	// Load list with TestCase Hashes from Database
 	var responseMessage *fenixTestCaseBuilderServerGrpcApi.ListAllRepositoryApiUrlsResponseMessage
-	responseMessage = fenixCloudDBObject.PrepareLoadUsersTemplateRepositoryUrls(&userIdentificationMessage)
+	responseMessage = fenixCloudDBObject.PrepareLoadUsersTemplateRepositoryUrls(userIdentificationMessage.GCPAuthenticatedUser)
 
 	return responseMessage, nil
 }
