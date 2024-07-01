@@ -459,6 +459,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(
 	tempTestInstructionContainersAsJsonb := protojson.Format(fullTestCaseMessage.MatureTestInstructionContainers)
 	tempDomainHash := fullTestCaseMessage.MessageHash
 	tempTestCaseExtraInformationAsJsonb := protojson.Format(fullTestCaseMessage.TestCaseExtraInformation)
+	tempTestCaseTemplateFilesAsJsonb := protojson.Format(fullTestCaseMessage.TestCaseTemplateFiles)
 
 	var dataRowToBeInsertedMultiType []interface{}
 	var dataRowsToBeInsertedMultiType [][]interface{}
@@ -482,6 +483,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, authorizationValueForOwnerDomain)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, authorizationValueForAllDomainsInTestCase)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, false)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestCaseTemplateFilesAsJsonb)
 
 	dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
 
@@ -490,7 +492,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(
 	sqlToExecute = sqlToExecute + "(\"DomainUuid\", \"DomainName\", \"TestCaseUuid\", \"TestCaseName\", \"TestCaseVersion\", " +
 		"\"TestCaseBasicInformationAsJsonb\", \"TestInstructionsAsJsonb\", \"TestInstructionContainersAsJsonb\", " +
 		"\"TestCaseHash\", \"TestCaseExtraInformationAsJsonb\", \"CanListAndViewTestCaseAuthorizationLevelOwnedByDomain\", " +
-		"\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomai\", \"TestCaseIsDeleted\") "
+		"\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomai\", \"TestCaseIsDeleted\", \"TestCaseTemplateFilesAsJsonb\" "
 	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
 	sqlToExecute = sqlToExecute + ";"
 

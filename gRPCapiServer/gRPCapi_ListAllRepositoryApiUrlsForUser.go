@@ -9,7 +9,7 @@ import (
 )
 
 // ListAllRepositoryApiUrls
-// TestCase GUI use this gRPC-api to Load a full TestCase with all its data
+// TesterGui use this gRPC-api to all Repository Api Urls for where Templates are stored
 func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllRepositoryApiUrls(
 	ctx context.Context,
 	userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (
