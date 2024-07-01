@@ -3,6 +3,7 @@ package CloudDbProcessing
 import (
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
+	"github.com/jlambert68/FenixTestInstructionsAdminShared/shared_code"
 	"time"
 
 	//"database/sql/driver"
@@ -470,6 +471,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(
 
 	dataRowToBeInsertedMultiType = nil
 
+	timeStampToUse := shared_code.GenerateDatetimeTimeStampForDB()
+
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempDomainUuid)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempDomainName)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestCaseUuid)
@@ -484,6 +487,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, authorizationValueForAllDomainsInTestCase)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, false)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestCaseTemplateFilesAsJsonb)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, timeStampToUse)
 
 	dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
 
@@ -492,7 +496,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(
 	sqlToExecute = sqlToExecute + "(\"DomainUuid\", \"DomainName\", \"TestCaseUuid\", \"TestCaseName\", \"TestCaseVersion\", " +
 		"\"TestCaseBasicInformationAsJsonb\", \"TestInstructionsAsJsonb\", \"TestInstructionContainersAsJsonb\", " +
 		"\"TestCaseHash\", \"TestCaseExtraInformationAsJsonb\", \"CanListAndViewTestCaseAuthorizationLevelOwnedByDomain\", " +
-		"\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomai\", \"TestCaseIsDeleted\", \"TestCaseTemplateFilesAsJsonb\" "
+		"\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomai\", \"TestCaseIsDeleted\", " +
+		"\"TestCaseTemplateFilesAsJsonb\", \"InsertTimeStamp\")  "
 	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
 	sqlToExecute = sqlToExecute + ";"
 
