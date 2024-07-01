@@ -222,7 +222,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "SELECT TC.\"TestCaseBasicInformationAsJsonb\", " +
 		"TC.\"TestInstructionsAsJsonb\", \"TestInstructionContainersAsJsonb\"," +
-		"TC.\"TestCaseHash\", TC.\"TestCaseExtraInformationAsJsonb\" "
+		"TC.\"TestCaseHash\", TC.\"TestCaseExtraInformationAsJsonb\", TC.\"TestCaseTemplateFilesAsJsonb\" "
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" TC "
 	sqlToExecute = sqlToExecute + fmt.Sprintf("WHERE TC.\"TestCaseUuid\" = '%s' ", testCaseUuidToLoad)
 	sqlToExecute = sqlToExecute + "AND "
@@ -270,14 +270,17 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 		tempMatureTestInstructions               fenixTestCaseBuilderServerGrpcApi.MatureTestInstructionsMessage
 		tempMatureTestInstructionContainers      fenixTestCaseBuilderServerGrpcApi.MatureTestInstructionContainersMessage
 		tempTestCaseExtraInformation             fenixTestCaseBuilderServerGrpcApi.TestCaseExtraInformationMessage
+		tempTestCaseTemplateFilesMessage         fenixTestCaseBuilderServerGrpcApi.TestCaseTemplateFilesMessage
 		tempTestCaseBasicInformationAsString     string
 		tempTestInstructionsAsString             string
 		tempTestInstructionContainersAsString    string
 		tempTestCaseExtraInformationAsString     string
+		tempTestCaseTemplateFilesAsString        string
 		tempTestCaseBasicInformationAsByteArray  []byte
 		tempTestInstructionsAsByteArray          []byte
 		tempTestInstructionContainersAsByteArray []byte
 		tempTestCaseExtraInformationAsByteArray  []byte
+		tempTestCaseTemplateFilesAsByteArray     []byte
 
 		testCaseHash string
 	)
@@ -291,6 +294,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 			&tempTestInstructionContainersAsString,
 			&testCaseHash,
 			&tempTestCaseExtraInformationAsString,
+			&tempTestCaseTemplateFilesAsString,
 		)
 
 		if err != nil {
@@ -309,6 +313,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 		tempTestInstructionsAsByteArray = []byte(tempTestInstructionsAsString)
 		tempTestInstructionContainersAsByteArray = []byte(tempTestInstructionContainersAsString)
 		tempTestCaseExtraInformationAsByteArray = []byte(tempTestCaseExtraInformationAsString)
+		tempTestCaseTemplateFilesAsByteArray = []byte(tempTestCaseTemplateFilesAsString)
 
 		// Convert json-byte-arrays into proto-messages
 		err = protojson.Unmarshal(tempTestCaseBasicInformationAsByteArray, &tempTestCaseBasicInformation)
@@ -351,6 +356,16 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 			return nil, err
 		}
 
+		err = protojson.Unmarshal(tempTestCaseTemplateFilesAsByteArray, &tempTestCaseTemplateFilesMessage)
+		if err != nil {
+			common_config.Logger.WithFields(logrus.Fields{
+				"Id":    "f262f8cb-16ea-4e12-8f25-ab73306fdeba",
+				"Error": err,
+			}).Error("Something went wrong when converting 'tempTestCaseTemplateFilesAsByteArray' into proto-message")
+
+			return nil, err
+		}
+
 		// Add the different parts into full TestCase-message
 		fullTestCaseMessage = &fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage{
 			TestCaseBasicInformation:        &tempTestCaseBasicInformation,
@@ -358,6 +373,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 			MatureTestInstructionContainers: &tempMatureTestInstructionContainers,
 			MessageHash:                     testCaseHash,
 			TestCaseExtraInformation:        &tempTestCaseExtraInformation,
+			TestCaseTemplateFiles:           &tempTestCaseTemplateFilesMessage,
 		}
 
 	}
