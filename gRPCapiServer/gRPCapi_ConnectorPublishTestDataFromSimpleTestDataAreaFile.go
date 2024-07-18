@@ -8,54 +8,54 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// ConnectorPublishTemplateRepositoryConnectionParameters
-// Connector publish Template Repository Connection Parameters
-func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) ConnectorPublishTemplateRepositoryConnectionParameters(
+// ConnectorPublishTestDataFromSimpleTestDataAreaFile
+// AllTemplateRepositoryConnectionParameters Connector Publish TestData From a Simple TestData-file for one TestData-area
+func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) ConnectorPublishTestDataFromSimpleTestDataAreaFile(
 	ctx context.Context,
-	allTemplateRepositoryConnectionParameters *fenixTestCaseBuilderServerGrpcApi.
-		AllTemplateRepositoryConnectionParameters) (
+	testDataFromSimpleTestDataAreaFileMessage *fenixTestCaseBuilderServerGrpcApi.
+		TestDataFromSimpleTestDataAreaFileMessage) (
 	returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse,
 	err error) {
 
 	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
-		"id": "56eabbe6-8be7-42c0-86ae-78869e952a90",
-		"allTemplateRepositoryConnectionParameters": allTemplateRepositoryConnectionParameters,
-	}).Debug("Incoming 'gRPCWorker- ConnectorPublishTemplateRepositoryConnectionParameters'")
+		"id": "10debd4d-3d93-4e85-8e24-59b9f8487234",
+		"allTemplateRepositoryConnectionParameters": testDataFromSimpleTestDataAreaFileMessage,
+	}).Debug("Incoming 'gRPCWorker- ConnectorPublishTestDataFromSimpleTestDataAreaFile'")
 
 	defer fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
-		"id": "c0f0711a-ada9-480e-afda-4d6785049bfa",
-	}).Debug("Outgoing 'gRPCWorker - ConnectorPublishTemplateRepositoryConnectionParameters'")
+		"id": "6440f5d3-79c9-4a20-84b8-7a5df5fc7f47",
+	}).Debug("Outgoing 'gRPCWorker - ConnectorPublishTestDataFromSimpleTestDataAreaFile'")
 
 	// Calling system
 	userId := "Execution Connector"
 
 	// Check if Client is using correct proto files version
 	returnMessage = common_config.IsClientUsingCorrectTestDataProtoFileVersion(
-		userId, allTemplateRepositoryConnectionParameters.GetClientSystemIdentification().ProtoFileVersionUsedByClient)
+		userId, testDataFromSimpleTestDataAreaFileMessage.GetClientSystemIdentification().ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 
 		fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
-			"id":            "ed80eaca-72f7-431c-ad89-8ed565e2fc01",
+			"id":            "cbc600d5-57b8-48b0-83e0-a7c61f70801d",
 			"returnMessage": returnMessage,
-			"allTemplateRepositoryConnectionParameters": allTemplateRepositoryConnectionParameters,
+			"testDataFromSimpleTestDataAreaFileMessage": testDataFromSimpleTestDataAreaFileMessage,
 		}).Debug("Not correct proto-file version")
 
 		// Exiting
 		return returnMessage, nil
 	}
 
-	// Save ConnectorPublishTemplateRepositoryConnectionParameters in CloudDB
+	// Save PublishTestDataFromSimpleTestDataAreaFile
 	var fenixCloudDBObject *CloudDbProcessing.FenixCloudDBObjectStruct
-	err = fenixCloudDBObject.PrepareSavePublishedTemplateRepositoryConnectionParameters(
-		allTemplateRepositoryConnectionParameters.GetClientSystemIdentification().GetDomainUuid(),
-		allTemplateRepositoryConnectionParameters.GetAllTemplateRepositories(),
-		allTemplateRepositoryConnectionParameters.GetSignedMessageByWorkerServiceAccount())
+	err = fenixCloudDBObject.PrepareSavePublishedTestDataFromSimpleTestDataAreaFile(
+		testDataFromSimpleTestDataAreaFileMessage.GetClientSystemIdentification().GetDomainUuid(),
+		testDataFromSimpleTestDataAreaFileMessage.GetTestDataFromSimpleTestDataAreaFiles(),
+		testDataFromSimpleTestDataAreaFileMessage.GetSignedMessageByWorkerServiceAccount())
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"id":    "70484037-5e3e-43f2-9213-9ff52c3ccbea",
+			"id":    "c3cdb8aa-fd57-4280-84e6-1af75c5c6da1",
 			"error": err,
-		}).Error("Couldn't save supported Template Repository Connection Parameters in CloudDB")
+		}).Error("Couldn't save supported TestData from 'simple' file in CloudDB")
 
 		// Set Error codes to return message
 		var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum

@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) SavePublishedTemplateRepositoryConnectionParametersCommitOrRoleBack(
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) savePublishedTemplateRepositoryConnectionParametersCommitOrRoleBack(
 	dbTransactionReference *pgx.Tx,
 	doCommitNotRoleBackReference *bool) {
 
@@ -23,14 +23,14 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) SavePublishedTemplateReposit
 
 		common_config.Logger.WithFields(logrus.Fields{
 			"id": "8c325f12-afa1-40cb-8ab8-1d51c8ba07bc",
-		}).Debug("Doing Commit for SQL  in 'SavePublishedTemplateRepositoryConnectionParametersCommitOrRoleBack'")
+		}).Debug("Doing Commit for SQL  in 'savePublishedTemplateRepositoryConnectionParametersCommitOrRoleBack'")
 
 	} else {
 		dbTransaction.Rollback(context.Background())
 
 		common_config.Logger.WithFields(logrus.Fields{
 			"id": "750776ab-c11e-4e36-aa5e-a6bec8d212f0",
-		}).Info("Doing Rollback for SQL  in 'SavePublishedTemplateRepositoryConnectionParametersCommitOrRoleBack'")
+		}).Info("Doing Rollback for SQL  in 'savePublishedTemplateRepositoryConnectionParametersCommitOrRoleBack'")
 
 	}
 }
@@ -43,7 +43,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSavePublishedTemplate
 	signedMessageByWorkerServiceAccountMessage *fenixTestCaseBuilderServerGrpcApi.SignedMessageByWorkerServiceAccountMessage) (
 	err error) {
 
-	// Begin SQL Transaction
+	// Begin SQL TransactionConnectorPublish
 	txn, err := fenixSyncShared.DbPool.Begin(context.Background())
 
 	if err != nil {
@@ -63,12 +63,12 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSavePublishedTemplate
 	doCommitNotRoleBack = false
 
 	// When leaving then do the actual commit or rollback
-	defer fenixCloudDBObject.SavePublishedTemplateRepositoryConnectionParametersCommitOrRoleBack(
+	defer fenixCloudDBObject.savePublishedTemplateRepositoryConnectionParametersCommitOrRoleBack(
 		&txn,
 		&doCommitNotRoleBack)
 
 	// Save all published Template Repository Connection Parameters
-	err = fenixCloudDBObject.SavePublishedTemplateRepositoryConnectionParameters(
+	err = fenixCloudDBObject.savePublishedTemplateRepositoryConnectionParameters(
 		txn,
 		domainUuid,
 		templateRepositoriesConnectionParameters,
@@ -90,7 +90,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSavePublishedTemplate
 }
 
 // Save all published Template Repository Connection Parameters
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) SavePublishedTemplateRepositoryConnectionParameters(
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) savePublishedTemplateRepositoryConnectionParameters(
 	dbTransaction pgx.Tx,
 	domainUuid string,
 	templateRepositoriesConnectionParameters []*fenixTestCaseBuilderServerGrpcApi.TemplateRepositoryConnectionParameters,
