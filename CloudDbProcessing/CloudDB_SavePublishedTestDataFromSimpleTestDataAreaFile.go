@@ -8,6 +8,7 @@ import (
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/encoding/protojson"
 	"time"
 )
 
@@ -274,20 +275,22 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveTestDataFromSimpl
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testDataFromOneSimpleTestDataAreaFileMessage.GetTestDataDomainTemplateName())
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testDataFromOneSimpleTestDataAreaFileMessage.GetTestDataAreaUuid())
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testDataFromOneSimpleTestDataAreaFileMessage.GetTestDataAreaName())
-	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testDataFromOneSimpleTestDataAreaFileMessage.GetHeadersForTestDataFromOneSimpleTestDataAreaFile())
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testDataFromOneSimpleTestDataAreaFileMessage.GetSimpleTestDataRows())
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testDataFromOneSimpleTestDataAreaFileMessage.GetTestDataFileSha256Hash())
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testDataFromOneSimpleTestDataAreaFileMessage.GetImportantDataInFileSha256Hash())
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTimestampToBeUsed)
 
+	tempHeadersForTestDataFromOneSimpleTestDataAreaFileAsJsonb := protojson.Format(testDataFromOneSimpleTestDataAreaFileMessage)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempHeadersForTestDataFromOneSimpleTestDataAreaFileAsJsonb)
+
 	dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
 
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "INSERT INTO \"FenixBuilder\".\"TestDataFromSimpleFile\" "
+	sqlToExecute = sqlToExecute + "INSERT INTO \"FenixBuilder\".\"TestDataFromSimpleTestDataAreaFile\" "
 	sqlToExecute = sqlToExecute + "(\"TestDataDomainUuid\", \"TestDataDomainName\", \"TestDataDomainTemplateName\"," +
 		" \"TestDataAreaUuid\", \"TestDataAreaName\", " +
-		"\"HeadersForTestDataFromOneSimpleTestDataAreaFile\", \"SimpleTestDataRows\", " +
-		"\"TestDataFileSha256Hash\", \"ImportantDataInFileSha256Hash\", \"InsertedTimeStamp\") "
+		"\"TestDataFileSha256Hash\", \"ImportantDataInFileSha256Hash\", \"InsertedTimeStamp\", " +
+		"\"TestDataFromOneSimpleTestDataAreaFileFullMessage\") "
 	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
 	sqlToExecute = sqlToExecute + ";"
 
