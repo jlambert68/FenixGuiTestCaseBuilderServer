@@ -8,6 +8,7 @@ import (
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/encoding/protojson"
 	"time"
 )
 
@@ -217,10 +218,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersTestDataFromSimpleT
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "SELECT \"TestDataDomainUuid\", \"TestDataDomainName\", \"TestDataDomainTemplateName\"," +
 		" \"TestDataAreaUuid\", \"TestDataAreaName\", " +
-		"\"HeadersForTestDataFromOneSimpleTestDataAreaFile\", \"SimpleTestDataRows\", " +
-		"\"TestDataFileSha256Hash\", \"ImportantDataInFileSha256Hash\", \"InsertedTimeStamp\" "
-	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestDataFromSimpleFile\" "
-	sqlToExecute = sqlToExecute + "WHERE \"DomainUuid\" IN " + sQLINArray + ""
+		"\"TestDataFileSha256Hash\", \"ImportantDataInFileSha256Hash\", \"InsertedTimeStamp\", " +
+		"\"TestDataFromOneSimpleTestDataAreaFileFullMessage\" "
+	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestDataFromSimpleTestDataAreaFile\" "
+	sqlToExecute = sqlToExecute + "WHERE \"TestDataDomainUuid\" IN " + sQLINArray + ""
 	sqlToExecute = sqlToExecute + ";"
 
 	// Log SQL to be executed if Environment variable is true
@@ -249,12 +250,15 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersTestDataFromSimpleT
 		return nil, err
 	}
 
-	var InsertedTimeStampAsString string
+	var insertedTimeStampAsTimeStamp time.Time
+	var tempTestDataFromOneSimpleTestDataAreaFileFullMessageAsString string
+	var tempTestDataFromOneSimpleTestDataAreaFileFullMessageAsStringAsByteArray []byte
 
 	// Extract data from DB result set
 	for rows.Next() {
 
-		var oneTestDataFromOneSimpleTestDataAreaFileMessage *fenixTestCaseBuilderServerGrpcApi.TestDataFromOneSimpleTestDataAreaFileMessage
+		var oneTestDataFromOneSimpleTestDataAreaFileMessage fenixTestCaseBuilderServerGrpcApi.TestDataFromOneSimpleTestDataAreaFileMessage
+		var oneTestDataFromOneSimpleTestDataAreaFileFullMessage fenixTestCaseBuilderServerGrpcApi.TestDataFromOneSimpleTestDataAreaFileMessage
 
 		err = rows.Scan(
 			&oneTestDataFromOneSimpleTestDataAreaFileMessage.TestDataDomainUuid,
@@ -262,11 +266,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersTestDataFromSimpleT
 			&oneTestDataFromOneSimpleTestDataAreaFileMessage.TestDataDomainTemplateName,
 			&oneTestDataFromOneSimpleTestDataAreaFileMessage.TestDataAreaUuid,
 			&oneTestDataFromOneSimpleTestDataAreaFileMessage.TestDataAreaName,
-			&oneTestDataFromOneSimpleTestDataAreaFileMessage.HeadersForTestDataFromOneSimpleTestDataAreaFile,
-			&oneTestDataFromOneSimpleTestDataAreaFileMessage.SimpleTestDataRows,
 			&oneTestDataFromOneSimpleTestDataAreaFileMessage.TestDataFileSha256Hash,
 			&oneTestDataFromOneSimpleTestDataAreaFileMessage.ImportantDataInFileSha256Hash,
-			&InsertedTimeStampAsString,
+			&insertedTimeStampAsTimeStamp,
+			&tempTestDataFromOneSimpleTestDataAreaFileFullMessageAsString,
 		)
 
 		if err != nil {
@@ -279,8 +282,22 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersTestDataFromSimpleT
 			return nil, err
 		}
 
+		// Convert json-string into byte-arrays
+		tempTestDataFromOneSimpleTestDataAreaFileFullMessageAsStringAsByteArray = []byte(tempTestDataFromOneSimpleTestDataAreaFileFullMessageAsString)
+
+		// Convert json-byte-array into proto-messages
+		err = protojson.Unmarshal(tempTestDataFromOneSimpleTestDataAreaFileFullMessageAsStringAsByteArray, &oneTestDataFromOneSimpleTestDataAreaFileFullMessage)
+		if err != nil {
+			common_config.Logger.WithFields(logrus.Fields{
+				"Id":    "89bfcfac-d89d-40ae-8d47-0ddafc127138",
+				"Error": err,
+			}).Error("Something went wrong when converting 'tempTestDataFromOneSimpleTestDataAreaFileFullMessageAsStringAsByteArray' into proto-message")
+
+			return nil, err
+		}
+
 		// Add TemplateRepositoryConnectionParameters to list
-		testDataFromSimpleTestDataAreaFileMessages = append(testDataFromSimpleTestDataAreaFileMessages, oneTestDataFromOneSimpleTestDataAreaFileMessage)
+		testDataFromSimpleTestDataAreaFileMessages = append(testDataFromSimpleTestDataAreaFileMessages, &oneTestDataFromOneSimpleTestDataAreaFileFullMessage)
 
 	}
 

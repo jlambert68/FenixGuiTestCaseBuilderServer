@@ -8,9 +8,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// ListTestDataFromSimpleTestDataAreaFile
+// ListAllTestDataForTestDataAreas
 // TesterGui use this gRPC-api to get TestData from 'simple' files
-func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListTestDataFromSimpleTestDataAreaFile(
+func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllTestDataForTestDataAreas(
 	ctx context.Context,
 	userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (
 	*fenixTestCaseBuilderServerGrpcApi.
