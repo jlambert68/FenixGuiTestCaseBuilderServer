@@ -275,7 +275,6 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveTestDataFromSimpl
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testDataFromOneSimpleTestDataAreaFileMessage.GetTestDataDomainTemplateName())
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testDataFromOneSimpleTestDataAreaFileMessage.GetTestDataAreaUuid())
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testDataFromOneSimpleTestDataAreaFileMessage.GetTestDataAreaName())
-	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testDataFromOneSimpleTestDataAreaFileMessage.GetSimpleTestDataRows())
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testDataFromOneSimpleTestDataAreaFileMessage.GetTestDataFileSha256Hash())
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testDataFromOneSimpleTestDataAreaFileMessage.GetImportantDataInFileSha256Hash())
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTimestampToBeUsed)
