@@ -4,6 +4,7 @@ import (
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
 	"errors"
+	"fmt"
 	"github.com/jackc/pgx/v4"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
@@ -138,6 +139,37 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) savePublishedTestDataFromSim
 		}).Warning("The correctness of the signature couldn't be verified")
 
 		err = errors.New("the correctness of the signature couldn't be verified")
+
+		return err
+	}
+
+	// Ensure that DomainUUID for all TestDataAreas use the same as the sender Domains UUID
+	var errorMessage, errorMessageToAdd string
+	for _, testDataArea := range testDataFromSimpleTestDataAreaFileMessage {
+		if testDataArea.TestDataDomainUuid != domainUuid {
+
+			errorMessageToAdd = fmt.Sprintf("TestDataArea '%s'('%s') has DomainUuid='%s' but expected '%s'",
+				testDataArea.GetTestDataAreaName(),
+				testDataArea.GetTestDataAreaUuid(),
+				testDataArea.GetTestDataDomainUuid(),
+				domainUuid)
+
+			if len(errorMessage) > 0 {
+				errorMessage = errorMessage + ", " + errorMessageToAdd
+			} else {
+				errorMessage = errorMessageToAdd
+			}
+		}
+	}
+
+	// Check if there was any problem
+	if len(errorMessage) > 0 {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id":           "9321ee8b-bc73-4d71-be05-18329e1d56ac",
+			"errorMessage": errorMessage,
+		}).Warning("Not correct DomainUUID in TestDataFile")
+
+		err = errors.New(errorMessage)
 
 		return err
 	}
