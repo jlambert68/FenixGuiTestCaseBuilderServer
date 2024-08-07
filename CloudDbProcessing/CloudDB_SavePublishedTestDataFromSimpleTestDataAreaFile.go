@@ -204,7 +204,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performDeleteCurrentTestData
 
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "DELETE FROM \"FenixBuilder\".\"TestDataFromSimpleTestDataAreaFile\" TDSAF "
-	sqlToExecute = sqlToExecute + "WHERE TDSAF.\"DomainUuid\" = '" + domainUUID + "' AND "
+	sqlToExecute = sqlToExecute + "WHERE TDSAF.\"TestDataDomainUuid\" = '" + domainUUID + "' AND "
 	sqlToExecute = sqlToExecute + "TDSAF.\"TestDataAreaUuid\" = '" + testDataAreaUuid + "' "
 	sqlToExecute = sqlToExecute + ";"
 
