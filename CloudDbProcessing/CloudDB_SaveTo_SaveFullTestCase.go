@@ -184,7 +184,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestCase(full
 
 	// Save the Users TestData for the TestCase
 	returnMessage, err = fenixCloudDBObject.saveUsersTestDataForTestCase(
-		txn, fullTestCaseMessage)
+		txn,
+		fullTestCaseMessage,
+		fullTestCaseMessage.TestCaseBasicInformation.GetUserIdentification().GetGCPAuthenticatedUser())
 
 	if err != nil {
 		return returnMessage
@@ -601,7 +603,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(
 // Save Users TestData for a TestCase to CloudDB
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveUsersTestDataForTestCase(
 	dbTransaction pgx.Tx,
-	fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (
+	fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage,
+	gcpAuthenticatedUser string) (
 	returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse,
 	err error) {
 
@@ -634,13 +637,14 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveUsersTestDataForTestCase
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestDataHash)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, false)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, timeStampToUse)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, gcpAuthenticatedUser)
 
 	dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
 
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "INSERT INTO \"FenixBuilder\".\"UsersTestDataForTestCase\" "
 	sqlToExecute = sqlToExecute + "(\"DomainUuid\", \"DomainName\", \"TestCaseUuid\", \"TestCaseName\", \"TestCaseVersion\", " +
-		"\"TestData\", \"TestDataHash\", \"TestCaseIsDeleted\", \"InsertTimeStamp\")  "
+		"\"TestData\", \"TestDataHash\", \"TestCaseIsDeleted\", \"InsertedTimeStamp\", \"GcpAuthenticatedUser\")  "
 	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
 	sqlToExecute = sqlToExecute + ";"
 
