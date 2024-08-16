@@ -145,6 +145,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestCase(full
 	returnMessage, err = fenixCloudDBObject.saveFullTestCase(
 		txn, fullTestCaseMessage, authorizationValueForOwnerDomain, authorizationValueForAllDomainsInTestCase)
 
+	// Save the Users TestData for the TestCase
+	returnMessage, err = fenixCloudDBObject.saveUsersTestDataForTestCase(
+		txn, fullTestCaseMessage)
+
 	return returnMessage
 }
 
@@ -544,27 +548,91 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(
 
 }
 
-/*
-// See https://www.alexedwards.net/blog/using-postgresql-jsonb
-// Make the Attrs struct implement the driver.Valuer interface. This method
-// simply returns the JSON-encoded representation of the struct.
-func (a myAttrStruct) Value() (driver.Value, error) {
+// Save Users TestData for a TestCase to CloudDB
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveUsersTestDataForTestCase(
+	dbTransaction pgx.Tx,
+	fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (
+	returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse,
+	err error) {
 
-	return json.Marshal(a)
-}
+	// Extract column data to be added to data-row
+	tempDomainUuid := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.DomainUuid
+	tempDomainName := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.DomainName
+	tempTestCaseUuid := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.TestCaseUuid
+	tempTestCaseName := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.EditableInformation.TestCaseName
+	tempTestCaseVersion := fullTestCaseMessage.TestCaseBasicInformation.BasicTestCaseInformation.NonEditableInformation.TestCaseVersion
+	tempTestDataAsJsonb := protojson.Format(fullTestCaseMessage.GetTestCaseTestData())
+	tempTestDataHash := fullTestCaseMessage.GetTestCaseTestData().GetHashOfThisMessageWithEmptyHashField()
 
-// Make the Attrs struct implement the sql.Scanner interface. This method
-// simply decodes a JSON-encoded value into the struct fields.
-func (a *myAttrStruct) Scan(value interface{}) error {
-	b, ok := value.([]byte)
-	if !ok {
-		return errors.New("type assertion to []byte failed")
+	var dataRowToBeInsertedMultiType []interface{}
+	var dataRowsToBeInsertedMultiType [][]interface{}
+
+	// Create Insert Statement
+	// Data to be inserted in the DB-table
+	dataRowsToBeInsertedMultiType = nil
+
+	dataRowToBeInsertedMultiType = nil
+
+	timeStampToUse := shared_code.GenerateDatetimeTimeStampForDB()
+
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempDomainUuid)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempDomainName)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestCaseUuid)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestCaseName)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestCaseVersion)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestDataAsJsonb)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestDataHash)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, false)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, timeStampToUse)
+
+	dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
+
+	sqlToExecute := ""
+	sqlToExecute = sqlToExecute + "INSERT INTO \"FenixBuilder\".\"UsersTestDataForTestCase\" "
+	sqlToExecute = sqlToExecute + "(\"DomainUuid\", \"DomainName\", \"TestCaseUuid\", \"TestCaseName\", \"TestCaseVersion\", " +
+		"\"TestData\", \"TestDataHash\", \"TestCaseIsDeleted\", \"InsertTimeStamp\")  "
+	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
+	sqlToExecute = sqlToExecute + ";"
+
+	// Execute Query CloudDB
+	comandTag, err := dbTransaction.Exec(context.Background(), sqlToExecute)
+
+	if err != nil {
+
+		// Set Error codes to return message
+		var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+		var errorCode fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+
+		errorCode = fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM
+		errorCodes = append(errorCodes, errorCode)
+
+		// Create Return message
+		returnMessage = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+			AckNack:                      false,
+			Comments:                     "Problem inserting Users TestData for TestCase",
+			ErrorCodes:                   errorCodes,
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
+		}
 	}
 
-	return json.Unmarshal(b, &a)
-}
+	// Log response from CloudDB
+	common_config.Logger.WithFields(logrus.Fields{
+		"Id":                       "2540118c-ad2f-4d68-bceb-abbed93d4891",
+		"comandTag.Insert()":       comandTag.Insert(),
+		"comandTag.Delete()":       comandTag.Delete(),
+		"comandTag.Select()":       comandTag.Select(),
+		"comandTag.Update()":       comandTag.Update(),
+		"comandTag.RowsAffected()": comandTag.RowsAffected(),
+		"comandTag.String()":       comandTag.String(),
+		"sqlToExecute":             sqlToExecute,
+	}).Debug("Return data for SQL executed in database")
 
-type myAttrStruct struct {
-	fenixTestCaseBuilderServerGrpcApi.BasicTestCaseInformationMessage
+	// No errors occurred
+	return &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+		AckNack:                      true,
+		Comments:                     "",
+		ErrorCodes:                   nil,
+		ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
+	}, nil
+
 }
-*/

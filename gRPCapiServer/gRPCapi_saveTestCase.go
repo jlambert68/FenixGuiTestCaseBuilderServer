@@ -8,31 +8,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-/*
-
-  // ************************************************  TestCase Builder ************************************************
-
-  // *** Send data to server ***
-
-  // Save full TestCase in DB
-  rpc SaveFullTestCase(FullTestCaseMessage) returns (AckNackResponse) {
-  }
-
-
-  // Save a Basic TestCase info in DB
-  rpc SaveTestCase(TestCaseBasicInformationMessage) returns (AckNackResponse) {
-  }
-
-  // Save all TestInstructions from the TestCase
-  rpc SaveAllTestCaseTestInstructions(SaveAllTestInstructionsForSpecificTestCaseRequestMessage) returns (AckNackResponse) {
-  }
-
-  // Save all TestInstructionContainers from the TestCase
-  rpc SaveAllTestCaseTestInstructionContainers(SaveAllTestInstructionContainersForSpecificTestCaseRequestMessage) returns (AckNackResponse) {
-  }
-
-*/
-
 // SaveFullTestCase
 // TestCase GUI use this gRPC-api to save a full TestCase with all its data
 func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) SaveFullTestCase(ctx context.Context, fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (*fenixTestCaseBuilderServerGrpcApi.AckNackResponse, error) {
