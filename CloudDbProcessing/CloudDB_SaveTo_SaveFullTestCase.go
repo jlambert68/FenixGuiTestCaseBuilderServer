@@ -16,6 +16,30 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCaseCommitOrRoleBack(
+	dbTransactionReference *pgx.Tx,
+	doCommitNotRoleBackReference *bool) {
+
+	dbTransaction := *dbTransactionReference
+	doCommitNotRoleBack := *doCommitNotRoleBackReference
+
+	if doCommitNotRoleBack == true {
+		dbTransaction.Commit(context.Background())
+
+		common_config.Logger.WithFields(logrus.Fields{
+			"id": "c2a383a8-07a3-46c6-9a7d-f327a7f7450b",
+		}).Debug("Doing Commit for SQL  in 'saveFullTestCaseCommitOrRoleBack'")
+
+	} else {
+		dbTransaction.Rollback(context.Background())
+
+		common_config.Logger.WithFields(logrus.Fields{
+			"id": "43150f43-8b9f-4ddf-a444-e18788910833",
+		}).Info("Doing Rollback for SQL  in 'saveFullTestCaseCommitOrRoleBack'")
+
+	}
+}
+
 // PrepareSaveFullTestCase
 // Do initial preparations to be able to save the TestCase
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestCase(fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse) {
@@ -47,7 +71,16 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestCase(full
 		return returnMessage
 	}
 
-	defer txn.Commit(context.Background())
+	// After all stuff is done, then Commit or Rollback depending on result
+	var doCommitNotRoleBack bool
+
+	// Standard is to do a Rollback
+	doCommitNotRoleBack = false
+
+	// When leaving then do the actual commit or rollback
+	defer fenixCloudDBObject.saveFullTestCaseCommitOrRoleBack(
+		&txn,
+		&doCommitNotRoleBack)
 
 	// Extract Domain that Owns the TestCase
 	var ownerDomainForTestCase domainForTestCaseStruct
@@ -145,9 +178,19 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestCase(full
 	returnMessage, err = fenixCloudDBObject.saveFullTestCase(
 		txn, fullTestCaseMessage, authorizationValueForOwnerDomain, authorizationValueForAllDomainsInTestCase)
 
+	if err != nil {
+		return returnMessage
+	}
+
 	// Save the Users TestData for the TestCase
 	returnMessage, err = fenixCloudDBObject.saveUsersTestDataForTestCase(
 		txn, fullTestCaseMessage)
+
+	if err != nil {
+		return returnMessage
+	}
+
+	doCommitNotRoleBack = true
 
 	return returnMessage
 }
@@ -510,6 +553,11 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(
 
 	if err != nil {
 
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "9f116364-c38b-4bd8-bea9-3ec307c76dfa",
+			"sqlToExecute": sqlToExecute,
+		}).Error("Problem when Saving TestCase to database")
+
 		// Set Error codes to return message
 		var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
 		var errorCode fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
@@ -520,10 +568,12 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(
 		// Create Return message
 		returnMessage = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
 			AckNack:                      false,
-			Comments:                     "Problem when Loading TestCase Basic Information from database",
+			Comments:                     "Problem when Saving TestCase to database",
 			ErrorCodes:                   errorCodes,
 			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		}
+
+		return returnMessage, err
 	}
 
 	// Log response from CloudDB
@@ -599,6 +649,11 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveUsersTestDataForTestCase
 
 	if err != nil {
 
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "f2956cdc-02e7-4e3b-b820-abe12608260d",
+			"sqlToExecute": sqlToExecute,
+		}).Error("Problem when Saving Users TestData for TestCase to database")
+
 		// Set Error codes to return message
 		var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
 		var errorCode fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
@@ -613,6 +668,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveUsersTestDataForTestCase
 			ErrorCodes:                   errorCodes,
 			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		}
+
+		return returnMessage, err
 	}
 
 	// Log response from CloudDB
