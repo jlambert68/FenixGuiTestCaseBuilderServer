@@ -33,10 +33,12 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 
 	// Check if Client is using correct proto files version
 	var returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse
-	returnMessage = common_config.IsClientUsingCorrectTestDataProtoFileVersion(userIdOnComputer, userIdentificationMessage.ProtoFileVersionUsedByClient)
+	returnMessage = common_config.IsClientUsingCorrectTestDataProtoFileVersion(
+		userIdOnComputer, userIdentificationMessage.ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 		// Not correct proto-file version is used
-		responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.
+			AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
 			ImmatureTestInstructions:          nil,
 			ImmatureTestInstructionContainers: nil,
 			AckNackResponse:                   returnMessage,
@@ -48,7 +50,16 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 
 	// Define variables to store data from DB in
 	var cloudDBImmatureTestInstructionItems []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage
-	var cloudDBImmatureTestInstructionContainerItems []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage
+	var cloudDBExecutionDomainsThatCanReceiveDirectTargetedTestInstructions []*fenixTestCaseBuilderServerGrpcApi.
+		ExecutionDomainsThatCanReceiveDirectTargetedTestInstructionsMessage
+	var cloudDBImmatureTestInstructionContainerItems []*fenixTestCaseBuilderServerGrpcApi.
+		ImmatureTestInstructionContainerMessage
+
+	// Temporary map to hinder duplicates of ExecutionDomains
+	var executionDomainsMap map[string]*fenixTestCaseBuilderServerGrpcApi.
+		ExecutionDomainsThatCanReceiveDirectTargetedTestInstructionsMessage
+	executionDomainsMap = make(map[string]*fenixTestCaseBuilderServerGrpcApi.
+		ExecutionDomainsThatCanReceiveDirectTargetedTestInstructionsMessage)
 
 	// Initiate object forCloudDB-processing
 	var fenixCloudDBObject *CloudDbProcessing.FenixCloudDBObjectStruct
@@ -150,7 +161,10 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 
 			// Convert TestInstruction. Slice position '0' is always the latest one so use that
 			var tempImmatureTestInstructionMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage
-			tempImmatureTestInstructionMessage, err = s.convertSupportedTestInstructionsIntoABBResultTI(
+			var tempExecutionDomainThatCanReceiveDirectTargetedTestInstructions *fenixTestCaseBuilderServerGrpcApi.ExecutionDomainsThatCanReceiveDirectTargetedTestInstructionsMessage
+			tempImmatureTestInstructionMessage,
+				tempExecutionDomainThatCanReceiveDirectTargetedTestInstructions,
+				err = s.convertSupportedTestInstructionsIntoABBResultTI(
 				tempTestInstructions.TestInstructionVersions[0].TestInstructionInstance,
 				tempTestInstructions.TestInstructionVersions[0].ResponseVariablesMapStructure)
 
@@ -177,7 +191,11 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 			}
 
 			// Append to list of TestInstructions to be sent to TesterGui
-			cloudDBImmatureTestInstructionItems = append(cloudDBImmatureTestInstructionItems, tempImmatureTestInstructionMessage)
+			cloudDBImmatureTestInstructionItems = append(
+				cloudDBImmatureTestInstructionItems, tempImmatureTestInstructionMessage)
+
+			executionDomainsMap[tempExecutionDomainThatCanReceiveDirectTargetedTestInstructions.ExecutionDomainUuid] =
+				tempExecutionDomainThatCanReceiveDirectTargetedTestInstructions
 
 		}
 
@@ -187,23 +205,30 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 
 			// Convert TestInstructionContainer. Slice position '0' is always the latest one so use that
 			var tempImmatureTestInstructionContainerMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionContainerMessage
-			tempImmatureTestInstructionContainerMessage, err = s.convertSupportedTestInstructionContainersIntoABBResultTIC(tempTestInstructionContainer.TestInstructionContainerVersions[0].TestInstructionContainerInstance)
+			tempImmatureTestInstructionContainerMessage, err = s.convertSupportedTestInstructionContainersIntoABBResultTIC(
+				tempTestInstructionContainer.TestInstructionContainerVersions[0].TestInstructionContainerInstance)
 
 			if err != nil {
 				common_config.Logger.WithFields(logrus.Fields{
 					"Id":  "730c9ffd-f0fb-40d6-b5c9-335e82556520",
 					"err": err,
-					"tempTestInstructionContainer.TestInstructionContainerVersions[0].TestInstructionContainerInstance": tempTestInstructionContainer.TestInstructionContainerVersions[0].TestInstructionContainerInstance,
+					"tempTestInstructionContainer.TestInstructionContainerVersions[0]." +
+						"TestInstructionContainerInstance": tempTestInstructionContainer.
+						TestInstructionContainerVersions[0].TestInstructionContainerInstance,
 				}).Error("Couldn't convert TestInstructionContainer into gRPC version to be sent to TesterGui")
 
-				responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
+				responseMessage = &fenixTestCaseBuilderServerGrpcApi.
+					AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
 					ImmatureTestInstructions:          nil,
 					ImmatureTestInstructionContainers: nil,
 					AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-						AckNack:                      false,
-						Comments:                     "Couldn't convert TestInstructionContainer into gRPC version to be sent to TesterGui",
-						ErrorCodes:                   []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
-						ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
+						AckNack:  false,
+						Comments: "Couldn't convert TestInstructionContainer into gRPC version to be sent to TesterGui",
+						ErrorCodes: []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum{
+							fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM},
+						ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
+							CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.
+								GetHighestFenixGuiBuilderProtoFileVersion()),
 					},
 				}
 
@@ -211,7 +236,8 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 			}
 
 			// Append to list of TestInstructions to be sent to TesterGui
-			cloudDBImmatureTestInstructionContainerItems = append(cloudDBImmatureTestInstructionContainerItems, tempImmatureTestInstructionContainerMessage)
+			cloudDBImmatureTestInstructionContainerItems = append(
+				cloudDBImmatureTestInstructionContainerItems, tempImmatureTestInstructionContainerMessage)
 
 		}
 	}
@@ -234,16 +260,33 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 		}
 	}
 
+	// Convert map with ExecutionDomains to slice of ExecutionDomains
+	for _, executionDomainThatCanReceiveDirectTargetedTestInstructions := range executionDomainsMap {
+
+		// If ExecutionDomainUUid is a ZeroUuid then skip that ExecutionDomain
+		// The reason is that ZeroUuid is used to indicate that a TestInstruction can have a dynamic ExecutionDomain and are set in TesterGui
+		if executionDomainThatCanReceiveDirectTargetedTestInstructions.ExecutionDomainUuid != common_config.ZeroUuid {
+
+			cloudDBExecutionDomainsThatCanReceiveDirectTargetedTestInstructions = append(
+				cloudDBExecutionDomainsThatCanReceiveDirectTargetedTestInstructions,
+				executionDomainThatCanReceiveDirectTargetedTestInstructions)
+		}
+
+	}
+
 	// Create the response to caller
-	responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
-		DomainsThatCanOwnTheTestCase:      domainsThatCanOwnTheTestCase,
-		ImmatureTestInstructions:          cloudDBImmatureTestInstructionItems,
-		ImmatureTestInstructionContainers: cloudDBImmatureTestInstructionContainerItems,
+	responseMessage = &fenixTestCaseBuilderServerGrpcApi.
+		AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
+		DomainsThatCanOwnTheTestCase:                                 domainsThatCanOwnTheTestCase,
+		ImmatureTestInstructions:                                     cloudDBImmatureTestInstructionItems,
+		ImmatureTestInstructionContainers:                            cloudDBImmatureTestInstructionContainerItems,
+		ExecutionDomainsThatCanReceiveDirectTargetedTestInstructions: cloudDBExecutionDomainsThatCanReceiveDirectTargetedTestInstructions,
 		AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-			AckNack:                      true,
-			Comments:                     "",
-			ErrorCodes:                   nil,
-			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
+			AckNack:    true,
+			Comments:   "",
+			ErrorCodes: nil,
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
+				CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		},
 	}
 

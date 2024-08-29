@@ -17,6 +17,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) convertSupportedTes
 	supportedTestInstructionInstance *TestInstructionAndTestInstuctionContainerTypes.TestInstructionStruct,
 	responseVariablesMapStructure *TestInstructionAndTestInstuctionContainerTypes.ResponseVariablesMapStructureStruct) (
 	immatureTestInstructionMessage *fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionMessage,
+	executionDomainThatCanReceiveDirectTargetedTestInstructions *fenixTestCaseBuilderServerGrpcApi.ExecutionDomainsThatCanReceiveDirectTargetedTestInstructionsMessage,
 	err error) {
 
 	// Convert UpdatedTimeStamp into time-variable
@@ -31,7 +32,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) convertSupportedTes
 			"supportedTestInstructionInstance.TestInstruction.UpdatedTimeStamp": supportedTestInstructionInstance.TestInstruction.UpdatedTimeStamp,
 		}).Error("Couldn't generate parser layout from TimeStamp")
 
-		return nil, err
+		return nil, nil, err
 	}
 
 	var tempUpdatedTimeStamp time.Time
@@ -45,7 +46,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) convertSupportedTes
 			"supportedTestInstructionInstance.TestInstruction.UpdatedTimeStamp": supportedTestInstructionInstance.TestInstruction.UpdatedTimeStamp,
 		}).Error("Couldn't parse TimeStamp in Broadcast-message")
 
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Create 'AvailableDropZones'
@@ -98,7 +99,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) convertSupportedTes
 				tempImmatureTestInstructionInformation.DropZoneName,
 				tempImmatureTestInstructionInformation.TestInstructionAttributeType))
 
-			return nil, err
+			return nil, nil, err
 		}
 
 		tempTestInstructionAttributeType = fenixTestCaseBuilderServerGrpcApi.TestInstructionAttributeTypeEnum(tempInt32)
@@ -152,7 +153,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) convertSupportedTes
 				immatureElementModel.ImmatureElementName,
 				immatureElementModel.TestCaseModelElementType))
 
-			return nil, err
+			return nil, nil, err
 		}
 
 		tempTestCaseModelElementType = fenixTestCaseBuilderServerGrpcApi.TestCaseModelElementTypeEnum(tempInt32)
@@ -236,5 +237,14 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) convertSupportedTes
 			ResponseVariablesMap: responseVariablesMapForGrpc},
 	}
 
-	return immatureTestInstructionMessage, err
+	// Create the ExecutionDomain information
+	executionDomainThatCanReceiveDirectTargetedTestInstructions = &fenixTestCaseBuilderServerGrpcApi.
+		ExecutionDomainsThatCanReceiveDirectTargetedTestInstructionsMessage{
+		DomainUuid:          string(supportedTestInstructionInstance.TestInstruction.DomainUUID),
+		DomainName:          string(supportedTestInstructionInstance.TestInstruction.DomainName),
+		ExecutionDomainUuid: string(supportedTestInstructionInstance.TestInstruction.ExecutionDomainUUID),
+		ExecutionDomainName: string(supportedTestInstructionInstance.TestInstruction.ExecutionDomainName),
+	}
+
+	return immatureTestInstructionMessage, executionDomainThatCanReceiveDirectTargetedTestInstructions, err
 }
