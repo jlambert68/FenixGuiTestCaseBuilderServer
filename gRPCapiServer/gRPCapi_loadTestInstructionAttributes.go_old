@@ -132,6 +132,9 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllImmatureTest
 		}
 	}
 
+
+	flytta nedanstende kod till TI & TIC delen
+
 	// Define variables to store Attribute data from DB in
 	var testInstructionAttributesList []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage_TestInstructionAttributeMessage
 

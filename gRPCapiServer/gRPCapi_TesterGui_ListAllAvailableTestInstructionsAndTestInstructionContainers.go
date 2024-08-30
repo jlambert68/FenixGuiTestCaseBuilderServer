@@ -103,8 +103,11 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 
 		responseMessage = &fenixTestCaseBuilderServerGrpcApi.
 			AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
-			ImmatureTestInstructions:          nil,
-			ImmatureTestInstructionContainers: nil,
+			DomainsThatCanOwnTheTestCase:                                 nil,
+			ImmatureTestInstructions:                                     nil,
+			ImmatureTestInstructionContainers:                            nil,
+			ExecutionDomainsThatCanReceiveDirectTargetedTestInstructions: nil,
+			ImmatureTestInstructionAttributes:                            nil,
 			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
 				AckNack:    false,
 				Comments:   fmt.Sprintf("User %s doesn't have access to any domains", gCPAuthenticatedUser),
@@ -135,8 +138,11 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 
 			responseMessage = &fenixTestCaseBuilderServerGrpcApi.
 				AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
-				ImmatureTestInstructions:          nil,
-				ImmatureTestInstructionContainers: nil,
+				DomainsThatCanOwnTheTestCase:                                 nil,
+				ImmatureTestInstructions:                                     nil,
+				ImmatureTestInstructionContainers:                            nil,
+				ExecutionDomainsThatCanReceiveDirectTargetedTestInstructions: nil,
+				ImmatureTestInstructionAttributes:                            nil,
 				AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
 					AckNack:    false,
 					Comments:   err.Error(),
@@ -176,8 +182,11 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 				}).Error("Couldn't convert TestInstruction into gRPC version to be sent to TesterGui")
 
 				responseMessage = &fenixTestCaseBuilderServerGrpcApi.AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
-					ImmatureTestInstructions:          nil,
-					ImmatureTestInstructionContainers: nil,
+					DomainsThatCanOwnTheTestCase:                                 nil,
+					ImmatureTestInstructions:                                     nil,
+					ImmatureTestInstructionContainers:                            nil,
+					ExecutionDomainsThatCanReceiveDirectTargetedTestInstructions: nil,
+					ImmatureTestInstructionAttributes:                            nil,
 					AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
 						AckNack:                      false,
 						Comments:                     "Couldn't convert TestInstruction into gRPC version to be sent to TesterGui",
@@ -219,8 +228,11 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 
 				responseMessage = &fenixTestCaseBuilderServerGrpcApi.
 					AvailableTestInstructionsAndPreCreatedTestInstructionContainersResponseMessage{
-					ImmatureTestInstructions:          nil,
-					ImmatureTestInstructionContainers: nil,
+					DomainsThatCanOwnTheTestCase:                                 nil,
+					ImmatureTestInstructions:                                     nil,
+					ImmatureTestInstructionContainers:                            nil,
+					ExecutionDomainsThatCanReceiveDirectTargetedTestInstructions: nil,
+					ImmatureTestInstructionAttributes:                            nil,
 					AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
 						AckNack:  false,
 						Comments: "Couldn't convert TestInstructionContainer into gRPC version to be sent to TesterGui",
@@ -261,18 +273,31 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 	}
 
 	// Convert map with ExecutionDomains to slice of ExecutionDomains
-	for _, executionDomainThatCanReceiveDirectTargetedTestInstructions := range executionDomainsMap {
+	var availableExecutionDomains []string
+	for executionDomain, executionDomainThatCanReceiveDirectTargetedTestInstructions := range executionDomainsMap {
 
 		// If ExecutionDomainUUid is a ZeroUuid then skip that ExecutionDomain
 		// The reason is that ZeroUuid is used to indicate that a TestInstruction can have a dynamic ExecutionDomain and are set in TesterGui
 		if executionDomainThatCanReceiveDirectTargetedTestInstructions.ExecutionDomainUuid != common_config.ZeroUuid {
 
+			// Add to slice with alla information about ExecutionDomains
 			cloudDBExecutionDomainsThatCanReceiveDirectTargetedTestInstructions = append(
 				cloudDBExecutionDomainsThatCanReceiveDirectTargetedTestInstructions,
 				executionDomainThatCanReceiveDirectTargetedTestInstructions)
+
+			// Add to simple slice of ExecutionDomains
+			availableExecutionDomains = append(availableExecutionDomains, executionDomain)
+
 		}
 
 	}
+
+	// Define variables to store Attribute data from DB in
+	var testInstructionAttributesList []*fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage_TestInstructionAttributeMessage
+
+	// Convert structured TestInstructionAttributes data into "raw" list of supported attributes
+	testInstructionAttributesList, err = s.convertSupportedTestInstructionsAttributesIntoAttributesList(
+		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessages, availableExecutionDomains)
 
 	// Create the response to caller
 	responseMessage = &fenixTestCaseBuilderServerGrpcApi.
@@ -281,6 +306,8 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 		ImmatureTestInstructions:                                     cloudDBImmatureTestInstructionItems,
 		ImmatureTestInstructionContainers:                            cloudDBImmatureTestInstructionContainerItems,
 		ExecutionDomainsThatCanReceiveDirectTargetedTestInstructions: cloudDBExecutionDomainsThatCanReceiveDirectTargetedTestInstructions,
+		ImmatureTestInstructionAttributes: &fenixTestCaseBuilderServerGrpcApi.ImmatureTestInstructionAttributesMessage{
+			TestInstructionAttributesList: testInstructionAttributesList},
 		AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
 			AckNack:    true,
 			Comments:   "",
