@@ -237,6 +237,14 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) convertSupportedTes
 			ResponseVariablesMap: responseVariablesMapForGrpc},
 	}
 
+	// Create the GuiName for the ExecutionDomain
+	var nameUsedInGui string
+	nameUsedInGui = fmt.Sprintf("%s/%s [%s/%s]",
+		string(supportedTestInstructionInstance.TestInstruction.DomainName),
+		string(supportedTestInstructionInstance.TestInstruction.ExecutionDomainUUID),
+		string(supportedTestInstructionInstance.TestInstruction.DomainUUID)[0:6],
+		string(supportedTestInstructionInstance.TestInstruction.ExecutionDomainUUID)[0:6])
+
 	// Create the ExecutionDomain information
 	executionDomainThatCanReceiveDirectTargetedTestInstructions = &fenixTestCaseBuilderServerGrpcApi.
 		ExecutionDomainsThatCanReceiveDirectTargetedTestInstructionsMessage{
@@ -244,6 +252,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) convertSupportedTes
 		DomainName:          string(supportedTestInstructionInstance.TestInstruction.DomainName),
 		ExecutionDomainUuid: string(supportedTestInstructionInstance.TestInstruction.ExecutionDomainUUID),
 		ExecutionDomainName: string(supportedTestInstructionInstance.TestInstruction.ExecutionDomainName),
+		NameUsedInGui:       nameUsedInGui,
 	}
 
 	return immatureTestInstructionMessage, executionDomainThatCanReceiveDirectTargetedTestInstructions, err

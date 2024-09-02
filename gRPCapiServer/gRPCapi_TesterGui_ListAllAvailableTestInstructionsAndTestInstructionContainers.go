@@ -278,17 +278,17 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 
 		// If ExecutionDomainUUid is a ZeroUuid then skip that ExecutionDomain
 		// The reason is that ZeroUuid is used to indicate that a TestInstruction can have a dynamic ExecutionDomain and are set in TesterGui
-		if executionDomainThatCanReceiveDirectTargetedTestInstructions.ExecutionDomainUuid != common_config.ZeroUuid {
+		//if executionDomainThatCanReceiveDirectTargetedTestInstructions.ExecutionDomainUuid != common_config.ZeroUuid {
 
-			// Add to slice with alla information about ExecutionDomains
-			cloudDBExecutionDomainsThatCanReceiveDirectTargetedTestInstructions = append(
-				cloudDBExecutionDomainsThatCanReceiveDirectTargetedTestInstructions,
-				executionDomainThatCanReceiveDirectTargetedTestInstructions)
+		// Add to slice with alla information about ExecutionDomains
+		cloudDBExecutionDomainsThatCanReceiveDirectTargetedTestInstructions = append(
+			cloudDBExecutionDomainsThatCanReceiveDirectTargetedTestInstructions,
+			executionDomainThatCanReceiveDirectTargetedTestInstructions)
 
-			// Add to simple slice of ExecutionDomains
-			availableExecutionDomains = append(availableExecutionDomains, executionDomain)
+		// Add to simple slice of ExecutionDomains
+		availableExecutionDomains = append(availableExecutionDomains, executionDomain)
 
-		}
+		//}
 
 	}
 
