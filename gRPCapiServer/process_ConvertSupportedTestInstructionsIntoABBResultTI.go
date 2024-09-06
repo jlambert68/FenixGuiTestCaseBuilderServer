@@ -241,7 +241,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) convertSupportedTes
 	var nameUsedInGui string
 	nameUsedInGui = fmt.Sprintf("%s/%s [%s/%s]",
 		string(supportedTestInstructionInstance.TestInstruction.DomainName),
-		string(supportedTestInstructionInstance.TestInstruction.ExecutionDomainUUID),
+		string(supportedTestInstructionInstance.TestInstruction.ExecutionDomainName),
 		string(supportedTestInstructionInstance.TestInstruction.DomainUUID)[0:6],
 		string(supportedTestInstructionInstance.TestInstruction.ExecutionDomainUUID)[0:6])
 
