@@ -1,5 +1,5 @@
 # Compile stage
-FROM golang:1.21 AS build-env
+FROM golang:1.22 AS build-env
 
 ADD . /dockerdev
 WORKDIR /dockerdev
