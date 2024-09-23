@@ -274,7 +274,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 
 	// Convert map with ExecutionDomains to slice of ExecutionDomains
 	var availableExecutionDomains []string
-	for executionDomain, executionDomainThatCanReceiveDirectTargetedTestInstructions := range executionDomainsMap {
+	for _, executionDomainThatCanReceiveDirectTargetedTestInstructions := range executionDomainsMap {
 
 		// If ExecutionDomainUUid is a ZeroUuid then skip that ExecutionDomain
 		// The reason is that ZeroUuid is used to indicate that a TestInstruction can have a dynamic ExecutionDomain and are set in TesterGui
@@ -286,7 +286,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListAllAvailableTes
 			executionDomainThatCanReceiveDirectTargetedTestInstructions)
 
 		// Add to simple slice of ExecutionDomains
-		availableExecutionDomains = append(availableExecutionDomains, executionDomain)
+		availableExecutionDomains = append(availableExecutionDomains, executionDomainThatCanReceiveDirectTargetedTestInstructions.GetNameUsedInGui())
 
 		//}
 
