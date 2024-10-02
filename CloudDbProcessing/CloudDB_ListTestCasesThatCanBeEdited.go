@@ -145,6 +145,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestCasesThatCanB
 	// Create a slice with all TestCaseUuid to be used for finding execution status
 	var testCaseUuidSlice []string
 
+	for _, tempTestCase := range testCasesThatCanBeEditedResponse {
+		testCaseUuidSlice = append(testCaseUuidSlice, tempTestCase.TestCaseUuid)
+	}
+
 	// Load the latest Execution Status for TestCase
 	var testCasesLatestExecutionStatusMap map[string]*fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
 	testCasesLatestExecutionStatusMap = make(map[string]*fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage)
@@ -182,7 +186,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestCasesThatCanB
 	// Load the latest OK Execution Status for TestCase
 	var testCasesLatestFinishedOkExecutionStatusMap map[string]*fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
 	testCasesLatestFinishedOkExecutionStatusMap = make(map[string]*fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage)
-	testCasesLatestFinishedOkExecutionStatusMap, err = fenixCloudDBObject.loadLatestExecutionStatusForTestCases(
+	testCasesLatestFinishedOkExecutionStatusMap, err = fenixCloudDBObject.loadLatestFinishedOkExecutionStatusForTestCases(
 		txn,
 		testCaseUuidSlice)
 
@@ -215,93 +219,51 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestCasesThatCanB
 
 	// Merge Execution status into full TestCaseList
 	var foundInMap bool
+	var changesAreMade bool
 	for testCaseIndex, temptestCase := range testCasesThatCanBeEditedResponse {
+
+		// Reset 'changesAreMade'
+		changesAreMade = false
 
 		// Latest Execution Status Information
 		var temptestCaseFromStatus *fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
 		temptestCaseFromStatus, foundInMap = testCasesLatestExecutionStatusMap[temptestCase.TestCaseUuid]
 
-		// TestCaseExecution-status wasn't found in Map
+		// TestCaseExecution-status wasn't found in Map which indicates that there are no executions for the TestCase
 		if foundInMap == false {
 
-			common_config.Logger.WithFields(logrus.Fields{
-				"Id":           "7d5aae17-990d-48d6-82a8-736b21f12733",
-				"TestCaseUuid": temptestCase.TestCaseUuid,
-			}).Error("TestCaseUuid wasn't found in Map, 'testCasesLatestExecutionStatusMap'. Should never happen")
+		} else {
+			// Add Latest Status information
+			temptestCase.LatestTestCaseExecutionStatus = temptestCaseFromStatus.LatestTestCaseExecutionStatus
+			temptestCase.LatestTestCaseExecutionStatusInsertTimeStamp = temptestCaseFromStatus.
+				LatestTestCaseExecutionStatusInsertTimeStamp
 
-			// Set Error codes to return message
-			var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
-			var errorCode fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+			// Indicate tha changes are done
+			changesAreMade = true
 
-			errorCode = fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM
-			errorCodes = append(errorCodes, errorCode)
-
-			// Create response message
-			var ackNackResponse *fenixTestCaseBuilderServerGrpcApi.AckNackResponse
-			ackNackResponse = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-				AckNack:    false,
-				Comments:   "Problem when Loading from database",
-				ErrorCodes: errorCodes,
-				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(
-					common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
-			}
-
-			responseMessage = &fenixTestCaseBuilderServerGrpcApi.ListTestCasesThatCanBeEditedResponseMessage{
-				AckNackResponse:                ackNackResponse,
-				TestCasesThatCanBeEditedByUser: nil,
-			}
-
-			return responseMessage
 		}
-
-		// Add Latest Status information
-		temptestCase.LatestTestCaseExecutionStatus = temptestCaseFromStatus.LatestTestCaseExecutionStatus
-		temptestCase.LatestTestCaseExecutionStatusInsertTimeStamp = temptestCaseFromStatus.
-			LatestTestCaseExecutionStatusInsertTimeStamp
 
 		// Latest Finished OK Execution Status Information
 		var temptestCaseFromFinishedStatus *fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
 		temptestCaseFromFinishedStatus, foundInMap = testCasesLatestFinishedOkExecutionStatusMap[temptestCase.TestCaseUuid]
 
-		// TestCaseExecution-status wasn't found in Map
+		// TestCaseExecution-status wasn't found in Map which indicates that there are no Finished OK executions for the TestCase
 		if foundInMap == false {
 
-			common_config.Logger.WithFields(logrus.Fields{
-				"Id":           "334414b5-3b7d-42a0-bcb9-9b76058e5ff2",
-				"TestCaseUuid": temptestCase.TestCaseUuid,
-			}).Error("TestCaseUuid wasn't found in Map, 'testCasesLatestFinishedOkExecutionStatusMap'. Should never happen")
+		} else {
+			// Add Latest Finished OK Status information
+			temptestCase.LatestFinishedOkTestCaseExecutionStatusInsertTimeStamp = temptestCaseFromFinishedStatus.
+				LatestFinishedOkTestCaseExecutionStatusInsertTimeStamp
 
-			// Set Error codes to return message
-			var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
-			var errorCode fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+			// Indicate tha changes are done
+			changesAreMade = true
 
-			errorCode = fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM
-			errorCodes = append(errorCodes, errorCode)
-
-			// Create response message
-			var ackNackResponse *fenixTestCaseBuilderServerGrpcApi.AckNackResponse
-			ackNackResponse = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-				AckNack:    false,
-				Comments:   "Problem when Loading from database",
-				ErrorCodes: errorCodes,
-				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(
-					common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
-			}
-
-			responseMessage = &fenixTestCaseBuilderServerGrpcApi.ListTestCasesThatCanBeEditedResponseMessage{
-				AckNackResponse:                ackNackResponse,
-				TestCasesThatCanBeEditedByUser: nil,
-			}
-
-			return responseMessage
 		}
 
-		// Add Latest Finished OK Status information
-		temptestCase.LatestFinishedOkTestCaseExecutionStatusInsertTimeStamp = temptestCaseFromFinishedStatus.
-			LatestFinishedOkTestCaseExecutionStatusInsertTimeStamp
-
-		// Save back the TestCase into the Slice
-		testCasesThatCanBeEditedResponse[testCaseIndex] = temptestCase
+		// Save back the TestCase into the Slice when changes are done
+		if changesAreMade == true {
+			testCasesThatCanBeEditedResponse[testCaseIndex] = temptestCase
+		}
 
 	}
 
@@ -386,13 +348,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 	sqlToExecute = sqlToExecute + "SELECT tc1.\"DomainUuid\", tc1.\"DomainName\", tc1.\"TestCaseUuid\", " +
 		"tc1.\"TestCaseName\", tc1.\"TestCaseVersion\" "
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" tc1 "
-	sqlToExecute = sqlToExecute + "(tc1.\"CanListAndViewTestCaseAuthorizationLevelOwnedByDomain\" & " + tempCanListAndViewTestCaseOwnedByThisDomainAsString + ")"
+	sqlToExecute = sqlToExecute + "WHERE (tc1.\"CanListAndViewTestCaseAuthorizationLevelOwnedByDomain\" & " + tempCanListAndViewTestCaseOwnedByThisDomainAsString + ")"
 	sqlToExecute = sqlToExecute + "= tc1.\"CanListAndViewTestCaseAuthorizationLevelOwnedByDomain\" "
 	sqlToExecute = sqlToExecute + "AND "
-	sqlToExecute = sqlToExecute + "(tc1.\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomain\" & " + tempCanListAndViewTestCaseHavingTIandTICfromThisDomainAsString + ")"
-	sqlToExecute = sqlToExecute + "= tc1.\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomain\" "
+	sqlToExecute = sqlToExecute + "(tc1.\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomai\" & " + tempCanListAndViewTestCaseHavingTIandTICfromThisDomainAsString + ")"
+	sqlToExecute = sqlToExecute + "= tc1.\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomai\" "
 	sqlToExecute = sqlToExecute + "AND "
-	sqlToExecute = sqlToExecute + "WHERE tc1.\"TestCaseIsDeleted\"  = false AND tc1.\"InsertTimeStamp\" IS NOT NULL " +
+	sqlToExecute = sqlToExecute + "tc1.\"TestCaseIsDeleted\"  = false AND tc1.\"InsertTimeStamp\" IS NOT NULL " +
 		"AND tc1.\"TestCaseVersion\" = (" +
 		"SELECT MAX(tc2.\"TestCaseVersion\") " +
 		"FROM \"FenixBuilder\".\"TestCases\" tc2 " +
@@ -428,7 +390,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 	// Extract data from DB result set
 	for rows.Next() {
 
-		var tempTestCaseThatCanBeEditedByUser *fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
+		var tempTestCaseThatCanBeEditedByUser fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
 
 		err = rows.Scan(
 			&tempTestCaseThatCanBeEditedByUser.DomainUuid,
@@ -450,7 +412,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 		}
 
 		// Add to slice of TestCases
-		testCasesThatCanBeEditedByUser = append(testCasesThatCanBeEditedByUser, tempTestCaseThatCanBeEditedByUser)
+		testCasesThatCanBeEditedByUser = append(testCasesThatCanBeEditedByUser, &tempTestCaseThatCanBeEditedByUser)
 
 	}
 
@@ -526,7 +488,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadLatestExecutionStatusFor
 	// Extract data from DB result set
 	for rows.Next() {
 
-		var tempTestCaseThatCanBeEditedByUser *fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
+		var tempTestCaseThatCanBeEditedByUser fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
 
 		err = rows.Scan(
 			&tempTestCaseThatCanBeEditedByUser.TestCaseUuid,
@@ -550,7 +512,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadLatestExecutionStatusFor
 		tempTestCaseThatCanBeEditedByUser.LatestTestCaseExecutionStatusInsertTimeStamp = timestamppb.New(tempInsertTimeStampAsTimeStamp)
 
 		// Add to map of TestCases execution data
-		testCasesLatestExecutionStatusMap[tempTestCaseThatCanBeEditedByUser.TestCaseUuid] = tempTestCaseThatCanBeEditedByUser
+		testCasesLatestExecutionStatusMap[tempTestCaseThatCanBeEditedByUser.TestCaseUuid] = &tempTestCaseThatCanBeEditedByUser
 
 	}
 
@@ -581,7 +543,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadLatestFinishedOkExecutio
 	testCasesLatestExecutionStatusMap = make(map[string]*fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage)
 
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "tce1.\"TestCaseUuid\", tce1.\"TestCaseVersion\", " +
+	sqlToExecute = sqlToExecute + "SELECT tce1.\"TestCaseUuid\", tce1.\"TestCaseVersion\", " +
 		"tce1.\"TestCaseExecutionStatus\", tce1.\"ExecutionStatusUpdateTimeStamp\" "
 	sqlToExecute = sqlToExecute + "FROM \"FenixExecution\".\"TestCasesUnderExecution\" tce1 "
 	sqlToExecute = sqlToExecute + "WHERE tce1.\"TestCaseUuid\" IN "
@@ -589,7 +551,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadLatestFinishedOkExecutio
 	sqlToExecute = sqlToExecute + "AND tce1.\"ExecutionStatusUpdateTimeStamp\" = "
 	sqlToExecute = sqlToExecute + "(SELECT MAX(tce2.\"ExecutionStatusUpdateTimeStamp\") "
 	sqlToExecute = sqlToExecute + "FROM \"FenixExecution\".\"TestCasesUnderExecution\" tce2 "
-	sqlToExecute = sqlToExecute + "WHERE tce2.\"TestCaseUuid\" = tce1.\"TestCaseUuid\") "
+	sqlToExecute = sqlToExecute + "WHERE tce2.\"TestCaseUuid\" = tce1.\"TestCaseUuid\" "
 	sqlToExecute = sqlToExecute + "AND tce2.\"TestCaseExecutionStatus\" IN (5, 6))  "
 	sqlToExecute = sqlToExecute + "; "
 
@@ -626,7 +588,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadLatestFinishedOkExecutio
 	// Extract data from DB result set
 	for rows.Next() {
 
-		var tempTestCaseThatCanBeEditedByUser *fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
+		var tempTestCaseThatCanBeEditedByUser fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
 
 		err = rows.Scan(
 			&tempTestCaseThatCanBeEditedByUser.TestCaseUuid,
@@ -650,7 +612,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadLatestFinishedOkExecutio
 		tempTestCaseThatCanBeEditedByUser.LatestTestCaseExecutionStatusInsertTimeStamp = timestamppb.New(tempInsertTimeStampAsTimeStamp)
 
 		// Add to map of TestCases execution data
-		testCasesLatestExecutionStatusMap[tempTestCaseThatCanBeEditedByUser.TestCaseUuid] = tempTestCaseThatCanBeEditedByUser
+		testCasesLatestExecutionStatusMap[tempTestCaseThatCanBeEditedByUser.TestCaseUuid] = &tempTestCaseThatCanBeEditedByUser
 
 	}
 

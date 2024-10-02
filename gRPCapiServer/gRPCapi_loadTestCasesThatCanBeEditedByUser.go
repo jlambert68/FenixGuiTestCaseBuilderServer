@@ -12,7 +12,7 @@ import (
 // TestCase GUI use this gRPC-api to List all TestCases that can be edited by the user
 func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListTestCasesThatCanBeEdited(
 	ctx context.Context,
-	getTestCaseRequestMessage *fenixTestCaseBuilderServerGrpcApi.GetTestCaseRequestMessage) (
+	listTestCasesRequestMessage *fenixTestCaseBuilderServerGrpcApi.ListTestCasesRequestMessage) (
 	*fenixTestCaseBuilderServerGrpcApi.ListTestCasesThatCanBeEditedResponseMessage,
 	error) {
 
@@ -25,7 +25,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListTestCasesThatCa
 	}).Debug("Outgoing 'gRPC - ListTestCasesThatCanBeEdited'")
 
 	// Check if Client is using correct proto files version
-	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion(getTestCaseRequestMessage.UserIdOnComputer, getTestCaseRequestMessage.ProtoFileVersionUsedByClient)
+	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion(listTestCasesRequestMessage.UserIdOnComputer, listTestCasesRequestMessage.ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 
 		// Not correct proto-file version is used
@@ -46,7 +46,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListTestCasesThatCa
 	// Load Full TestCase from Database
 	var responseMessage *fenixTestCaseBuilderServerGrpcApi.ListTestCasesThatCanBeEditedResponseMessage
 	responseMessage = fenixCloudDBObject.PrepareListTestCasesThatCanBeEdited(
-		getTestCaseRequestMessage.GetGCPAuthenticatedUser())
+		listTestCasesRequestMessage.GetGCPAuthenticatedUser())
 
 	return responseMessage, nil
 }
