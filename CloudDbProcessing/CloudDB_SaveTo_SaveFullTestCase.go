@@ -4,6 +4,7 @@ import (
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/shared_code"
+	"strconv"
 	"time"
 
 	//"database/sql/driver"
@@ -42,7 +43,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCaseCommitOrRole
 
 // PrepareSaveFullTestCase
 // Do initial preparations to be able to save the TestCase
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestCase(fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse) {
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestCase(
+	fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (
+	returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse) {
 
 	// Begin SQL Transaction
 	txn, err := fenixSyncShared.DbPool.Begin(context.Background())
@@ -510,6 +513,12 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(
 	tempDomainHash := fullTestCaseMessage.MessageHash
 	tempTestCaseExtraInformationAsJsonb := protojson.Format(fullTestCaseMessage.TestCaseExtraInformation)
 	tempTestCaseTemplateFilesAsJsonb := protojson.Format(fullTestCaseMessage.TestCaseTemplateFiles)
+	timeStampToUse := shared_code.GenerateDatetimeTimeStampForDB()
+
+	// finish Preview-structure to be saved
+	fullTestCaseMessage.TestCasePreview.TestCasePreview.TestCaseVersion = strconv.Itoa(int(nexTestCaseVersion))
+	fullTestCaseMessage.TestCasePreview.TestCasePreview.LastSavedTimeStamp = timeStampToUse
+	testCasePreviewAsJsonb := protojson.Format(fullTestCaseMessage.TestCasePreview)
 
 	var dataRowToBeInsertedMultiType []interface{}
 	var dataRowsToBeInsertedMultiType [][]interface{}
@@ -519,8 +528,6 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(
 	dataRowsToBeInsertedMultiType = nil
 
 	dataRowToBeInsertedMultiType = nil
-
-	timeStampToUse := shared_code.GenerateDatetimeTimeStampForDB()
 
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempDomainUuid)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempDomainName)
@@ -537,6 +544,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, false)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestCaseTemplateFilesAsJsonb)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, timeStampToUse)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testCasePreviewAsJsonb)
 
 	dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
 
@@ -546,7 +554,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(
 		"\"TestCaseBasicInformationAsJsonb\", \"TestInstructionsAsJsonb\", \"TestInstructionContainersAsJsonb\", " +
 		"\"TestCaseHash\", \"TestCaseExtraInformationAsJsonb\", \"CanListAndViewTestCaseAuthorizationLevelOwnedByDomain\", " +
 		"\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomai\", \"TestCaseIsDeleted\", " +
-		"\"TestCaseTemplateFilesAsJsonb\", \"InsertTimeStamp\")  "
+		"\"TestCaseTemplateFilesAsJsonb\", \"InsertTimeStamp\", \"TestCasePreview\")  "
 	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
 	sqlToExecute = sqlToExecute + ";"
 

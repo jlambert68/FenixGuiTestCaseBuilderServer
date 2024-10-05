@@ -8,7 +8,6 @@ import (
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	"github.com/sirupsen/logrus"
 	"strings"
-	"time"
 )
 
 // Hash a single value
@@ -20,27 +19,6 @@ func HashSingleValue(valueToHash string) (hashValue string) {
 
 	return hashValue
 
-}
-
-// GenerateDatetimeTimeStampForDB
-// Generate DataBaseTimeStamp, eg '2022-02-08 17:35:04.000000'
-func GenerateDatetimeTimeStampForDB() (currentTimeStampAsString string) {
-
-	timeStampLayOut := "2006-01-02 15:04:05.000000 -0700" //milliseconds
-	currentTimeStamp := time.Now().UTC()
-	currentTimeStampAsString = currentTimeStamp.Format(timeStampLayOut)
-
-	return currentTimeStampAsString
-}
-
-// GenerateDatetimeFromTimeInputForDB
-// Generate DataBaseTimeStamp, eg '2022-02-08 17:35:04.000000'
-func GenerateDatetimeFromTimeInputForDB(currentTime time.Time) (currentTimeStampAsString string) {
-
-	timeStampLayOut := "2006-01-02 15:04:05.000000 -0700" //milliseconds
-	currentTimeStampAsString = currentTime.Format(timeStampLayOut)
-
-	return currentTimeStampAsString
 }
 
 // ********************************************************************************************************************

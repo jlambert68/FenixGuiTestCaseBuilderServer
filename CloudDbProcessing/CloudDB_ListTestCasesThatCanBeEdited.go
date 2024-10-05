@@ -8,6 +8,7 @@ import (
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"strconv"
 	"time"
@@ -339,14 +340,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 
 		return nil, err
 	}
-	/*
-		SELECT tc1."DomainUuid", tc1."DomainName", tc1."TestCaseUuid", tc1."TestCaseName", tc1."TestCaseVersion", tc1."InsertTimeStamp"
-		FROM "FenixBuilder"."TestCases" TC1
-		WHERE tc1."TestCaseIsDeleted"  = false AND tc1."InsertTimeStamp" IS NOT NULL  AND tc1."TestCaseVersion" = (SELECT MAX(tc2."TestCaseVersion") FROM "FenixBuilder"."TestCases" tc2 WHERE tc2."TestCaseUuid" = tc1."TestCaseUuid") ;
-	*/
+
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "SELECT tc1.\"DomainUuid\", tc1.\"DomainName\", tc1.\"TestCaseUuid\", " +
-		"tc1.\"TestCaseName\", tc1.\"TestCaseVersion\" "
+		"tc1.\"TestCaseName\", tc1.\"TestCaseVersion\", \"InsertTimeStamp\", \"TestCasePreview\" "
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" tc1 "
 	sqlToExecute = sqlToExecute + "WHERE (tc1.\"CanListAndViewTestCaseAuthorizationLevelOwnedByDomain\" & " + tempCanListAndViewTestCaseOwnedByThisDomainAsString + ")"
 	sqlToExecute = sqlToExecute + "= tc1.\"CanListAndViewTestCaseAuthorizationLevelOwnedByDomain\" "
@@ -387,6 +384,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 		return nil, err
 	}
 
+	var (
+		tempInsertTimeStampAsTimeStamp time.Time
+		tempTestCasePreview            fenixTestCaseBuilderServerGrpcApi.TestCasePreviewMessage
+		tempTestCasePreviewAsString    string
+		tempTestCasePreviewAsByteArray []byte
+	)
+
 	// Extract data from DB result set
 	for rows.Next() {
 
@@ -398,6 +402,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 			&tempTestCaseThatCanBeEditedByUser.TestCaseUuid,
 			&tempTestCaseThatCanBeEditedByUser.TestCaseName,
 			&tempTestCaseThatCanBeEditedByUser.TestCaseVersion,
+			&tempInsertTimeStampAsTimeStamp,
+			&tempTestCasePreviewAsString,
 		)
 
 		if err != nil {
@@ -410,6 +416,26 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 
 			return nil, err
 		}
+
+		// Convert json-string into byte-array
+		tempTestCasePreviewAsByteArray = []byte(tempTestCasePreviewAsString)
+
+		// Convert json-byte-arrays into proto-messages
+		err = protojson.Unmarshal(tempTestCasePreviewAsByteArray, &tempTestCasePreview)
+		if err != nil {
+			common_config.Logger.WithFields(logrus.Fields{
+				"Id":    "447410d1-ef9c-476c-9d4d-ac0d9d79328d",
+				"Error": err,
+			}).Error("Something went wrong when converting 'tempTestCasePreviewAsByteArray' into proto-message")
+
+			return nil, err
+		}
+
+		// Save json into gRPC-message
+		tempTestCaseThatCanBeEditedByUser.TestCasePreview = &tempTestCasePreview
+
+		// Convert DataTime into gRPC-version
+		tempTestCaseThatCanBeEditedByUser.LastSavedTimeStamp = timestamppb.New(tempInsertTimeStampAsTimeStamp)
 
 		// Add to slice of TestCases
 		testCasesThatCanBeEditedByUser = append(testCasesThatCanBeEditedByUser, &tempTestCaseThatCanBeEditedByUser)
