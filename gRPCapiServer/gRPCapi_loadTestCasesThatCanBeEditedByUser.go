@@ -43,10 +43,12 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListTestCasesThatCa
 	var fenixCloudDBObject *CloudDbProcessing.FenixCloudDBObjectStruct
 	fenixCloudDBObject = &CloudDbProcessing.FenixCloudDBObjectStruct{}
 
-	// Load Full TestCase from Database
+	// List TestCases from Database
 	var responseMessage *fenixTestCaseBuilderServerGrpcApi.ListTestCasesThatCanBeEditedResponseMessage
 	responseMessage = fenixCloudDBObject.PrepareListTestCasesThatCanBeEdited(
-		listTestCasesRequestMessage.GetGCPAuthenticatedUser())
+		listTestCasesRequestMessage.GetGCPAuthenticatedUser(),
+		listTestCasesRequestMessage.TestCaseUpdatedMinTimeStamp.AsTime(),
+		listTestCasesRequestMessage.TestCaseExecutionUpdatedMinTimeStamp.AsTime())
 
 	return responseMessage, nil
 }

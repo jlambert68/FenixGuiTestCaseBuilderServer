@@ -17,7 +17,9 @@ import (
 // PrepareListTestCasesThatCanBeEdited
 // List all TestCases from Database that the user can edit
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestCasesThatCanBeEdited(
-	gCPAuthenticatedUser string) (
+	gCPAuthenticatedUser string,
+	testCaseUpdatedMinTimeStamp time.Time,
+	testCaseExecutionUpdatedMinTimeStamp time.Time) (
 	responseMessage *fenixTestCaseBuilderServerGrpcApi.ListTestCasesThatCanBeEditedResponseMessage) {
 
 	// Begin SQL Transaction
@@ -84,11 +86,12 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestCasesThatCanB
 
 	}
 
-	// Load the TestCase
+	// Load the TestCases
 	var testCasesThatCanBeEditedResponse []*fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
 	testCasesThatCanBeEditedResponse, err = fenixCloudDBObject.listTestCasesThatCanBeEdited(
 		txn,
-		domainAndAuthorizations)
+		domainAndAuthorizations,
+		testCaseUpdatedMinTimeStamp)
 
 	// Error when retrieving TestCase
 	if err != nil {
@@ -155,7 +158,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestCasesThatCanB
 	testCasesLatestExecutionStatusMap = make(map[string]*fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage)
 	testCasesLatestExecutionStatusMap, err = fenixCloudDBObject.loadLatestExecutionStatusForTestCases(
 		txn,
-		testCaseUuidSlice)
+		testCaseUuidSlice,
+		testCaseExecutionUpdatedMinTimeStamp)
 
 	// Error when retrieving TestCaseExecution-status
 	if err != nil {
@@ -288,7 +292,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestCasesThatCanB
 // Load all TestCases that the user can edit
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited(
 	dbTransaction pgx.Tx,
-	domainAndAuthorizations []DomainAndAuthorizationsStruct) (
+	domainAndAuthorizations []DomainAndAuthorizationsStruct,
+	testCaseUpdatedMinTimeStamp time.Time) (
 	testCasesThatCanBeEditedByUser []*fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage,
 	err error) {
 
@@ -355,7 +360,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 		"AND tc1.\"TestCaseVersion\" = (" +
 		"SELECT MAX(tc2.\"TestCaseVersion\") " +
 		"FROM \"FenixBuilder\".\"TestCases\" tc2 " +
-		"WHERE tc2.\"TestCaseUuid\" = tc1.\"TestCaseUuid\") "
+		"WHERE tc2.\"TestCaseUuid\" = tc1.\"TestCaseUuid\") AND "
+	sqlToExecute = sqlToExecute + "tc1.\"InsertTimeStamp\" > '" + common_config.GenerateDatetimeFromTimeInputForDB(testCaseUpdatedMinTimeStamp) + "' "
 	sqlToExecute = sqlToExecute + "; "
 
 	// Log SQL to be executed if Environment variable is true
@@ -386,7 +392,6 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 
 	var (
 		tempInsertTimeStampAsTimeStamp time.Time
-		tempTestCasePreview            fenixTestCaseBuilderServerGrpcApi.TestCasePreviewMessage
 		tempTestCasePreviewAsString    string
 		tempTestCasePreviewAsByteArray []byte
 	)
@@ -395,6 +400,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 	for rows.Next() {
 
 		var tempTestCaseThatCanBeEditedByUser fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
+		var tempTestCasePreview fenixTestCaseBuilderServerGrpcApi.TestCasePreviewMessage
 
 		err = rows.Scan(
 			&tempTestCaseThatCanBeEditedByUser.DomainUuid,
@@ -463,7 +469,8 @@ WHERE tce1."TestCaseUuid" IN ('4eebed04-39a9-4ad9-ae67-51c9de984486',  '653a43f7
 // Load the latest Execution Status for TestCases
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadLatestExecutionStatusForTestCases(
 	dbTransaction pgx.Tx,
-	testCaseUuidSlice []string) (
+	testCaseUuidSlice []string,
+	testCaseExecutionUpdatedMinTimeStamp time.Time) (
 	testCasesLatestExecutionStatusMap map[string]*fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage,
 	err error) {
 
@@ -478,7 +485,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadLatestExecutionStatusFor
 	sqlToExecute = sqlToExecute + "AND tce1.\"ExecutionStatusUpdateTimeStamp\" = "
 	sqlToExecute = sqlToExecute + "(SELECT MAX(tce2.\"ExecutionStatusUpdateTimeStamp\") "
 	sqlToExecute = sqlToExecute + "FROM \"FenixExecution\".\"TestCasesUnderExecution\" tce2 "
-	sqlToExecute = sqlToExecute + "WHERE tce2.\"TestCaseUuid\" = tce1.\"TestCaseUuid\") "
+	sqlToExecute = sqlToExecute + "WHERE tce2.\"TestCaseUuid\" = tce1.\"TestCaseUuid\") AND "
+	sqlToExecute = sqlToExecute + "tce1.\"ExecutionStatusUpdateTimeStamp\" > '" + common_config.GenerateDatetimeFromTimeInputForDB(testCaseExecutionUpdatedMinTimeStamp) + "' "
 	sqlToExecute = sqlToExecute + "; "
 
 	// Log SQL to be executed if Environment variable is true
