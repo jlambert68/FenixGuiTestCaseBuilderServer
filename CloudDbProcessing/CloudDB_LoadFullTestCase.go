@@ -252,6 +252,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 		return nil, err
 	}
 
+	// Delete timestamp
+	var deleteTimeStampAsString string
+	deleteTimeStampAsString = time.Now().Format("2006-01-02 00:00:00")
+
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "SELECT TC.\"TestCaseBasicInformationAsJsonb\", " +
 		"TC.\"TestInstructionsAsJsonb\", \"TestInstructionContainersAsJsonb\"," +
@@ -269,7 +273,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" tc2 "
 	sqlToExecute = sqlToExecute + fmt.Sprintf("WHERE tc2.\"TestCaseUuid\" = '%s' ", testCaseUuidToLoad)
 	sqlToExecute = sqlToExecute + "AND "
-	sqlToExecute = sqlToExecute + "tc2.\"TestCaseIsDeleted\" = false )"
+	sqlToExecute = sqlToExecute + "tc2.\"DeletedTimeStamp\" > '" + deleteTimeStampAsString + "' )"
 	sqlToExecute = sqlToExecute + "; "
 
 	// Log SQL to be executed if Environment variable is true

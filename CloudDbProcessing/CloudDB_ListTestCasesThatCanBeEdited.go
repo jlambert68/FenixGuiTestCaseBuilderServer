@@ -346,6 +346,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 		return nil, err
 	}
 
+	// Delete timestamp
+	var deleteTimeStampAsString string
+	deleteTimeStampAsString = time.Now().Format("2006-01-02 00:00:00")
+
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "SELECT tc1.\"DomainUuid\", tc1.\"DomainName\", tc1.\"TestCaseUuid\", " +
 		"tc1.\"TestCaseName\", tc1.\"TestCaseVersion\", \"InsertTimeStamp\", \"TestCasePreview\" "
@@ -361,7 +365,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 		"SELECT MAX(tc2.\"TestCaseVersion\") " +
 		"FROM \"FenixBuilder\".\"TestCases\" tc2 " +
 		"WHERE tc2.\"TestCaseUuid\" = tc1.\"TestCaseUuid\") AND "
-	sqlToExecute = sqlToExecute + "tc1.\"InsertTimeStamp\" > '" + common_config.GenerateDatetimeFromTimeInputForDB(testCaseUpdatedMinTimeStamp) + "' "
+	sqlToExecute = sqlToExecute + "tc1.\"InsertTimeStamp\" > '" +
+		common_config.GenerateDatetimeFromTimeInputForDB(testCaseUpdatedMinTimeStamp) + "' AND "
+	sqlToExecute = sqlToExecute + "tc1.\"DeletedTimeStamp\" > '" + deleteTimeStampAsString + "' "
 	sqlToExecute = sqlToExecute + "; "
 
 	// Log SQL to be executed if Environment variable is true
