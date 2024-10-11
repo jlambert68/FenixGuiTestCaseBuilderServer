@@ -171,6 +171,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performDeleteTestCase(
 	sqlToExecute = sqlToExecute + fmt.Sprintf("\"DeletedInsertedTImeStamp\" = '%s' ", tempTimestampToBeUsed)
 	sqlToExecute = sqlToExecute + fmt.Sprintf("\"DeletedByGCPAuthenticatedUser\" = '%s' ", deleteTestCaseAtThisDateRequest.
 		GetUserIdentification().GetGCPAuthenticatedUser())
+	sqlToExecute = sqlToExecute + fmt.Sprintf("\"TestCaseIsDeleted\" = %s ", "true ")
 	sqlToExecute = sqlToExecute + fmt.Sprintf("WHERE \"TestCaseUuid\" = '%s' AND ", deleteTestCaseAtThisDateRequest.
 		GetDeleteThisTestCaseAtThisDate().GetTestCaseUuid())
 	sqlToExecute = sqlToExecute + fmt.Sprintf("\"TestCaseVersion\" = '%s' ", deleteTestCaseAtThisDateRequest.
