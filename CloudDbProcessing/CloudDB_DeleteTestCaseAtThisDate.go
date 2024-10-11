@@ -79,6 +79,15 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareDeleteTestCaseAtThisD
 		deleteTestCaseAtThisDateRequest.GetDeleteThisTestCaseAtThisDate().GetTestCaseUuid(),
 		deleteTestCaseAtThisDateRequest.GetUserIdentification().GetGCPAuthenticatedUser())
 
+	if tempDetailedTestCaseFromDatabase == nil {
+
+		err = errors.New(fmt.Sprintf("didn't find any existing TestCase in Database with TestCaseUuid = '%s' and TestCaseVersion = '%d'",
+			deleteTestCaseAtThisDateRequest.GetDeleteThisTestCaseAtThisDate().GetTestCaseUuid(),
+			deleteTestCaseAtThisDateRequest.GetDeleteThisTestCaseAtThisDate().GetTestCaseVersion()))
+
+		return err
+	}
+
 	// Extract all Domains that exist within all TestInstructions and TestInstructionContainers in the TestCase
 	var allDomainsWithinTestCase []domainForTestCaseStruct
 	allDomainsWithinTestCase = fenixCloudDBObject.extractAllDomainsWithinTestCase(tempDetailedTestCaseFromDatabase.DetailedTestCase)
@@ -92,6 +101,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareDeleteTestCaseAtThisD
 			"id":    "d95403de-4470-4ebc-bcb2-c03844ba9ca6",
 			"error": err,
 		}).Error("Got some problem when loading Users Domains")
+
+		err = errors.New(fmt.Sprintf("got some problem when loading Users Domains. Error='%s'", err.Error()))
 
 		return err
 	}
