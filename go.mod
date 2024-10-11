@@ -18,7 +18,7 @@ require (
 require (
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v4 v4.18.3
-	github.com/jlambert68/FenixGrpcApi v0.0.0-20241007180710-42f4a7f98c6d
+	github.com/jlambert68/FenixGrpcApi v0.0.0-20241011073523-271a4bbf0b8e
 	github.com/jlambert68/FenixStandardTestInstructionAdmin v0.0.0-20240919130102-9cebd6af2e83
 	github.com/jlambert68/FenixTestInstructionsAdminShared v0.0.0-20240830110518-fbce28ce9256
 	google.golang.org/api v0.199.0
