@@ -367,7 +367,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 		"WHERE tc2.\"TestCaseUuid\" = tc1.\"TestCaseUuid\") AND "
 	sqlToExecute = sqlToExecute + "tc1.\"InsertTimeStamp\" > '" +
 		common_config.GenerateDatetimeFromTimeInputForDB(testCaseUpdatedMinTimeStamp) + "' AND "
-	sqlToExecute = sqlToExecute + "tc1.\"DeletedTimeStamp\" > '" + deleteTimeStampAsString + "' "
+	sqlToExecute = sqlToExecute + "tc1.\"DeleteTimestamp\" > '" + deleteTimeStampAsString + "' "
 	sqlToExecute = sqlToExecute + "; "
 
 	// Log SQL to be executed if Environment variable is true

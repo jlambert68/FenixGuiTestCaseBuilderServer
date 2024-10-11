@@ -124,10 +124,19 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareDeleteTestCaseAtThisD
 
 	// Verify that latest saved TestCase doesn't have a higher TestInstructionVersion
 	if tempDetailedTestCaseFromDatabase.GetDetailedTestCase().GetTestCaseBasicInformation().GetBasicTestCaseInformation().
-		GetNonEditableInformation().GetTestCaseVersion() !=
+		GetNonEditableInformation().GetTestCaseVersion() >
 		deleteTestCaseAtThisDateRequest.GetDeleteThisTestCaseAtThisDate().TestCaseVersion {
 
-		err = errors.New("there is a new TestCase saved in the database. Can't delete TestCase")
+		err = errors.New("there is a newer TestCase saved in the database. So can't delete TestCase")
+
+		return err
+	}
+
+	if tempDetailedTestCaseFromDatabase.GetDetailedTestCase().GetTestCaseBasicInformation().GetBasicTestCaseInformation().
+		GetNonEditableInformation().GetTestCaseVersion() <
+		deleteTestCaseAtThisDateRequest.GetDeleteThisTestCaseAtThisDate().TestCaseVersion {
+
+		err = errors.New("the TestCaseVersion received is higher then the highest version in thetdatabase. So can't delete TestCase")
 
 		return err
 	}
@@ -168,13 +177,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performDeleteTestCase(
 	sqlToExecute = sqlToExecute + "UPDATE \"FenixBuilder\".\"TestCases\" "
 	sqlToExecute = sqlToExecute + fmt.Sprintf("SET \"DeleteTimestamp\" = '%s', ", deleteTestCaseAtThisDateRequest.
 		GetDeleteThisTestCaseAtThisDate().GetDeletedDate())
-	sqlToExecute = sqlToExecute + fmt.Sprintf("\"DeletedInsertedTImeStamp\" = '%s' ", tempTimestampToBeUsed)
-	sqlToExecute = sqlToExecute + fmt.Sprintf("\"DeletedByGCPAuthenticatedUser\" = '%s' ", deleteTestCaseAtThisDateRequest.
+	sqlToExecute = sqlToExecute + fmt.Sprintf("\"DeletedInsertedTImeStamp\" = '%s', ", tempTimestampToBeUsed)
+	sqlToExecute = sqlToExecute + fmt.Sprintf("\"DeletedByGCPAuthenticatedUser\" = '%s', ", deleteTestCaseAtThisDateRequest.
 		GetUserIdentification().GetGCPAuthenticatedUser())
 	sqlToExecute = sqlToExecute + fmt.Sprintf("\"TestCaseIsDeleted\" = %s ", "true ")
 	sqlToExecute = sqlToExecute + fmt.Sprintf("WHERE \"TestCaseUuid\" = '%s' AND ", deleteTestCaseAtThisDateRequest.
 		GetDeleteThisTestCaseAtThisDate().GetTestCaseUuid())
-	sqlToExecute = sqlToExecute + fmt.Sprintf("\"TestCaseVersion\" = '%s' ", deleteTestCaseAtThisDateRequest.
+	sqlToExecute = sqlToExecute + fmt.Sprintf("\"TestCaseVersion\" = '%d' ", deleteTestCaseAtThisDateRequest.
 		GetDeleteThisTestCaseAtThisDate().GetTestCaseVersion())
 	sqlToExecute = sqlToExecute + "; "
 

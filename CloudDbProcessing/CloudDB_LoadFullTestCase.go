@@ -273,7 +273,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" tc2 "
 	sqlToExecute = sqlToExecute + fmt.Sprintf("WHERE tc2.\"TestCaseUuid\" = '%s' ", testCaseUuidToLoad)
 	sqlToExecute = sqlToExecute + "AND "
-	sqlToExecute = sqlToExecute + "tc2.\"DeletedTimeStamp\" > '" + deleteTimeStampAsString + "' )"
+	sqlToExecute = sqlToExecute + "tc2.\"DeleteTimestamp\" > '" + deleteTimeStampAsString + "' )"
 	sqlToExecute = sqlToExecute + "; "
 
 	// Log SQL to be executed if Environment variable is true
