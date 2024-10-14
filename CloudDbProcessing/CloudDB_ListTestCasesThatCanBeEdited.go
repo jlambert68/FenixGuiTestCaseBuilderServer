@@ -360,7 +360,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 	sqlToExecute = sqlToExecute + "(tc1.\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomai\" & " + tempCanListAndViewTestCaseHavingTIandTICfromThisDomainAsString + ")"
 	sqlToExecute = sqlToExecute + "= tc1.\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomai\" "
 	sqlToExecute = sqlToExecute + "AND "
-	sqlToExecute = sqlToExecute + "tc1.\"TestCaseIsDeleted\"  = false AND tc1.\"InsertTimeStamp\" IS NOT NULL " +
+	sqlToExecute = sqlToExecute + "tc1.\"InsertTimeStamp\" IS NOT NULL " +
 		"AND tc1.\"TestCaseVersion\" = (" +
 		"SELECT MAX(tc2.\"TestCaseVersion\") " +
 		"FROM \"FenixBuilder\".\"TestCases\" tc2 " +

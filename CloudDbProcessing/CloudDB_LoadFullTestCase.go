@@ -13,6 +13,9 @@ import (
 	"time"
 )
 
+// This date is used as delete date when the TestCase is not deleted
+const testCaseNotDeletedDate = "2068-11-18"
+
 // PrepareLoadFullTestCase
 // Load Full TestCase from Database
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadFullTestCase(testCaseUuidToLoad string, gCPAuthenticatedUser string) (responseMessage *fenixTestCaseBuilderServerGrpcApi.GetDetailedTestCaseResponse) {
@@ -259,7 +262,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "SELECT TC.\"TestCaseBasicInformationAsJsonb\", " +
 		"TC.\"TestInstructionsAsJsonb\", \"TestInstructionContainersAsJsonb\"," +
-		"TC.\"TestCaseHash\", TC.\"TestCaseExtraInformationAsJsonb\", TC.\"TestCaseTemplateFilesAsJsonb\" "
+		"TC.\"TestCaseHash\", TC.\"TestCaseExtraInformationAsJsonb\", TC.\"TestCaseTemplateFilesAsJsonb\", " +
+		"TC.\"DeleteTimestamp\" "
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" TC "
 	sqlToExecute = sqlToExecute + fmt.Sprintf("WHERE TC.\"TestCaseUuid\" = '%s' ", testCaseUuidToLoad)
 	sqlToExecute = sqlToExecute + "AND "
@@ -320,6 +324,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 		tempTestCaseTemplateFilesAsByteArray     []byte
 
 		testCaseHash string
+
+		tempDeleteTimeStamp time.Time
+		tempDeleteAsString  string
 	)
 
 	// Extract data from DB result set
@@ -332,6 +339,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 			&testCaseHash,
 			&tempTestCaseExtraInformationAsString,
 			&tempTestCaseTemplateFilesAsString,
+			&tempDeleteTimeStamp,
 		)
 
 		if err != nil {
@@ -351,6 +359,15 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 		tempTestInstructionContainersAsByteArray = []byte(tempTestInstructionContainersAsString)
 		tempTestCaseExtraInformationAsByteArray = []byte(tempTestCaseExtraInformationAsString)
 		tempTestCaseTemplateFilesAsByteArray = []byte(tempTestCaseTemplateFilesAsString)
+
+		// Format The Delete Date into a string
+		tempDeleteAsString = tempDeleteTimeStamp.Format("2006-01-02")
+
+		// When the TestCase is not deleted then it uses a Delete date far away in the future. If so then clear the Date sent to TesterGui
+
+		if tempDeleteAsString == testCaseNotDeletedDate {
+			tempDeleteAsString = ""
+		}
 
 		// Convert json-byte-arrays into proto-messages
 		err = protojson.Unmarshal(tempTestCaseBasicInformationAsByteArray, &tempTestCaseBasicInformation)
@@ -408,9 +425,12 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 			TestCaseBasicInformation:        &tempTestCaseBasicInformation,
 			MatureTestInstructions:          &tempMatureTestInstructions,
 			MatureTestInstructionContainers: &tempMatureTestInstructionContainers,
-			MessageHash:                     testCaseHash,
 			TestCaseExtraInformation:        &tempTestCaseExtraInformation,
 			TestCaseTemplateFiles:           &tempTestCaseTemplateFilesMessage,
+			TestCaseTestData:                nil,
+			TestCasePreview:                 nil,
+			MessageHash:                     testCaseHash,
+			DeletedDate:                     tempDeleteAsString,
 		}
 
 	}
