@@ -258,7 +258,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestCasesThatCanB
 		} else {
 			// Add Latest Finished OK Status information
 			temptestCase.LatestFinishedOkTestCaseExecutionStatusInsertTimeStamp = temptestCaseFromFinishedStatus.
-				LatestFinishedOkTestCaseExecutionStatusInsertTimeStamp
+				LatestTestCaseExecutionStatusInsertTimeStamp
 
 			// Indicate tha changes are done
 			changesAreMade = true
