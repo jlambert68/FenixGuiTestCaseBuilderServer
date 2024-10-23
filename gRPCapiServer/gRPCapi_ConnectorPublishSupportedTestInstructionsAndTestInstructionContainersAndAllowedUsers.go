@@ -5,6 +5,7 @@ import (
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
+	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/TestInstructionAndTestInstuctionContainerTypes"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/shared_code"
 	"github.com/sirupsen/logrus"
@@ -93,6 +94,18 @@ func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) PublishSuppor
 		return returnMessage, nil
 	}
 
+	// Extract the Hashes that are bases as for the message that was signed
+	// Create and sign message
+	var reCreatedMessageHashThatWasSigned string
+	var hashesToHash []string
+	hashesToHash = []string{
+		supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersGrpcWorkerMessage.TestInstructions.TestInstructionsHash,
+		supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersGrpcWorkerMessage.TestInstructionContainers.TestInstructionContainersHash,
+		supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersGrpcWorkerMessage.AllowedUsers.AllowedUsersHash,
+		supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersGrpcWorkerMessage.ConnectorDomain.ConnectorsDomainHash}
+
+	reCreatedMessageHashThatWasSigned = fenixSyncShared.HashValues(hashesToHash, false)
+
 	// Save Published TestInstructions, TestInstructionContainers and Allowed Users to CloudDB
 
 	// Save SupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers in CloudDB
@@ -100,7 +113,8 @@ func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) PublishSuppor
 	var fenixCloudDBObject *CloudDbProcessing.FenixCloudDBObjectStruct
 	err = fenixCloudDBObject.PrepareSaveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
 		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage,
-		supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersGrpcWorkerMessage.GetSignedMessageByWorkerServiceAccount())
+		supportedTestInstructionsAndTestInstructionContainersAndAllowedUsersGrpcWorkerMessage.GetMessageSignatureData(),
+		reCreatedMessageHashThatWasSigned)
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{

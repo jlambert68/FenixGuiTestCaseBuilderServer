@@ -12,6 +12,7 @@ import (
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/TestInstructionAndTestInstuctionContainerTypes"
+	schnorr "github.com/jlambert68/FenixTestInstructionsAdminShared/shared_code"
 	"github.com/sirupsen/logrus"
 	"time"
 )
@@ -45,7 +46,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
 	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage *TestInstructionAndTestInstuctionContainerTypes.
 		TestInstructionsAndTestInstructionsContainersStruct,
-	signedMessageByWorkerServiceAccountMessage *fenixTestCaseBuilderServerGrpcApi.SignedMessageByWorkerServiceAccountMessage) (
+	messageSignatureData *fenixTestCaseBuilderServerGrpcApi.MessageSignatureDataMessage,
+	reCreatedMessageHashThatWasSigned string) (
 	err error) {
 
 	// Begin SQL Transaction
@@ -72,11 +74,26 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveSupportedTestInst
 		&txn,
 		&doCommitNotRoleBack)
 
+	// Verify that the signature was produced by correct private key
+	err = fenixCloudDBObject.validateSignedMessage(
+		txn,
+		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage,
+		messageSignatureData,
+		reCreatedMessageHashThatWasSigned)
+	if err != nil {
+
+		common_config.Logger.WithFields(logrus.Fields{
+			"id":    "c9380c0d-7515-4319-96a0-7a8f8553c486",
+			"error": err,
+		}).Error("Problem when verifying signature")
+
+		return err
+	}
+
 	// Save  all supported TestInstructions, TestInstructionContainers and Allowed Users
 	err = fenixCloudDBObject.saveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
 		txn,
-		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage,
-		signedMessageByWorkerServiceAccountMessage)
+		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage)
 
 	if err != nil {
 
@@ -94,11 +111,133 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveSupportedTestInst
 }
 
 // Save all supported TestInstructions, TestInstructionContainers and Allowed Users
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) validateSignedMessage(
 	dbTransaction pgx.Tx,
 	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage *TestInstructionAndTestInstuctionContainerTypes.
 		TestInstructionsAndTestInstructionsContainersStruct,
-	signedMessageByWorkerServiceAccountMessage *fenixTestCaseBuilderServerGrpcApi.SignedMessageByWorkerServiceAccountMessage) (
+	messageSignatureData *fenixTestCaseBuilderServerGrpcApi.MessageSignatureDataMessage,
+	reCreatedMessageHashThatWasSigned string) (
+	err error) {
+
+	// Load the Domains public key
+	var publicKeyAsBase64String string
+	publicKeyAsBase64String, err = fenixCloudDBObject.loadDomainsPublicKey(
+		dbTransaction,
+		string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID))
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id": "d67ea5fc-b016-422f-a57a-5764c0ca766e",
+			"testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain,
+			"error": err,
+		}).Error("Couldn't load the Public Key for the Domain")
+
+		return err
+	}
+
+	// Verify the Schnorr signature
+	err = schnorr.VerifySchnorrSignature(
+		reCreatedMessageHashThatWasSigned,
+		publicKeyAsBase64String,
+		messageSignatureData.GetSignature())
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id": "b048e9d8-0c4a-46d7-aa35-de3181c9d8ec",
+			"testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain,
+			"error": err,
+		}).Error("Signature couldn't be validated")
+
+		return err
+	}
+
+	common_config.Logger.WithFields(logrus.Fields{
+		"id":                                  "1edf41ca-acdc-42a1-8a06-d4ad29e39bc2",
+		"reCreatedMessageHashThatWasSigned":   reCreatedMessageHashThatWasSigned,
+		"messageSignatureData.GetSignature()": messageSignatureData.GetSignature(),
+		"publicKeyAsBase64String":             publicKeyAsBase64String,
+	}).Debug("Signature was successfully verified")
+
+	return err
+}
+
+// Load the Domains public key
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainsPublicKey(
+	dbTransaction pgx.Tx,
+	ConnectorsDomainUUID string) (
+	publicKeyAsBase64String string,
+	err error) {
+
+	sqlToExecute := ""
+	sqlToExecute = sqlToExecute + "SELECT TC.\"PublicKey\" "
+	sqlToExecute = sqlToExecute + "FROM \"FenixDomainAdministration\".\"domains\" TC "
+	sqlToExecute = sqlToExecute + "WHERE TC.\"domain_uuid\" = '" + ConnectorsDomainUUID + "' "
+	sqlToExecute = sqlToExecute + ";"
+
+	// Log SQL to be executed if Environment variable is true
+	if common_config.LogAllSQLs == true {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "549ac4fc-f103-43a1-b29f-8beab708df41",
+			"sqlToExecute": sqlToExecute,
+		}).Debug("SQL to be executed within 'loadDomainsPublicKey'")
+	}
+
+	// Query DB
+	var ctx context.Context
+	ctx, timeOutCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer timeOutCancel()
+
+	rows, err := dbTransaction.Query(ctx, sqlToExecute)
+	defer rows.Close()
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "a09022fe-e880-45f8-ba70-5c893a97e38e",
+			"Error":        err,
+			"sqlToExecute": sqlToExecute,
+		}).Error("Something went wrong when executing SQL")
+
+		return "", err
+	}
+
+	// Extract data from DB result set
+	for rows.Next() {
+
+		err = rows.Scan(
+			&publicKeyAsBase64String,
+		)
+
+		if err != nil {
+
+			common_config.Logger.WithFields(logrus.Fields{
+				"Id":           "eb498766-8c83-4589-9d0f-f49853ee6342",
+				"Error":        err,
+				"sqlToExecute": sqlToExecute,
+			}).Error("Something went wrong when processing result from database")
+
+			return "", err
+		}
+	}
+
+	// Log response from CloudDB
+	common_config.Logger.WithFields(logrus.Fields{
+		"Id":                       "8ba6de0b-3120-4bd6-bb5a-938f6f798034",
+		"comandTag.Insert()":       rows.CommandTag().Insert(),
+		"comandTag.Delete()":       rows.CommandTag().Delete(),
+		"comandTag.Select()":       rows.CommandTag().Select(),
+		"comandTag.Update()":       rows.CommandTag().Update(),
+		"comandTag.RowsAffected()": rows.CommandTag().RowsAffected(),
+		"comandTag.String()":       rows.CommandTag().String(),
+	}).Debug("Return data for SQL executed in database")
+
+	return publicKeyAsBase64String, err
+}
+
+// Save all supported TestInstructions, TestInstructionContainers and Allowed Users
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstructionsAndTestInstructionContainersAndAllowedUsers(
+	dbTransaction pgx.Tx,
+	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage *TestInstructionAndTestInstuctionContainerTypes.
+		TestInstructionsAndTestInstructionsContainersStruct) (
 	err error) {
 
 	// Verify that Domain exists in database
@@ -141,32 +280,6 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveSupportedTestInstruction
 			ForceNewBaseLineForTestInstructionsAndTestInstructionContainers == false {
 
 		return nil
-	}
-
-	// Verify Signed message to secure that sending worker is using correct Service Account
-	var verificationOfSignatureSucceeded bool
-	verificationOfSignatureSucceeded, err = fenixCloudDBObject.verifySignatureFromWorker(
-		signedMessageByWorkerServiceAccountMessage,
-		domainBaseData)
-
-	if err != nil {
-		common_config.Logger.WithFields(logrus.Fields{
-			"id":  "618180da-8de6-454d-b489-50eb24a7a41e",
-			"err": err,
-		}).Info("Got some problem when verifying Signature")
-
-		return err
-	}
-
-	// The signature couldn't be verified correctly
-	if verificationOfSignatureSucceeded == false {
-		common_config.Logger.WithFields(logrus.Fields{
-			"id": "5624bb59-7ce9-4643-ad62-e36bd3ba319f",
-		}).Warning("The correctness of the signature couldn't be verified")
-
-		err = errors.New("the correctness of the signature couldn't be verified")
-
-		return err
 	}
 
 	// When there is no Message Hash in database then just save the message in the database
