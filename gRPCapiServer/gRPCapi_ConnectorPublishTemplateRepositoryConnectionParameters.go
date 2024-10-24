@@ -5,7 +5,9 @@ import (
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
+	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // ConnectorPublishTemplateRepositoryConnectionParameters
@@ -44,12 +46,31 @@ func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) ConnectorPubl
 		return returnMessage, nil
 	}
 
+	// Extract the Hashes that are bases as for the message that was signed
+	// ReCreate the  message
+	var reCreatedMessageHashThatWasSigned string
+	var hashesToHash []string
+
+	// Loop all Template-data and convert into json
+	for _, tempTemplate := range allTemplateRepositoryConnectionParameters.GetAllTemplateRepositories() {
+		var tempTemplateAsJson string
+		tempTemplateAsJson = protojson.Format(tempTemplate)
+
+		// Append to slice to be hashed
+		hashesToHash = append(hashesToHash, tempTemplateAsJson)
+
+	}
+
+	// Create a hash of the slice
+	reCreatedMessageHashThatWasSigned = fenixSyncShared.HashValues(hashesToHash, true)
+
 	// Save ConnectorPublishTemplateRepositoryConnectionParameters in CloudDB
 	var fenixCloudDBObject *CloudDbProcessing.FenixCloudDBObjectStruct
 	err = fenixCloudDBObject.PrepareSavePublishedTemplateRepositoryConnectionParameters(
 		allTemplateRepositoryConnectionParameters.GetClientSystemIdentification().GetDomainUuid(),
 		allTemplateRepositoryConnectionParameters.GetAllTemplateRepositories(),
-		allTemplateRepositoryConnectionParameters.GetSignedMessageByWorkerServiceAccount())
+		allTemplateRepositoryConnectionParameters.GetMessageSignatureData(),
+		reCreatedMessageHashThatWasSigned)
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{

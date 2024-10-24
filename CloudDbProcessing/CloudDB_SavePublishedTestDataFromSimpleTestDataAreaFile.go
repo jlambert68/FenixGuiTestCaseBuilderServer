@@ -42,7 +42,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) SavePublishedTestDataFromSim
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSavePublishedTestDataFromSimpleTestDataAreaFile(
 	domainUuid string,
 	templateRepositoriesConnectionParameters []*fenixTestCaseBuilderServerGrpcApi.TestDataFromOneSimpleTestDataAreaFileMessage,
-	signedMessageByWorkerServiceAccountMessage *fenixTestCaseBuilderServerGrpcApi.SignedMessageByWorkerServiceAccountMessage) (
+	messageSignatureData *fenixTestCaseBuilderServerGrpcApi.MessageSignatureDataMessage,
+	reCreatedMessageHashThatWasSigned string) (
 	err error) {
 
 	// Begin SQL TransactionConnectorPublish
@@ -69,12 +70,28 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSavePublishedTestData
 		&txn,
 		&doCommitNotRoleBack)
 
+	// Verify that the signature was produced by correct private key
+	err = fenixCloudDBObject.validateSignedMessage(
+		txn,
+		domainUuid,
+		messageSignatureData,
+		reCreatedMessageHashThatWasSigned)
+
+	if err != nil {
+
+		common_config.Logger.WithFields(logrus.Fields{
+			"id":    "5766f524-5500-43b3-920f-dc7de4fe4848",
+			"error": err,
+		}).Error("Problem when verifying signature")
+
+		return err
+	}
+
 	// Save the TestData from 'simple' TestDataArea-files
 	err = fenixCloudDBObject.savePublishedTestDataFromSimpleTestDataAreaFile(
 		txn,
 		domainUuid,
-		templateRepositoriesConnectionParameters,
-		signedMessageByWorkerServiceAccountMessage)
+		templateRepositoriesConnectionParameters)
 
 	if err != nil {
 
@@ -95,8 +112,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSavePublishedTestData
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) savePublishedTestDataFromSimpleTestDataAreaFile(
 	dbTransaction pgx.Tx,
 	domainUuid string,
-	testDataFromSimpleTestDataAreaFileMessage []*fenixTestCaseBuilderServerGrpcApi.TestDataFromOneSimpleTestDataAreaFileMessage,
-	signedMessageByWorkerServiceAccountMessage *fenixTestCaseBuilderServerGrpcApi.SignedMessageByWorkerServiceAccountMessage) (
+	testDataFromSimpleTestDataAreaFileMessage []*fenixTestCaseBuilderServerGrpcApi.TestDataFromOneSimpleTestDataAreaFileMessage) (
 	err error) {
 
 	var testAreaUuid string
@@ -113,32 +129,6 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) savePublishedTestDataFromSim
 			"domainUuid": domainUuid,
 			"error":      err,
 		}).Error("Domain does not exist in database or some error occurred when calling database")
-
-		return err
-	}
-
-	// Verify Signed message to secure that sending worker is using correct Service Account
-	var verificationOfSignatureSucceeded bool
-	verificationOfSignatureSucceeded, err = fenixCloudDBObject.verifySignatureFromWorker(
-		signedMessageByWorkerServiceAccountMessage,
-		domainBaseData)
-
-	if err != nil {
-		common_config.Logger.WithFields(logrus.Fields{
-			"id":  "618180da-8de6-454d-b489-50eb24a7a41e",
-			"err": err,
-		}).Info("Got some problem when verifying Signature")
-
-		return err
-	}
-
-	// The signature couldn't be verified correctly
-	if verificationOfSignatureSucceeded == false {
-		common_config.Logger.WithFields(logrus.Fields{
-			"id": "430f2ebb-bcf8-4746-b114-896a1744fdd1",
-		}).Warning("The correctness of the signature couldn't be verified")
-
-		err = errors.New("the correctness of the signature couldn't be verified")
 
 		return err
 	}

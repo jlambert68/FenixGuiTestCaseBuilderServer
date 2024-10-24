@@ -2,13 +2,12 @@ package CloudDbProcessing
 
 import (
 	"FenixGuiTestCaseBuilderServer/common_config"
-	"FenixGuiTestCaseBuilderServer/messagesToWorkerServer"
+
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/jackc/pgx/v4"
-	fenixExecutionWorkerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixExecutionServer/fenixExecutionWorkerGrpcApi/go_grpc_api"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/TestInstructionAndTestInstuctionContainerTypes"
@@ -77,9 +76,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveSupportedTestInst
 	// Verify that the signature was produced by correct private key
 	err = fenixCloudDBObject.validateSignedMessage(
 		txn,
-		testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage,
+		string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID),
 		messageSignatureData,
 		reCreatedMessageHashThatWasSigned)
+
 	if err != nil {
 
 		common_config.Logger.WithFields(logrus.Fields{
@@ -110,11 +110,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveSupportedTestInst
 	return err
 }
 
-// Save all supported TestInstructions, TestInstructionContainers and Allowed Users
+// Validate the signature that was produced by the Connector
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) validateSignedMessage(
 	dbTransaction pgx.Tx,
-	testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage *TestInstructionAndTestInstuctionContainerTypes.
-		TestInstructionsAndTestInstructionsContainersStruct,
+	connectorsDomainUuid string,
 	messageSignatureData *fenixTestCaseBuilderServerGrpcApi.MessageSignatureDataMessage,
 	reCreatedMessageHashThatWasSigned string) (
 	err error) {
@@ -123,13 +122,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) validateSignedMessage(
 	var publicKeyAsBase64String string
 	publicKeyAsBase64String, err = fenixCloudDBObject.loadDomainsPublicKey(
 		dbTransaction,
-		string(testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain.ConnectorsDomainUUID))
+		connectorsDomainUuid)
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"id": "d67ea5fc-b016-422f-a57a-5764c0ca766e",
-			"testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain,
-			"error": err,
+			"id":                   "d67ea5fc-b016-422f-a57a-5764c0ca766e",
+			"connectorsDomainUuid": connectorsDomainUuid,
+			"error":                err,
 		}).Error("Couldn't load the Public Key for the Domain")
 
 		return err
@@ -143,9 +142,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) validateSignedMessage(
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"id": "b048e9d8-0c4a-46d7-aa35-de3181c9d8ec",
-			"testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain": testInstructionsAndTestInstructionContainersFromGrpcBuilderMessage.ConnectorsDomain,
-			"error": err,
+			"id":                   "b048e9d8-0c4a-46d7-aa35-de3181c9d8ec",
+			"connectorsDomainUuid": connectorsDomainUuid,
+			"error":                err,
 		}).Error("Signature couldn't be validated")
 
 		return err
@@ -1158,65 +1157,6 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainBaseData(
 	}
 
 	return domainBaseData, err
-}
-
-// Do the signature verification of signature received from Worker
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifySignatureFromWorker(
-	signedMessageByWorkerServiceAccountMessage *fenixTestCaseBuilderServerGrpcApi.SignedMessageByWorkerServiceAccountMessage,
-	domainBaseData *domainBaseDataStruct) (
-	verificationOfSignatureSucceeded bool,
-	err error) {
-
-	// Set up temporary variable used when calling Worker over gRPC
-	var tempMessagesToWorkerServerObject *messagesToWorkerServer.MessagesToWorkerServerObjectStruct
-	tempMessagesToWorkerServerObject = &messagesToWorkerServer.MessagesToWorkerServerObjectStruct{Logger: common_config.Logger}
-
-	// Call Worker over gRPC
-	var signMessageResponse *fenixExecutionWorkerGrpcApi.SignMessageResponse
-	signMessageResponse, err = tempMessagesToWorkerServerObject.SendBuilderServerAskWorkerToSignMessage(
-		signedMessageByWorkerServiceAccountMessage.GetMessageToBeSigned(),
-		domainBaseData.workerAddressToDial)
-
-	// Got some problem when doing gRPC-call to WorkerServer
-	if err != nil {
-		common_config.Logger.WithFields(logrus.Fields{
-			"id":             "63858aac-491f-4162-9cbb-ed9d4b1c5ba6",
-			"error":          err,
-			"domainBaseData": domainBaseData,
-		}).Error("Got a problem when calling WorkerServer over gRPC to verify signature")
-
-		return false, err
-	}
-
-	// Got some problem when doing gRPC-call to WorkerServer
-	if signMessageResponse.GetAckNackResponse().GetAckNack() == false {
-		common_config.Logger.WithFields(logrus.Fields{
-			"id":                  "09580908-dfbf-4f86-adb5-ca64e9a610b8",
-			"error":               err,
-			"domainBaseData":      domainBaseData,
-			"signMessageResponse": signMessageResponse,
-		}).Error("Got a problem when calling WorkerServer over gRPC to verify signature")
-
-		var newError error
-		newError = errors.New(signMessageResponse.GetAckNackResponse().GetComments())
-
-		return false, newError
-	}
-
-	// Verify recreated signature with signature produced by Worker when sending published TI, TIC and Allowed Users
-	if signMessageResponse.GetSignedMessageByWorkerServiceAccount().
-		GetHashOfSignature() != signedMessageByWorkerServiceAccountMessage.HashOfSignature {
-		return false, err
-	}
-
-	// Verify recreated KeyId with KeyId produced by Worker
-	if signMessageResponse.GetSignedMessageByWorkerServiceAccount().
-		GetHashedKeyId() != signedMessageByWorkerServiceAccountMessage.HashedKeyId {
-		return false, err
-	}
-
-	// Success in signature verification
-	return true, err
 }
 
 // Delete old data in database for Supported TestInstructions, TestInstructionContainers And Allowed Users

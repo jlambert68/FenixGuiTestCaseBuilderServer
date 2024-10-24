@@ -3,7 +3,6 @@ package CloudDbProcessing
 import (
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
-	"errors"
 	"github.com/jackc/pgx/v4"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
@@ -40,7 +39,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) savePublishedTemplateReposit
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSavePublishedTemplateRepositoryConnectionParameters(
 	domainUuid string,
 	templateRepositoriesConnectionParameters []*fenixTestCaseBuilderServerGrpcApi.TemplateRepositoryConnectionParameters,
-	signedMessageByWorkerServiceAccountMessage *fenixTestCaseBuilderServerGrpcApi.SignedMessageByWorkerServiceAccountMessage) (
+	messageSignatureData *fenixTestCaseBuilderServerGrpcApi.MessageSignatureDataMessage,
+	reCreatedMessageHashThatWasSigned string) (
 	err error) {
 
 	// Begin SQL TransactionConnectorPublish
@@ -67,12 +67,28 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSavePublishedTemplate
 		&txn,
 		&doCommitNotRoleBack)
 
+	// Verify that the signature was produced by correct private key
+	err = fenixCloudDBObject.validateSignedMessage(
+		txn,
+		domainUuid,
+		messageSignatureData,
+		reCreatedMessageHashThatWasSigned)
+
+	if err != nil {
+
+		common_config.Logger.WithFields(logrus.Fields{
+			"id":    "9d881429-7985-41cc-ba9a-6b19a19d99f7",
+			"error": err,
+		}).Error("Problem when verifying signature")
+
+		return err
+	}
+
 	// Save all published Template Repository Connection Parameters
 	err = fenixCloudDBObject.savePublishedTemplateRepositoryConnectionParameters(
 		txn,
 		domainUuid,
-		templateRepositoriesConnectionParameters,
-		signedMessageByWorkerServiceAccountMessage)
+		templateRepositoriesConnectionParameters)
 
 	if err != nil {
 
@@ -93,8 +109,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSavePublishedTemplate
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) savePublishedTemplateRepositoryConnectionParameters(
 	dbTransaction pgx.Tx,
 	domainUuid string,
-	templateRepositoriesConnectionParameters []*fenixTestCaseBuilderServerGrpcApi.TemplateRepositoryConnectionParameters,
-	signedMessageByWorkerServiceAccountMessage *fenixTestCaseBuilderServerGrpcApi.SignedMessageByWorkerServiceAccountMessage) (
+	templateRepositoriesConnectionParameters []*fenixTestCaseBuilderServerGrpcApi.TemplateRepositoryConnectionParameters) (
 	err error) {
 
 	// Verify that Domain exists in database
@@ -109,32 +124,6 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) savePublishedTemplateReposit
 			"domainUuid": domainUuid,
 			"error":      err,
 		}).Error("Domain does not exist in database or some error occurred when calling database")
-
-		return err
-	}
-
-	// Verify Signed message to secure that sending worker is using correct Service Account
-	var verificationOfSignatureSucceeded bool
-	verificationOfSignatureSucceeded, err = fenixCloudDBObject.verifySignatureFromWorker(
-		signedMessageByWorkerServiceAccountMessage,
-		domainBaseData)
-
-	if err != nil {
-		common_config.Logger.WithFields(logrus.Fields{
-			"id":  "618180da-8de6-454d-b489-50eb24a7a41e",
-			"err": err,
-		}).Info("Got some problem when verifying Signature")
-
-		return err
-	}
-
-	// The signature couldn't be verified correctly
-	if verificationOfSignatureSucceeded == false {
-		common_config.Logger.WithFields(logrus.Fields{
-			"id": "5624bb59-7ce9-4643-ad62-e36bd3ba319f",
-		}).Warning("The correctness of the signature couldn't be verified")
-
-		err = errors.New("the correctness of the signature couldn't be verified")
 
 		return err
 	}

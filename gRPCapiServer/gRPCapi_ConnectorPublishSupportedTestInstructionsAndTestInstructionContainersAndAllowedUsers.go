@@ -95,7 +95,7 @@ func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) PublishSuppor
 	}
 
 	// Extract the Hashes that are bases as for the message that was signed
-	// Create and sign message
+	// ReCreate the  message
 	var reCreatedMessageHashThatWasSigned string
 	var hashesToHash []string
 	hashesToHash = []string{
