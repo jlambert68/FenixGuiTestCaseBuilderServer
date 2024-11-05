@@ -142,9 +142,12 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) validateSignedMessage(
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"id":                   "b048e9d8-0c4a-46d7-aa35-de3181c9d8ec",
-			"connectorsDomainUuid": connectorsDomainUuid,
-			"error":                err,
+			"id":                                "b048e9d8-0c4a-46d7-aa35-de3181c9d8ec",
+			"connectorsDomainUuid":              connectorsDomainUuid,
+			"error":                             err,
+			"publicKeyAsBase64String":           publicKeyAsBase64String,
+			"Signature":                         messageSignatureData.GetSignature(),
+			"reCreatedMessageHashThatWasSigned": reCreatedMessageHashThatWasSigned,
 		}).Error("Signature couldn't be validated")
 
 		return err
