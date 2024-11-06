@@ -8,6 +8,7 @@ import (
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/encoding/protojson"
+	"strings"
 )
 
 // ConnectorPublishTestDataFromSimpleTestDataAreaFile
@@ -55,6 +56,9 @@ func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) ConnectorPubl
 	for _, tempTestData := range testDataFromSimpleTestDataAreaFileMessage.GetTestDataFromSimpleTestDataAreaFiles() {
 		var tempTestDataAsJson string
 		tempTestDataAsJson = protojson.Format(tempTestData)
+
+		// Remove spaces in json
+		tempTestDataAsJson = strings.ReplaceAll(tempTestDataAsJson, " ", "")
 
 		// Append to slice to be hashed
 		hashesToHash = append(hashesToHash, tempTestDataAsJson)
