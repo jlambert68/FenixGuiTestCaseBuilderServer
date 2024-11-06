@@ -158,7 +158,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) validateSignedMessage(
 		"reCreatedMessageHashThatWasSigned":   reCreatedMessageHashThatWasSigned,
 		"messageSignatureData.GetSignature()": messageSignatureData.GetSignature(),
 		"publicKeyAsBase64String":             publicKeyAsBase64String,
-	}).Debug("Signature was successfully verified")
+	}).Info("Signature was successfully verified")
 
 	return err
 }
