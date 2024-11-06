@@ -8,6 +8,7 @@ import (
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/encoding/protojson"
+	"strings"
 )
 
 // ConnectorPublishTemplateRepositoryConnectionParameters
@@ -55,6 +56,9 @@ func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) ConnectorPubl
 	for _, tempTemplate := range allTemplateRepositoryConnectionParameters.GetAllTemplateRepositories() {
 		var tempTemplateAsJson string
 		tempTemplateAsJson = protojson.Format(tempTemplate)
+
+		// Remove spaces in json
+		tempTemplateAsJson = strings.ReplaceAll(tempTemplateAsJson, " ", "")
 
 		// Append to slice to be hashed
 		hashesToHash = append(hashesToHash, tempTemplateAsJson)
