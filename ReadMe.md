@@ -19,18 +19,17 @@ BuilderServer has the responsibility to server TesterGui with all components tha
 
 The following environment variable is needed for BuilderServer to be able to run.
 
-| Environment variable                        | Example value                            | comment                                                                        |
-|---------------------------------------------|------------------------------------------|--------------------------------------------------------------------------------|
-| DB_HOST                                     | 127.0.0.1                                |                                                                                |
-| DB_NAME                                     | fenix_gcp_database                       |                                                                                |
-| DB_PASS                                     | database password                        |                                                                                |
-| DB_POOL_MAX_CONNECTIONS                     | 4                                        | The number of connections towards the database that the ExectionServer can use |
-| DB_PORT                                     | 5432                                     |                                                                                |
-| DB_SCHEMA                                   | Not used                                 |                                                                                |
-| DB_USER                                     | postgres                                 |                                                                                |
-| ExecutionLocation    | GCP                                      |                                                                                |
-| FenixGuiBuilderServerAddress | 127.0.0.1                                |                                                                                |
-| FenixGuiBuilderServerPort                 | 6670                                     |                                                                                |
-| LogAllSQLs                    | true                                     |                                                                                |
-
+| Environment variable         | Example value      | comment                                                                        |
+|------------------------------|--------------------|--------------------------------------------------------------------------------|
+| DB_HOST                      | 127.0.0.1          |                                                                                |
+| DB_NAME                      | fenix_gcp_database |                                                                                |
+| DB_PASS                      | database password  |                                                                                |
+| DB_POOL_MAX_CONNECTIONS      | 4                  | The number of connections towards the database that the ExectionServer can use |
+| DB_PORT                      | 5432               |                                                                                |
+| DB_SCHEMA                    | Not used           |                                                                                |
+| DB_USER                      | postgres           |                                                                                |
+| ExecutionLocation            | LOCALHOST_NODOCKER                |                                                                                |
+| FenixGuiBuilderServerAddress | 127.0.0.1          |                                                                                |
+| FenixGuiBuilderServerPort    | 6670               |                                                                                |
+| LogAllSQLs                   | true               |                                                                                |
 
