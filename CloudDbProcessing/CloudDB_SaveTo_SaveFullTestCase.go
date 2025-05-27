@@ -520,6 +520,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(
 	fullTestCaseMessage.TestCasePreview.TestCasePreview.LastSavedTimeStamp = timeStampToUse
 	testCasePreviewAsJsonb := protojson.Format(fullTestCaseMessage.TestCasePreview)
 
+	// Convert TestCaseMetaData into jsonb
+	testCaseMetaDataAsJsonb := protojson.Format(fullTestCaseMessage.TestCaseMetaData)
+
 	var dataRowToBeInsertedMultiType []interface{}
 	var dataRowsToBeInsertedMultiType [][]interface{}
 
@@ -545,6 +548,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestCaseTemplateFilesAsJsonb)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, timeStampToUse)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testCasePreviewAsJsonb)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, testCaseMetaDataAsJsonb)
 
 	dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
 
@@ -554,7 +558,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestCase(
 		"\"TestCaseBasicInformationAsJsonb\", \"TestInstructionsAsJsonb\", \"TestInstructionContainersAsJsonb\", " +
 		"\"TestCaseHash\", \"TestCaseExtraInformationAsJsonb\", \"CanListAndViewTestCaseAuthorizationLevelOwnedByDomain\", " +
 		"\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomai\", \"TestCaseIsDeleted\", " +
-		"\"TestCaseTemplateFilesAsJsonb\", \"InsertTimeStamp\", \"TestCasePreview\")  "
+		"\"TestCaseTemplateFilesAsJsonb\", \"InsertTimeStamp\", \"TestCasePreview\", \"TestCaseMetaData\")  "
 	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
 	sqlToExecute = sqlToExecute + ";"
 
