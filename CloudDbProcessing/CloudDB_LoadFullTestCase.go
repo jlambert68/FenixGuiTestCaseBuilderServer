@@ -263,14 +263,16 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 	sqlToExecute = sqlToExecute + "SELECT TC.\"TestCaseBasicInformationAsJsonb\", " +
 		"TC.\"TestInstructionsAsJsonb\", \"TestInstructionContainersAsJsonb\"," +
 		"TC.\"TestCaseHash\", TC.\"TestCaseExtraInformationAsJsonb\", TC.\"TestCaseTemplateFilesAsJsonb\", " +
-		"TC.\"DeleteTimestamp\" "
+		"TC.\"DeleteTimestamp\", TC.\"TestCaseMetaData\" "
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" TC "
 	sqlToExecute = sqlToExecute + fmt.Sprintf("WHERE TC.\"TestCaseUuid\" = '%s' ", testCaseUuidToLoad)
 	sqlToExecute = sqlToExecute + "AND "
-	sqlToExecute = sqlToExecute + "(TC.\"CanListAndViewTestCaseAuthorizationLevelOwnedByDomain\" & " + tempCanListAndViewTestCaseOwnedByThisDomainAsString + ")"
+	sqlToExecute = sqlToExecute + "(TC.\"CanListAndViewTestCaseAuthorizationLevelOwnedByDomain\" & " +
+		tempCanListAndViewTestCaseOwnedByThisDomainAsString + ")"
 	sqlToExecute = sqlToExecute + "= TC.\"CanListAndViewTestCaseAuthorizationLevelOwnedByDomain\" "
 	sqlToExecute = sqlToExecute + "AND "
-	sqlToExecute = sqlToExecute + "(TC.\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomai\" & " + tempCanListAndViewTestCaseHavingTIandTICfromThisDomainAsString + ")"
+	sqlToExecute = sqlToExecute + "(TC.\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomai\" & " +
+		tempCanListAndViewTestCaseHavingTIandTICfromThisDomainAsString + ")"
 	sqlToExecute = sqlToExecute + "= TC.\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomai\" "
 	sqlToExecute = sqlToExecute + "AND "
 	sqlToExecute = sqlToExecute + "TC.\"TestCaseVersion\" = (SELECT MAX(\"TestCaseVersion\") "
@@ -307,21 +309,24 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 	}
 
 	var (
-		tempTestCaseBasicInformation             fenixTestCaseBuilderServerGrpcApi.TestCaseBasicInformationMessage
-		tempMatureTestInstructions               fenixTestCaseBuilderServerGrpcApi.MatureTestInstructionsMessage
-		tempMatureTestInstructionContainers      fenixTestCaseBuilderServerGrpcApi.MatureTestInstructionContainersMessage
-		tempTestCaseExtraInformation             fenixTestCaseBuilderServerGrpcApi.TestCaseExtraInformationMessage
-		tempTestCaseTemplateFilesMessage         fenixTestCaseBuilderServerGrpcApi.TestCaseTemplateFilesMessage
-		tempTestCaseBasicInformationAsString     string
-		tempTestInstructionsAsString             string
-		tempTestInstructionContainersAsString    string
-		tempTestCaseExtraInformationAsString     string
-		tempTestCaseTemplateFilesAsString        string
-		tempTestCaseBasicInformationAsByteArray  []byte
-		tempTestInstructionsAsByteArray          []byte
-		tempTestInstructionContainersAsByteArray []byte
-		tempTestCaseExtraInformationAsByteArray  []byte
-		tempTestCaseTemplateFilesAsByteArray     []byte
+		tempTestCaseBasicInformation                        fenixTestCaseBuilderServerGrpcApi.TestCaseBasicInformationMessage
+		tempMatureTestInstructions                          fenixTestCaseBuilderServerGrpcApi.MatureTestInstructionsMessage
+		tempMatureTestInstructionContainers                 fenixTestCaseBuilderServerGrpcApi.MatureTestInstructionContainersMessage
+		tempTestCaseExtraInformation                        fenixTestCaseBuilderServerGrpcApi.TestCaseExtraInformationMessage
+		tempTestCaseTemplateFilesMessage                    fenixTestCaseBuilderServerGrpcApi.TestCaseTemplateFilesMessage
+		tempUserSpecifiedTestCaseMetaDataMessage            fenixTestCaseBuilderServerGrpcApi.UserSpecifiedTestCaseMetaDataMessage
+		tempTestCaseBasicInformationAsString                string
+		tempTestInstructionsAsString                        string
+		tempTestInstructionContainersAsString               string
+		tempTestCaseExtraInformationAsString                string
+		tempTestCaseTemplateFilesAsString                   string
+		tempUserSpecifiedTestCaseMetaDataMessageAsString    string
+		tempTestCaseBasicInformationAsByteArray             []byte
+		tempTestInstructionsAsByteArray                     []byte
+		tempTestInstructionContainersAsByteArray            []byte
+		tempTestCaseExtraInformationAsByteArray             []byte
+		tempTestCaseTemplateFilesAsByteArray                []byte
+		tempUserSpecifiedTestCaseMetaDataMessageAsByteArray []byte
 
 		testCaseHash string
 
@@ -340,6 +345,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 			&tempTestCaseExtraInformationAsString,
 			&tempTestCaseTemplateFilesAsString,
 			&tempDeleteTimeStamp,
+			&tempUserSpecifiedTestCaseMetaDataMessageAsString,
 		)
 
 		if err != nil {
@@ -359,6 +365,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 		tempTestInstructionContainersAsByteArray = []byte(tempTestInstructionContainersAsString)
 		tempTestCaseExtraInformationAsByteArray = []byte(tempTestCaseExtraInformationAsString)
 		tempTestCaseTemplateFilesAsByteArray = []byte(tempTestCaseTemplateFilesAsString)
+		tempUserSpecifiedTestCaseMetaDataMessageAsByteArray = []byte(tempUserSpecifiedTestCaseMetaDataMessageAsString)
 
 		// Format The Delete Date into a string
 		tempDeleteAsString = tempDeleteTimeStamp.Format("2006-01-02")
@@ -420,6 +427,16 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 			return nil, err
 		}
 
+		err = protojson.Unmarshal(tempUserSpecifiedTestCaseMetaDataMessageAsByteArray, &tempUserSpecifiedTestCaseMetaDataMessage)
+		if err != nil {
+			common_config.Logger.WithFields(logrus.Fields{
+				"Id":    "8a3d639f-8b39-4ffb-b80d-30217affa77c",
+				"Error": err,
+			}).Error("Something went wrong when converting 'tempUserSpecifiedTestCaseMetaDataMessageAsByteArray' into proto-message")
+
+			return nil, err
+		}
+
 		// Add the different parts into full TestCase-message
 		fullTestCaseMessage = &fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage{
 			TestCaseBasicInformation:        &tempTestCaseBasicInformation,
@@ -431,6 +448,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 			TestCasePreview:                 nil,
 			MessageHash:                     testCaseHash,
 			DeletedDate:                     tempDeleteAsString,
+			TestCaseMetaData:                &tempUserSpecifiedTestCaseMetaDataMessage,
 		}
 
 	}
