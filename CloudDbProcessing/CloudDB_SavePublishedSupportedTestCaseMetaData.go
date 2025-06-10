@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) savePublishedSupportedTestCaseMetaDataParametersCommitOrRoleBack(
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) savePublishedSupportedMetaDataParametersCommitOrRoleBack(
 	dbTransactionReference *pgx.Tx,
 	doCommitNotRoleBackReference *bool) {
 
@@ -23,23 +23,24 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) savePublishedSupportedTestCa
 
 		common_config.Logger.WithFields(logrus.Fields{
 			"id": "d0a7e400-8ff8-456d-9d01-15e2812aecbf",
-		}).Debug("Doing Commit for SQL  in 'savePublishedSupportedTestCaseMetaDataParametersCommitOrRoleBack'")
+		}).Debug("Doing Commit for SQL  in 'savePublishedSupportedMetaDataParametersCommitOrRoleBack'")
 
 	} else {
 		dbTransaction.Rollback(context.Background())
 
 		common_config.Logger.WithFields(logrus.Fields{
 			"id": "1faa0ad9-299a-47b2-a8bb-961e88b65883",
-		}).Info("Doing Rollback for SQL  in 'savePublishedSupportedTestCaseMetaDataParametersCommitOrRoleBack'")
+		}).Info("Doing Rollback for SQL  in 'savePublishedSupportedMetaDataParametersCommitOrRoleBack'")
 
 	}
 }
 
-// PrepareSavePublishedSupportedTestCaseMetaDataParameters
+// PrepareSavePublishedSupportedMetaDataParameters
 // Do initial preparations to be able to save all published SupportedTestCaseMetaData Parameters
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSavePublishedSupportedTestCaseMetaDataParameters(
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSavePublishedSupportedMetaDataParameters(
 	domainUuid string,
-	supportedMetaDataAsJson string,
+	supportedTestCaseMetaDataAsJson string,
+	supportedTestSuiteMetaDataAsJson string,
 	messageSignatureData *fenixTestCaseBuilderServerGrpcApi.MessageSignatureDataMessage,
 	reCreatedMessageHashThatWasSigned string) (
 	err error) {
@@ -51,7 +52,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSavePublishedSupporte
 		common_config.Logger.WithFields(logrus.Fields{
 			"id":    "0a5fb682-c274-4bb4-a049-c4d6426bcbd8",
 			"error": err,
-		}).Error("Problem to do 'DbPool.Begin'  in 'PrepareSavePublishedSupportedTestCaseMetaDataParameters'")
+		}).Error("Problem to do 'DbPool.Begin'  in 'PrepareSavePublishedSupportedMetaDataParameters'")
 
 		return err
 
@@ -64,7 +65,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSavePublishedSupporte
 	doCommitNotRoleBack = false
 
 	// When leaving then do the actual commit or rollback
-	defer fenixCloudDBObject.savePublishedSupportedTestCaseMetaDataParametersCommitOrRoleBack(
+	defer fenixCloudDBObject.savePublishedSupportedMetaDataParametersCommitOrRoleBack(
 		&txn,
 		&doCommitNotRoleBack)
 
@@ -89,7 +90,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSavePublishedSupporte
 	err = fenixCloudDBObject.savePublishedSupportedTestCaseMetaDataParameters(
 		txn,
 		domainUuid,
-		supportedMetaDataAsJson)
+		supportedTestCaseMetaDataAsJson,
+		supportedTestSuiteMetaDataAsJson)
 
 	if err != nil {
 
@@ -110,7 +112,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSavePublishedSupporte
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) savePublishedSupportedTestCaseMetaDataParameters(
 	dbTransaction pgx.Tx,
 	domainUuid string,
-	supportedMetaDataAsJson string) (
+	supportedTestCaseMetaDataAsJson string,
+	supportedTestSuiteMetaDataAsJson string) (
 	err error) {
 
 	// Verify that Domain exists in database
@@ -130,7 +133,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) savePublishedSupportedTestCa
 	}
 
 	// Delete old data in database for published SupportedTestCaseMetaData Parameters
-	err = fenixCloudDBObject.performDeleteCurrentSupportedTestCaseMetaDataParameters(
+	err = fenixCloudDBObject.performDeleteCurrentSupportedMetaDataParameters(
 		dbTransaction,
 		domainUuid)
 
@@ -146,9 +149,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) savePublishedSupportedTestCa
 	}
 
 	// Save published SupportedTestCaseMetaData Parameters
-	err = fenixCloudDBObject.performSaveSupportedTestCaseMetaDataParameters(
+	err = fenixCloudDBObject.performSaveSupportedMetaDataParameters(
 		dbTransaction,
-		supportedMetaDataAsJson,
+		supportedTestCaseMetaDataAsJson,
+		supportedTestSuiteMetaDataAsJson,
 		domainBaseData)
 
 	if err != nil {
@@ -166,23 +170,23 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) savePublishedSupportedTestCa
 }
 
 // Delete old data in database for published SupportedTestCaseMetaData Parameters
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) performDeleteCurrentSupportedTestCaseMetaDataParameters(
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) performDeleteCurrentSupportedMetaDataParameters(
 	dbTransaction pgx.Tx,
 	connectorsDomainUUID string) (
 	err error) {
 
 	common_config.Logger.WithFields(logrus.Fields{
 		"Id": "f35ab1b0-eee8-4702-be97-64e02a55ef94",
-	}).Debug("Entering: performDeleteCurrentSupportedTestCaseMetaDataParameters()")
+	}).Debug("Entering: performDeleteCurrentSupportedMetaDataParameters()")
 
 	defer func() {
 		common_config.Logger.WithFields(logrus.Fields{
 			"Id": "0053358a-abdc-4fa0-924f-6e5ded0c600a",
-		}).Debug("Exiting: performDeleteCurrentSupportedTestCaseMetaDataParameters()")
+		}).Debug("Exiting: performDeleteCurrentSupportedMetaDataParameters()")
 	}()
 
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "DELETE FROM \"FenixBuilder\".\"SupportedTestCaseMetaData\" STCMD "
+	sqlToExecute = sqlToExecute + "DELETE FROM \"FenixBuilder\".\"SupportedTestCaseAndTestSuiteMetaData\" STCMD "
 	sqlToExecute = sqlToExecute + "WHERE STCMD.\"DomainUuid\" = '" + connectorsDomainUUID + "' "
 	sqlToExecute = sqlToExecute + ";"
 
@@ -191,7 +195,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performDeleteCurrentSupporte
 		common_config.Logger.WithFields(logrus.Fields{
 			"Id":           "a8b07184-b72c-4e92-8b8e-790a7237f2d3",
 			"sqlToExecute": sqlToExecute,
-		}).Debug("SQL to be executed within 'performDeleteCurrentSupportedTestCaseMetaDataParameters'")
+		}).Debug("SQL to be executed within 'performDeleteCurrentSupportedMetaDataParameters'")
 	}
 
 	// Query DB
@@ -226,9 +230,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performDeleteCurrentSupporte
 }
 
 // Do the actual save for published SupportedTestCaseMetaData Parameters
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestCaseMetaDataParameters(
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedMetaDataParameters(
 	dbTransaction pgx.Tx,
-	supportedMetaDataAsJson string,
+	supportedTestCaseMetaDataAsJson string,
+	supportedTestSuiteMetaDataAsJson string,
 	domainBaseData *domainBaseDataStruct) (
 	err error) {
 
@@ -238,11 +243,11 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestCase
 	dataRowsToBeInsertedMultiType = nil
 
 	// Exist if now users are specified
-	if len(supportedMetaDataAsJson) == 0 {
+	if len(supportedTestCaseMetaDataAsJson) == 0 {
 
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id":                      "d16bc9ec-d6c5-4d84-9598-bc0a1258693f",
-			"supportedMetaDataAsJson": supportedMetaDataAsJson,
+			"Id":                              "d16bc9ec-d6c5-4d84-9598-bc0a1258693f",
+			"supportedTestCaseMetaDataAsJson": supportedTestCaseMetaDataAsJson,
 		}).Debug("json must have a value, can't be empty")
 
 		err = errors.New("json must have a value, can't be empty")
@@ -257,14 +262,16 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestCase
 
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, domainBaseData.domainUUID)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, domainBaseData.domainName)
-	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, supportedMetaDataAsJson)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, supportedTestCaseMetaDataAsJson)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTimestampToBeUsed)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, supportedTestSuiteMetaDataAsJson)
 
 	dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
 
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "INSERT INTO \"FenixBuilder\".\"SupportedTestCaseMetaData\" "
-	sqlToExecute = sqlToExecute + "(\"DomainUuid\", \"DomainName\", \"SupportedTestCaseMetaData\", \"UpdateTimeStamp\") "
+	sqlToExecute = sqlToExecute + "INSERT INTO \"FenixBuilder\".\"SupportedTestCaseAndTestSuiteMetaData\" "
+	sqlToExecute = sqlToExecute + "(\"DomainUuid\", \"DomainName\", \"SupportedTestCaseMetaData\", " +
+		"\"UpdateTimeStamp\", \"SupportedTestSuiteMetaData\") "
 	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
 	sqlToExecute = sqlToExecute + ";"
 
@@ -273,7 +280,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestCase
 		common_config.Logger.WithFields(logrus.Fields{
 			"Id":           "cfba1303-eca4-45e1-8903-597bafcce489",
 			"sqlToExecute": sqlToExecute,
-		}).Debug("SQL to be executed within 'performSaveSupportedTestCaseMetaDataParameters'")
+		}).Debug("SQL to be executed within 'performSaveSupportedMetaDataParameters'")
 	}
 
 	// Execute Query CloudDB
@@ -283,7 +290,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedTestCase
 		common_config.Logger.WithFields(logrus.Fields{
 			"Id":           "2321d844-b6bb-4938-8a04-da0181d358ce",
 			"sqlToExecute": sqlToExecute,
-		}).Error("Got some problem when executing SQL within 'performSaveSupportedTestCaseMetaDataParameters'")
+		}).Error("Got some problem when executing SQL within 'performSaveSupportedMetaDataParameters'")
 
 		return err
 	}

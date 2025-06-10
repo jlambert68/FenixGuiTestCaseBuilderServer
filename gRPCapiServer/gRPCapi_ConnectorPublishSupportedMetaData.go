@@ -10,17 +10,16 @@ import (
 )
 
 // ConnectorPublishSupportedMetaData
-// Connector publish supported TestCaseMetaData-parameters
+// Connector publish supported TestCaseMetaData-parameters, for TestCase and TestSuite
 func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) ConnectorPublishSupportedMetaData(
 	ctx context.Context,
-	supportedTestCaseMetaData *fenixTestCaseBuilderServerGrpcApi.
-		SupportedTestCaseMetaData) (
+	supportedMetaData *fenixTestCaseBuilderServerGrpcApi.SupportedTestCaseAndTestSuiteMetaData) (
 	returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse,
 	err error) {
 
 	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
-		"id":                        "76d02500-60b0-41bf-b7c8-37ba314b4f3d",
-		"supportedTestCaseMetaData": supportedTestCaseMetaData,
+		"id":                "76d02500-60b0-41bf-b7c8-37ba314b4f3d",
+		"supportedMetaData": supportedMetaData,
 	}).Debug("Incoming 'gRPCWorker- ConnectorPublishSupportedMetaData'")
 
 	defer fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
@@ -32,13 +31,13 @@ func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) ConnectorPubl
 
 	// Check if Client is using correct proto files version
 	returnMessage = common_config.IsClientUsingCorrectTestDataProtoFileVersion(
-		userId, supportedTestCaseMetaData.GetClientSystemIdentification().ProtoFileVersionUsedByClient)
+		userId, supportedMetaData.GetClientSystemIdentification().ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 
 		fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
-			"id":                        "ed80eaca-72f7-431c-ad89-8ed565e2fc01",
-			"returnMessage":             returnMessage,
-			"supportedTestCaseMetaData": supportedTestCaseMetaData,
+			"id":                "ed80eaca-72f7-431c-ad89-8ed565e2fc01",
+			"returnMessage":     returnMessage,
+			"supportedMetaData": supportedMetaData,
 		}).Debug("Not correct proto-file version")
 
 		// Exiting
@@ -49,15 +48,25 @@ func (s *fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct) ConnectorPubl
 	// ReCreate the  message
 	var reCreatedMessageHashThatWasSigned string
 
+	var supportedTestCaseMetaDataAsJson string
+	var supportedTestSuiteMetaDataAsJson string
+	var jsonAsSlice []string
+
+	supportedTestCaseMetaDataAsJson = supportedMetaData.SupportedTestCaseMetaDataAsJson
+	supportedTestSuiteMetaDataAsJson = supportedMetaData.SupportedTestSuiteMetaDataAsJson
+	jsonAsSlice = append(jsonAsSlice, supportedTestCaseMetaDataAsJson)
+	jsonAsSlice = append(jsonAsSlice, supportedTestSuiteMetaDataAsJson)
+
 	// Create a hash of the slice
-	reCreatedMessageHashThatWasSigned = fenixSyncShared.HashSingleValue(supportedTestCaseMetaData.GetSupportedMetaDataAsJson())
+	reCreatedMessageHashThatWasSigned = fenixSyncShared.HashValues(jsonAsSlice, true)
 
 	// Save ConnectorPublishTemplateRepositoryConnectionParameters in CloudDB
 	var fenixCloudDBObject *CloudDbProcessing.FenixCloudDBObjectStruct
-	err = fenixCloudDBObject.PrepareSavePublishedSupportedTestCaseMetaDataParameters(
-		supportedTestCaseMetaData.GetClientSystemIdentification().GetDomainUuid(),
-		supportedTestCaseMetaData.GetSupportedMetaDataAsJson(),
-		supportedTestCaseMetaData.GetMessageSignatureData(),
+	err = fenixCloudDBObject.PrepareSavePublishedSupportedMetaDataParameters(
+		supportedMetaData.GetClientSystemIdentification().GetDomainUuid(),
+		supportedMetaData.GetSupportedTestCaseMetaDataAsJson(),
+		supportedMetaData.GetSupportedTestSuiteMetaDataAsJson(),
+		supportedMetaData.GetMessageSignatureData(),
 		reCreatedMessageHashThatWasSigned)
 
 	if err != nil {
