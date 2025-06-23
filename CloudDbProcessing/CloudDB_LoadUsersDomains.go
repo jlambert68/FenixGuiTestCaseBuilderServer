@@ -49,14 +49,14 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersDomains(
 
 // Used for holding a Users domain and the Authorizations for that Domain
 type DomainAndAuthorizationsStruct struct {
-	GCPAuthenticatedUser                                       string
-	DomainUuid                                                 string
-	DomainName                                                 string
-	CanListAndViewTestCaseOwnedByThisDomain                    int64
-	CanBuildAndSaveTestCaseOwnedByThisDomain                   int64
-	CanListAndViewTestCaseHavingTIandTICFromThisDomain         int64
-	CanListAndViewTestCaseHavingTIandTICFromThisDomainExtended int64
-	CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain        int64
+	GCPAuthenticatedUser                                                  string
+	DomainUuid                                                            string
+	DomainName                                                            string
+	CanListAndViewTestCaseOrTestSuiteOwnedByThisDomain                    int64
+	CanBuildAndSaveTestCaseOrTestSuiteOwnedByThisDomain                   int64
+	CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain         int64
+	CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomainExtended int64
+	CanBuildAndSaveTestCaseOrTestSuiteHavingTIandTICFromThisDomain        int64
 }
 
 // Concatenate Users specific Domains and Domains open for every one to use
@@ -123,10 +123,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) concatenateUsersDomainsAndDo
 
 		} else {
 			// Replace values
-			termpDomainAndAuthorization.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain =
-				tempdomainOpenForEveryOneToUse.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain
-			termpDomainAndAuthorization.CanListAndViewTestCaseHavingTIandTICFromThisDomain =
-				tempdomainOpenForEveryOneToUse.CanListAndViewTestCaseHavingTIandTICFromThisDomain
+			termpDomainAndAuthorization.CanBuildAndSaveTestCaseOrTestSuiteHavingTIandTICFromThisDomain =
+				tempdomainOpenForEveryOneToUse.CanBuildAndSaveTestCaseOrTestSuiteHavingTIandTICFromThisDomain
+			termpDomainAndAuthorization.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain =
+				tempdomainOpenForEveryOneToUse.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain
 		}
 	}
 
@@ -200,11 +200,11 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersDomains(
 		err = rows.Scan(
 			&tempDomainAndAuthorizations.DomainUuid,
 			&tempDomainAndAuthorizations.DomainName,
-			&tempDomainAndAuthorizations.CanListAndViewTestCaseOwnedByThisDomain,
-			&tempDomainAndAuthorizations.CanBuildAndSaveTestCaseOwnedByThisDomain,
-			&tempDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain,
-			&tempDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomainExtended,
-			&tempDomainAndAuthorizations.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain,
+			&tempDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteOwnedByThisDomain,
+			&tempDomainAndAuthorizations.CanBuildAndSaveTestCaseOrTestSuiteOwnedByThisDomain,
+			&tempDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain,
+			&tempDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomainExtended,
+			&tempDomainAndAuthorizations.CanBuildAndSaveTestCaseOrTestSuiteHavingTIandTICFromThisDomain,
 		)
 
 		if err != nil {
@@ -312,12 +312,12 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainsOpenForEveryOneTo
 
 		// Convert bool to int64 for 'tempCanListAndViewTestCaseHavingTIandTICFromThisDomain'
 		if tempCanListAndViewTestCaseHavingTIandTICFromThisDomain == true {
-			tempDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain = bitNumberValue
+			tempDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain = bitNumberValue
 		}
 
 		// Convert bool to int64 for 'tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain'
 		if tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain == true {
-			tempDomainAndAuthorizations.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain = bitNumberValue
+			tempDomainAndAuthorizations.CanBuildAndSaveTestCaseOrTestSuiteHavingTIandTICFromThisDomain = bitNumberValue
 		}
 
 		// Add user to the row-data

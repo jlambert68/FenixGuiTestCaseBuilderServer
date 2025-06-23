@@ -105,27 +105,27 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadDomainsSupportedTestInst
 		domainList = append(domainList, domainAndAuthorization.DomainUuid)
 
 		// Calculate the Authorization requirements for...
-		// CanBuildAndSaveTestCaseOwnedByThisDomain
-		tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOwnedByThisDomain =
-			tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOwnedByThisDomain +
-				domainAndAuthorization.CanBuildAndSaveTestCaseOwnedByThisDomain
+		// CanBuildAndSaveTestCaseOrTestSuiteOwnedByThisDomain
+		tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOrTestSuiteOwnedByThisDomain =
+			tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOrTestSuiteOwnedByThisDomain +
+				domainAndAuthorization.CanBuildAndSaveTestCaseOrTestSuiteOwnedByThisDomain
 
-		// CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain
-		tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain =
-			tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain +
-				domainAndAuthorization.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain
+		// CanBuildAndSaveTestCaseOrTestSuiteHavingTIandTICFromThisDomain
+		tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOrTestSuiteHavingTIandTICFromThisDomain =
+			tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOrTestSuiteHavingTIandTICFromThisDomain +
+				domainAndAuthorization.CanBuildAndSaveTestCaseOrTestSuiteHavingTIandTICFromThisDomain
 	}
 
-	// Convert Values into string for CanBuildAndSaveTestCaseOwnedByThisDomain
+	// Convert Values into string for CanBuildAndSaveTestCaseOrTestSuiteOwnedByThisDomain
 	var tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomainAsString string
 	tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomainAsString = strconv.FormatInt(
-		tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain, 10)
+		tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOrTestSuiteHavingTIandTICFromThisDomain, 10)
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
 			"Id":    "d502db9f-8814-42c9-a62d-2e83de0ea688",
 			"Error": err,
-			"tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOwnedByThisDomain": tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOwnedByThisDomain,
+			"tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOrTestSuiteOwnedByThisDomain": tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOrTestSuiteOwnedByThisDomain,
 		}).Error("Couldn't convert into string representation")
 
 		return nil, err

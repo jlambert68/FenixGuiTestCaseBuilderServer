@@ -215,26 +215,26 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 
 		// Calculate the Authorization requirements for...
 		// TestCaseAuthorizationLevelOwnedByDomain
-		tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOwnedByThisDomain =
-			tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOwnedByThisDomain +
-				domainAndAuthorization.CanListAndViewTestCaseOwnedByThisDomain
+		tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteOwnedByThisDomain =
+			tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteOwnedByThisDomain +
+				domainAndAuthorization.CanListAndViewTestCaseOrTestSuiteOwnedByThisDomain
 
 		// TestCaseAuthorizationLevelHavingTiAndTicWithDomain
-		tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain =
-			tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain +
-				domainAndAuthorization.CanListAndViewTestCaseHavingTIandTICFromThisDomain
+		tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain =
+			tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain +
+				domainAndAuthorization.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain
 	}
 
 	// Convert Values into string for TestCaseAuthorizationLevelOwnedByDomain
 	var tempCanListAndViewTestCaseOwnedByThisDomainAsString string
 	tempCanListAndViewTestCaseOwnedByThisDomainAsString = strconv.FormatInt(
-		tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain, 10)
+		tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain, 10)
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
 			"Id":    "938e364a-5ab7-4248-bb39-217b283407b8",
 			"Error": err,
-			"tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain": tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain,
+			"tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain": tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain,
 		}).Error("Couldn't convert into string representation")
 
 		return nil, err
@@ -243,13 +243,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestCase(
 	// Convert Values into string for TestCaseAuthorizationLevelOwnedByDomain
 	var tempCanListAndViewTestCaseHavingTIandTICfromThisDomainAsString string
 	tempCanListAndViewTestCaseHavingTIandTICfromThisDomainAsString = strconv.FormatInt(
-		tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain, 10)
+		tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain, 10)
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
 			"Id":    "938e364a-5ab7-4248-bb39-217b283407b8",
 			"Error": err,
-			"tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain": tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseHavingTIandTICFromThisDomain,
+			"tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain": tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain,
 		}).Error("Couldn't convert into string representation")
 
 		return nil, err

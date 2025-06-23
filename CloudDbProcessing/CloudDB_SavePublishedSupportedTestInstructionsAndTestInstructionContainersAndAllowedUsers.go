@@ -532,31 +532,31 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performSaveSupportedAllowedU
 			allowedUser.UserIdOnComputer,
 			allowedUser.GCPAuthenticatedUser}
 
-		// Convert 'CanListAndViewTestCaseOwnedByThisDomain'-bool into value based on 'domainBaseData.bitNumberValue'
+		// Convert 'CanListAndViewTestCaseOrTestSuiteOwnedByThisDomain'-bool into value based on 'domainBaseData.bitNumberValue'
 		var tempCanListAndViewTestCaseOwnedByThisDomain int64
 		if allowedUser.UserAuthorizationRights.CanListAndViewTestCaseOwnedByThisDomain == true {
 			tempCanListAndViewTestCaseOwnedByThisDomain = domainBaseData.bitNumberValue
 		}
 
-		// Convert 'CanBuildAndSaveTestCaseOwnedByThisDomain'-bool into value based on 'domainBaseData.bitNumberValue'
+		// Convert 'CanBuildAndSaveTestCaseOrTestSuiteOwnedByThisDomain'-bool into value based on 'domainBaseData.bitNumberValue'
 		var tempCanBuildAndSaveTestCaseOwnedByThisDomain int64
 		if allowedUser.UserAuthorizationRights.CanBuildAndSaveTestCaseOwnedByThisDomain == true {
 			tempCanBuildAndSaveTestCaseOwnedByThisDomain = domainBaseData.bitNumberValue
 		}
 
-		// Convert 'CanListAndViewTestCaseHavingTIandTICFromThisDomain'-bool into value based on 'domainBaseData.bitNumberValue'
+		// Convert 'CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain'-bool into value based on 'domainBaseData.bitNumberValue'
 		var tempCanListAndViewTestCaseHavingTIandTICFromThisDomain int64
 		if allowedUser.UserAuthorizationRights.CanListAndViewTestCaseHavingTIandTICFromThisDomain == true {
 			tempCanListAndViewTestCaseHavingTIandTICFromThisDomain = domainBaseData.bitNumberValue
 		}
 
-		// Convert 'CanListAndViewTestCaseHavingTIandTICFromThisDomainExtended'-bool into value based on 'domainBaseData.bitNumberValue'
+		// Convert 'CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomainExtended'-bool into value based on 'domainBaseData.bitNumberValue'
 		var tempCanListAndViewTestCaseHavingTIandTICFromThisDomainExtendedn int64
 		if allowedUser.UserAuthorizationRights.CanListAndViewTestCaseHavingTIandTICFromThisDomainExtended == true {
 			tempCanListAndViewTestCaseHavingTIandTICFromThisDomainExtendedn = domainBaseData.bitNumberValue
 		}
 
-		// Convert 'CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain'-bool into value based on 'domainBaseData.bitNumberValue'
+		// Convert 'CanBuildAndSaveTestCaseOrTestSuiteHavingTIandTICFromThisDomain'-bool into value based on 'domainBaseData.bitNumberValue'
 		var tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain int64
 		if allowedUser.UserAuthorizationRights.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain == true {
 			tempCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain = domainBaseData.bitNumberValue

@@ -14,7 +14,7 @@ import (
 // Do initial preparations to be able to load all domains for a specific user
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTestCaseMetaData(
 	gCPAuthenticatedUser string) (
-	testCaseMetaDataResponseMessage *fenixTestCaseBuilderServerGrpcApi.ListTestCaseMetaDataResponseMessage) {
+	testCaseAndTestSuiteMetaDataResponseMessage *fenixTestCaseBuilderServerGrpcApi.ListTestCaseAndTestSuiteMetaDataResponseMessage) {
 
 	// Begin SQL Transaction
 	txn, err := fenixSyncShared.DbPool.Begin(context.Background())
@@ -25,8 +25,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTestCaseMeta
 			"error": err,
 		}).Error("Problem to do 'DbPool.Begin'  in 'PrepareLoadUsersTestCaseMetaData'")
 
-		testCaseMetaDataResponseMessage = &fenixTestCaseBuilderServerGrpcApi.
-			ListTestCaseMetaDataResponseMessage{
+		testCaseAndTestSuiteMetaDataResponseMessage = &fenixTestCaseBuilderServerGrpcApi.
+			ListTestCaseAndTestSuiteMetaDataResponseMessage{
 			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
 				AckNack:    false,
 				Comments:   err.Error(),
@@ -35,10 +35,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTestCaseMeta
 					CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.
 						GetHighestFenixGuiBuilderProtoFileVersion()),
 			},
-			TestCaseMetaDataForDomains: nil,
+			TestCaseAndTestSuiteMetaDataForDomains: nil,
 		}
 
-		return testCaseMetaDataResponseMessage
+		return testCaseAndTestSuiteMetaDataResponseMessage
 
 	}
 
@@ -55,8 +55,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTestCaseMeta
 			"gCPAuthenticatedUser": gCPAuthenticatedUser,
 		}).Error("Got some problem when loading users domains from database")
 
-		testCaseMetaDataResponseMessage = &fenixTestCaseBuilderServerGrpcApi.
-			ListTestCaseMetaDataResponseMessage{
+		testCaseAndTestSuiteMetaDataResponseMessage = &fenixTestCaseBuilderServerGrpcApi.
+			ListTestCaseAndTestSuiteMetaDataResponseMessage{
 			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
 				AckNack:    false,
 				Comments:   err.Error(),
@@ -65,10 +65,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTestCaseMeta
 					CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.
 						GetHighestFenixGuiBuilderProtoFileVersion()),
 			},
-			TestCaseMetaDataForDomains: nil,
+			TestCaseAndTestSuiteMetaDataForDomains: nil,
 		}
 
-		return testCaseMetaDataResponseMessage
+		return testCaseAndTestSuiteMetaDataResponseMessage
 
 	}
 
@@ -79,8 +79,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTestCaseMeta
 			"gCPAuthenticatedUser": gCPAuthenticatedUser,
 		}).Warning("User doesn't have access to any domains")
 
-		testCaseMetaDataResponseMessage = &fenixTestCaseBuilderServerGrpcApi.
-			ListTestCaseMetaDataResponseMessage{
+		testCaseAndTestSuiteMetaDataResponseMessage = &fenixTestCaseBuilderServerGrpcApi.
+			ListTestCaseAndTestSuiteMetaDataResponseMessage{
 			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
 				AckNack:    false,
 				Comments:   fmt.Sprintf("User %s doesn't have access to any domains", gCPAuthenticatedUser),
@@ -89,10 +89,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTestCaseMeta
 					CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.
 						GetHighestFenixGuiBuilderProtoFileVersion()),
 			},
-			TestCaseMetaDataForDomains: nil,
+			TestCaseAndTestSuiteMetaDataForDomains: nil,
 		}
 
-		return testCaseMetaDataResponseMessage
+		return testCaseAndTestSuiteMetaDataResponseMessage
 
 	}
 
@@ -100,7 +100,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTestCaseMeta
 	var domainsThatCanOwnTheTestCase []*fenixTestCaseBuilderServerGrpcApi.DomainsThatCanOwnTheTestCaseMessage
 
 	for _, domainAndAuthorization := range domainAndAuthorizations {
-		if domainAndAuthorization.CanBuildAndSaveTestCaseOwnedByThisDomain > 0 {
+		if domainAndAuthorization.CanBuildAndSaveTestCaseOrTestSuiteOwnedByThisDomain > 0 {
 
 			// When value is set then the Domain can own a TestCase
 			var tempDomainsThatCanOwnTheTestCase *fenixTestCaseBuilderServerGrpcApi.DomainsThatCanOwnTheTestCaseMessage
@@ -121,8 +121,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTestCaseMeta
 			"gCPAuthenticatedUser": gCPAuthenticatedUser,
 		}).Warning("User doesn't have access to any domains that can own TestCase. This will automatically give that no TestCaseMetaData can be loaded")
 
-		testCaseMetaDataResponseMessage = &fenixTestCaseBuilderServerGrpcApi.
-			ListTestCaseMetaDataResponseMessage{
+		testCaseAndTestSuiteMetaDataResponseMessage = &fenixTestCaseBuilderServerGrpcApi.
+			ListTestCaseAndTestSuiteMetaDataResponseMessage{
 			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
 				AckNack:    false,
 				Comments:   fmt.Sprintf("User %s doesn't have access to any domains that can own TestCase and therefor no TestCaseMetaData can be loaded", gCPAuthenticatedUser),
@@ -131,16 +131,16 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTestCaseMeta
 					CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.
 						GetHighestFenixGuiBuilderProtoFileVersion()),
 			},
-			TestCaseMetaDataForDomains: nil,
+			TestCaseAndTestSuiteMetaDataForDomains: nil,
 		}
 
-		return testCaseMetaDataResponseMessage
+		return testCaseAndTestSuiteMetaDataResponseMessage
 
 	}
 
 	// Load all parameters to be able to construct the TemplateApiUrls
-	var testCaseMetaDataForDomains []*fenixTestCaseBuilderServerGrpcApi.TestCaseMetaDataForOneDomainMessage
-	testCaseMetaDataForDomains, err = fenixCloudDBObject.loadUsersTestCaseMetaDataParameters(
+	var testCaseMetaDataForDomains []*fenixTestCaseBuilderServerGrpcApi.TestCaseAndTestSuiteMetaDataForOneDomainMessage
+	testCaseMetaDataForDomains, err = fenixCloudDBObject.loadUsersTestCaseAndTestSuiteMetaDataParameters(
 		txn,
 		domainsThatCanOwnTheTestCase)
 
@@ -150,8 +150,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTestCaseMeta
 			"gCPAuthenticatedUser": gCPAuthenticatedUser,
 		}).Error("Got some error when loading Template-url-parameters from Database")
 
-		testCaseMetaDataResponseMessage = &fenixTestCaseBuilderServerGrpcApi.
-			ListTestCaseMetaDataResponseMessage{
+		testCaseAndTestSuiteMetaDataResponseMessage = &fenixTestCaseBuilderServerGrpcApi.
+			ListTestCaseAndTestSuiteMetaDataResponseMessage{
 			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
 				AckNack:    false,
 				Comments:   fmt.Sprintf("Got some error when loading TestCaseMetaData-arameters from Database for User '%s'", gCPAuthenticatedUser),
@@ -160,10 +160,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTestCaseMeta
 					CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.
 						GetHighestFenixGuiBuilderProtoFileVersion()),
 			},
-			TestCaseMetaDataForDomains: nil,
+			TestCaseAndTestSuiteMetaDataForDomains: nil,
 		}
 
-		return testCaseMetaDataResponseMessage
+		return testCaseAndTestSuiteMetaDataResponseMessage
 	}
 
 	// Check if any template-parameters was found in database
@@ -173,8 +173,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTestCaseMeta
 			"gCPAuthenticatedUser": gCPAuthenticatedUser,
 		}).Warning("Didn't find any Template-parameter for user, which shouldn't happen")
 
-		testCaseMetaDataResponseMessage = &fenixTestCaseBuilderServerGrpcApi.
-			ListTestCaseMetaDataResponseMessage{
+		testCaseAndTestSuiteMetaDataResponseMessage = &fenixTestCaseBuilderServerGrpcApi.
+			ListTestCaseAndTestSuiteMetaDataResponseMessage{
 			AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
 				AckNack:    false,
 				Comments:   fmt.Sprintf("Didn't find any TestCaseMetaData-parameter for user '%s', which shouldn't happen", gCPAuthenticatedUser),
@@ -183,15 +183,15 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTestCaseMeta
 					CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.
 						GetHighestFenixGuiBuilderProtoFileVersion()),
 			},
-			TestCaseMetaDataForDomains: nil,
+			TestCaseAndTestSuiteMetaDataForDomains: nil,
 		}
 
-		return testCaseMetaDataResponseMessage
+		return testCaseAndTestSuiteMetaDataResponseMessage
 	}
 
 	// Create ResponseMessage
-	testCaseMetaDataResponseMessage = &fenixTestCaseBuilderServerGrpcApi.
-		ListTestCaseMetaDataResponseMessage{
+	testCaseAndTestSuiteMetaDataResponseMessage = &fenixTestCaseBuilderServerGrpcApi.
+		ListTestCaseAndTestSuiteMetaDataResponseMessage{
 		AckNackResponse: &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
 			AckNack:    true,
 			Comments:   "",
@@ -200,29 +200,29 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTestCaseMeta
 				CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.
 					GetHighestFenixGuiBuilderProtoFileVersion()),
 		},
-		TestCaseMetaDataForDomains: testCaseMetaDataForDomains,
+		TestCaseAndTestSuiteMetaDataForDomains: testCaseMetaDataForDomains,
 	}
 
-	return testCaseMetaDataResponseMessage
+	return testCaseAndTestSuiteMetaDataResponseMessage
 
 }
 
-// Load all TestCaseMetaData-parameters for all Domains that the User has access to
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersTestCaseMetaDataParameters(
+// Load all TestCaseMetaData- and TestSuite-parameters for all Domains that the User has access to
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersTestCaseAndTestSuiteMetaDataParameters(
 	dbTransaction pgx.Tx,
 	domainsToTestCaseMetaDataFor []*fenixTestCaseBuilderServerGrpcApi.DomainsThatCanOwnTheTestCaseMessage) (
-	testCaseMetaDataForDomains []*fenixTestCaseBuilderServerGrpcApi.TestCaseMetaDataForOneDomainMessage,
+	testCaseAndTestSuiteMetaDataForDomains []*fenixTestCaseBuilderServerGrpcApi.TestCaseAndTestSuiteMetaDataForOneDomainMessage,
 	err error) {
 
 	common_config.Logger.WithFields(logrus.Fields{
 		"Id":                           "b482cff4-72a3-4ac3-a695-271edfb1b5d1",
 		"domainsToTestCaseMetaDataFor": domainsToTestCaseMetaDataFor,
-	}).Debug("Entering: loadUsersTestCaseMetaDataParameters")
+	}).Debug("Entering: loadUsersTestCaseAndTestSuiteMetaDataParameters")
 
 	defer func() {
 		common_config.Logger.WithFields(logrus.Fields{
 			"Id": "ec1b3cf2-d59b-43c8-9a1a-4a480f86883c",
-		}).Debug("Exiting: loadUsersTestCaseMetaDataParameters")
+		}).Debug("Exiting: loadUsersTestCaseAndTestSuiteMetaDataParameters")
 	}()
 
 	// Generate SQLINArray containing DomainUuids
@@ -238,8 +238,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersTestCaseMetaDataPar
 	sQLINArray = fenixCloudDBObject.generateSQLINArray(domainSlice)
 
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "SELECT \"DomainUuid\", \"DomainName\", \"SupportedTestCaseMetaData\" "
-	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"SupportedTestCaseMetaData\" "
+	sqlToExecute = sqlToExecute + "SELECT \"DomainUuid\", \"DomainName\", \"SupportedTestCaseMetaData\", " +
+		"\"SupportedTestSuiteMetaData\" "
+	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"SupportedTestCaseAndTestSuiteMetaData\" "
 	sqlToExecute = sqlToExecute + "WHERE \"DomainUuid\" IN " + sQLINArray + ""
 	sqlToExecute = sqlToExecute + ";"
 
@@ -248,7 +249,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersTestCaseMetaDataPar
 		common_config.Logger.WithFields(logrus.Fields{
 			"Id":           "8c65ac46-2fc6-4e8b-9d7a-e617d55fbdf7",
 			"sqlToExecute": sqlToExecute,
-		}).Debug("SQL to be executed within 'loadUsersTestCaseMetaDataParameters'")
+		}).Debug("SQL to be executed within 'loadUsersTestCaseAndTestSuiteMetaDataParameters'")
 	}
 
 	// Query DB
@@ -272,14 +273,15 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersTestCaseMetaDataPar
 	// Extract data from DB result set
 	for rows.Next() {
 
-		var testCaseMetaDataForDomain *fenixTestCaseBuilderServerGrpcApi.TestCaseMetaDataForOneDomainMessage
-		testCaseMetaDataForDomain = &fenixTestCaseBuilderServerGrpcApi.TestCaseMetaDataForOneDomainMessage{}
+		var testCaseAndTestSuiteMetaDataForDomain *fenixTestCaseBuilderServerGrpcApi.TestCaseAndTestSuiteMetaDataForOneDomainMessage
+		testCaseAndTestSuiteMetaDataForDomain = &fenixTestCaseBuilderServerGrpcApi.TestCaseAndTestSuiteMetaDataForOneDomainMessage{}
 
 		err = rows.Scan(
 
-			&testCaseMetaDataForDomain.DomainUuid,
-			&testCaseMetaDataForDomain.DomainName,
-			&testCaseMetaDataForDomain.TestCaseMetaDataAsJson,
+			&testCaseAndTestSuiteMetaDataForDomain.DomainUuid,
+			&testCaseAndTestSuiteMetaDataForDomain.DomainName,
+			&testCaseAndTestSuiteMetaDataForDomain.TestCaseMetaDataAsJson,
+			&testCaseAndTestSuiteMetaDataForDomain.TestSuiteMetaDataAsJson,
 		)
 
 		if err != nil {
@@ -292,10 +294,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersTestCaseMetaDataPar
 			return nil, err
 		}
 
-		// Add 'testCaseMetaDataForDomain' to list
-		testCaseMetaDataForDomains = append(testCaseMetaDataForDomains, testCaseMetaDataForDomain)
+		// Add 'testCaseAndTestSuiteMetaDataForDomain' to list
+		testCaseAndTestSuiteMetaDataForDomains = append(testCaseAndTestSuiteMetaDataForDomains, testCaseAndTestSuiteMetaDataForDomain)
 
 	}
 
-	return testCaseMetaDataForDomains, err
+	return testCaseAndTestSuiteMetaDataForDomains, err
 }

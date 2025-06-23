@@ -67,8 +67,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareDeleteTestCaseAtThisD
 		&doCommitNotRoleBack)
 
 	// Extract Domain that Owns the TestCase
-	var ownerDomainForTestCase domainForTestCaseStruct
-	ownerDomainForTestCase = domainForTestCaseStruct{
+	var ownerDomainForTestCase domainForTestCaseOrTestSuiteStruct
+	ownerDomainForTestCase = domainForTestCaseOrTestSuiteStruct{
 		domainUuid: deleteTestCaseAtThisDateRequest.GetDeleteThisTestCaseAtThisDate().GetDomainUuid(),
 		domainName: deleteTestCaseAtThisDateRequest.GetDeleteThisTestCaseAtThisDate().GetDomainName(),
 	}
@@ -89,7 +89,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareDeleteTestCaseAtThisD
 	}
 
 	// Extract all Domains that exist within all TestInstructions and TestInstructionContainers in the TestCase
-	var allDomainsWithinTestCase []domainForTestCaseStruct
+	var allDomainsWithinTestCase []domainForTestCaseOrTestSuiteStruct
 	allDomainsWithinTestCase = fenixCloudDBObject.extractAllDomainsWithinTestCase(tempDetailedTestCaseFromDatabase.DetailedTestCase)
 
 	// Load Users all Domains

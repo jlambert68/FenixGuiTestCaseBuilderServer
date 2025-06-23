@@ -102,7 +102,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadUsersTemplateRepo
 	var domainsThatCanOwnTheTestCase []*fenixTestCaseBuilderServerGrpcApi.DomainsThatCanOwnTheTestCaseMessage
 
 	for _, domainAndAuthorization := range domainAndAuthorizations {
-		if domainAndAuthorization.CanBuildAndSaveTestCaseOwnedByThisDomain > 0 {
+		if domainAndAuthorization.CanBuildAndSaveTestCaseOrTestSuiteOwnedByThisDomain > 0 {
 
 			// When value is set then the Domain can own a TestCase
 			var tempDomainsThatCanOwnTheTestCase *fenixTestCaseBuilderServerGrpcApi.DomainsThatCanOwnTheTestCaseMessage

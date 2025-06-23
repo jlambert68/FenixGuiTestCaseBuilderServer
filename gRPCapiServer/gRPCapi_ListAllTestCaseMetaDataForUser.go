@@ -8,12 +8,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// ListTestCaseMetaData
-// TesterGui use this gRPC-api to get all TestCaseMetaData for user to use when building TestCases
-func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListTestCaseMetaData(
+// ListTestCaseAndTestSuiteMetaData
+// TesterGui use this gRPC-api to get all TestCaseMetaData and TestSuiteMeta for user to use when building TestCases and TestSuites
+func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListTestCaseAndTestSuiteMetaData(
 	ctx context.Context,
 	userIdentificationMessage *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage) (
-	*fenixTestCaseBuilderServerGrpcApi.ListTestCaseMetaDataResponseMessage, error) {
+	*fenixTestCaseBuilderServerGrpcApi.ListTestCaseAndTestSuiteMetaDataResponseMessage, error) {
 
 	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"id": "741ccbff-4db4-4a80-b147-51a196714c91",
@@ -28,10 +28,10 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListTestCaseMetaDat
 	if returnMessage != nil {
 
 		// Not correct proto-file version is used
-		var responseMessage *fenixTestCaseBuilderServerGrpcApi.ListTestCaseMetaDataResponseMessage
-		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ListTestCaseMetaDataResponseMessage{
-			AckNackResponse:            returnMessage,
-			TestCaseMetaDataForDomains: nil,
+		var responseMessage *fenixTestCaseBuilderServerGrpcApi.ListTestCaseAndTestSuiteMetaDataResponseMessage
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ListTestCaseAndTestSuiteMetaDataResponseMessage{
+			AckNackResponse:                        returnMessage,
+			TestCaseAndTestSuiteMetaDataForDomains: nil,
 		}
 
 		// Exiting
@@ -43,7 +43,7 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) ListTestCaseMetaDat
 	fenixCloudDBObject = &CloudDbProcessing.FenixCloudDBObjectStruct{}
 
 	// Load list with TestCase Hashes from Database
-	var responseMessage *fenixTestCaseBuilderServerGrpcApi.ListTestCaseMetaDataResponseMessage
+	var responseMessage *fenixTestCaseBuilderServerGrpcApi.ListTestCaseAndTestSuiteMetaDataResponseMessage
 	responseMessage = fenixCloudDBObject.PrepareLoadUsersTestCaseMetaData(userIdentificationMessage.GCPAuthenticatedUser)
 
 	return responseMessage, nil

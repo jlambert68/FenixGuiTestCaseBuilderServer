@@ -86,11 +86,11 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestCase(
 		&doCommitNotRoleBack)
 
 	// Extract Domain that Owns the TestCase
-	var ownerDomainForTestCase domainForTestCaseStruct
+	var ownerDomainForTestCase domainForTestCaseOrTestSuiteStruct
 	ownerDomainForTestCase = fenixCloudDBObject.extractOwnerDomainFromTestCase(fullTestCaseMessage)
 
 	// Extract all Domains that exist within all TestInstructions and TestInstructionContainers in the TestCase
-	var allDomainsWithinTestCase []domainForTestCaseStruct
+	var allDomainsWithinTestCase []domainForTestCaseOrTestSuiteStruct
 	allDomainsWithinTestCase = fenixCloudDBObject.extractAllDomainsWithinTestCase(fullTestCaseMessage)
 
 	// Load Users all Domains
@@ -200,8 +200,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestCase(
 	return returnMessage
 }
 
-// Struct used when extracting the Owner Domain for a TestCase
-type domainForTestCaseStruct struct {
+// Struct used when extracting the Owner Domain for a TestCase or a TestSuite
+type domainForTestCaseOrTestSuiteStruct struct {
 	domainUuid string
 	domainName string
 }
@@ -209,7 +209,7 @@ type domainForTestCaseStruct struct {
 // Extract Domain that Owns the TestCase
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) extractOwnerDomainFromTestCase(
 	fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (
-	ownerDomainForTestCase domainForTestCaseStruct) {
+	ownerDomainForTestCase domainForTestCaseOrTestSuiteStruct) {
 
 	// Extract the Owner Domain Uuid
 	ownerDomainForTestCase.domainUuid = fullTestCaseMessage.GetTestCaseBasicInformation().
@@ -225,7 +225,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) extractOwnerDomainFromTestCa
 // Extract all Domains that exist within all TestInstructions and TestInstructionContainers in the TestCase
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) extractAllDomainsWithinTestCase(
 	fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (
-	allDomainsWithinTestCase []domainForTestCaseStruct) {
+	allDomainsWithinTestCase []domainForTestCaseOrTestSuiteStruct) {
 
 	var tempDomainsMap map[string]string
 	var existsInDomainsMap bool
@@ -235,8 +235,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) extractAllDomainsWithinTestC
 	for _, tempMatureTestInstruction := range fullTestCaseMessage.GetMatureTestInstructions().
 		GetMatureTestInstructions() {
 
-		var tempDomainsWithinTestCase domainForTestCaseStruct
-		tempDomainsWithinTestCase = domainForTestCaseStruct{
+		var tempDomainsWithinTestCase domainForTestCaseOrTestSuiteStruct
+		tempDomainsWithinTestCase = domainForTestCaseOrTestSuiteStruct{
 			domainUuid: tempMatureTestInstruction.GetBasicTestInstructionInformation().GetNonEditableInformation().
 				GetDomainUuid(),
 			domainName: tempMatureTestInstruction.GetBasicTestInstructionInformation().GetNonEditableInformation().
@@ -261,8 +261,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) extractAllDomainsWithinTestC
 	for _, tempMatureTestInstructionContainer := range fullTestCaseMessage.GetMatureTestInstructionContainers().
 		GetMatureTestInstructionContainers() {
 
-		var tempDomainsWithinTestCase domainForTestCaseStruct
-		tempDomainsWithinTestCase = domainForTestCaseStruct{
+		var tempDomainsWithinTestCase domainForTestCaseOrTestSuiteStruct
+		tempDomainsWithinTestCase = domainForTestCaseOrTestSuiteStruct{
 			domainUuid: tempMatureTestInstructionContainer.GetBasicTestInstructionContainerInformation().
 				GetNonEditableInformation().GetDomainUuid(),
 			domainName: tempMatureTestInstructionContainer.GetBasicTestInstructionContainerInformation().
@@ -289,8 +289,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) extractAllDomainsWithinTestC
 // Verify that User is allowed to Save TestCase
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyThatUserIsAllowedToSaveTestCase(
 	dbTransaction pgx.Tx,
-	ownerDomainForTestCase domainForTestCaseStruct,
-	allDomainsWithinTestCase []domainForTestCaseStruct,
+	ownerDomainForTestCase domainForTestCaseOrTestSuiteStruct,
+	allDomainsWithinTestCase []domainForTestCaseOrTestSuiteStruct,
 	usersDomainsAndAuthorizations []DomainAndAuthorizationsStruct) (
 	userIsAllowedToSaveTestCase bool,
 	authorizationValueForOwnerDomain int64,
@@ -299,7 +299,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyThatUserIsAllowedToSav
 
 	// List Authorization value for 'OwnerDomain' from database
 	authorizationValueForOwnerDomain, err = fenixCloudDBObject.loadAuthorizationValueBasedOnDomainList(
-		dbTransaction, []domainForTestCaseStruct{ownerDomainForTestCase})
+		dbTransaction, []domainForTestCaseOrTestSuiteStruct{ownerDomainForTestCase})
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
@@ -338,27 +338,27 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyThatUserIsAllowedToSav
 		domainList = append(domainList, domainAndAuthorization.DomainUuid)
 
 		// Calculate the Authorization requirements for...
-		// CanBuildAndSaveTestCaseOwnedByThisDomain
-		tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOwnedByThisDomain =
-			tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOwnedByThisDomain +
-				domainAndAuthorization.CanBuildAndSaveTestCaseOwnedByThisDomain
+		// CanBuildAndSaveTestCaseOrTestSuiteOwnedByThisDomain
+		tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOrTestSuiteOwnedByThisDomain =
+			tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOrTestSuiteOwnedByThisDomain +
+				domainAndAuthorization.CanBuildAndSaveTestCaseOrTestSuiteOwnedByThisDomain
 
-		// CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain
-		tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain =
-			tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain +
-				domainAndAuthorization.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain
+		// CanBuildAndSaveTestCaseOrTestSuiteHavingTIandTICFromThisDomain
+		tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOrTestSuiteHavingTIandTICFromThisDomain =
+			tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOrTestSuiteHavingTIandTICFromThisDomain +
+				domainAndAuthorization.CanBuildAndSaveTestCaseOrTestSuiteHavingTIandTICFromThisDomain
 	}
 
-	// Check if User can Save TestCase due to 'CanBuildAndSaveTestCaseOwnedByThisDomain'
+	// Check if User can Save TestCase due to 'CanBuildAndSaveTestCaseOrTestSuiteOwnedByThisDomain'
 	var userCanBuildAndSaveTestCaseOwnedByThisDomain bool
 	userCanBuildAndSaveTestCaseOwnedByThisDomain =
-		(tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOwnedByThisDomain & authorizationValueForOwnerDomain) ==
+		(tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOrTestSuiteOwnedByThisDomain & authorizationValueForOwnerDomain) ==
 			authorizationValueForOwnerDomain
 
-	// Check if User canSave TestCase due to 'CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain'
+	// Check if User canSave TestCase due to 'CanBuildAndSaveTestCaseOrTestSuiteHavingTIandTICFromThisDomain'
 	var userCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain bool
 	userCanBuildAndSaveTestCaseHavingTIandTICFromThisDomain =
-		(tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseHavingTIandTICFromThisDomain & authorizationValueForAllDomainsInTestCase) ==
+		(tempCalculatedDomainAndAuthorizations.CanBuildAndSaveTestCaseOrTestSuiteHavingTIandTICFromThisDomain & authorizationValueForAllDomainsInTestCase) ==
 			authorizationValueForAllDomainsInTestCase
 
 	// Are both control 'true'
@@ -373,7 +373,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyThatUserIsAllowedToSav
 // Load Authorization value based on Domain List
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadAuthorizationValueBasedOnDomainList(
 	dbTransaction pgx.Tx,
-	domainList []domainForTestCaseStruct) (
+	domainList []domainForTestCaseOrTestSuiteStruct) (
 	authorizationValue int64,
 	err error) {
 
