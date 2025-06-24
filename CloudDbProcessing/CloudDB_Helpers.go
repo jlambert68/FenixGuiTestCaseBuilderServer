@@ -109,7 +109,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) getNexTestSuiteVersion(
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "SELECT MAX(TS.\"TestSuiteVersion\") "
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestSuites\" TS "
-	sqlToExecute = sqlToExecute + "WHERE TS.\"TestSuitesUuid\" = '" + testSuiteUuid + "';"
+	sqlToExecute = sqlToExecute + "WHERE TS.\"TestSuiteUuid\" = '" + testSuiteUuid + "';"
 
 	// Query DB
 	var ctx context.Context

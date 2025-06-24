@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/shared_code"
-	"math/rand"
+
 	"strconv"
 	"time"
 
@@ -95,8 +95,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestSuite(
 
 	// Extract all TestCaseUuid from TestSuite
 	var testCaseUuidsInTestSuite []string
-	for _, tempTestCasesInTestSuite := range fullTestSuiteMessage.TestCasesInTestSuite.TestCasesInTestSuite {
-		testCaseUuidsInTestSuite = append(testCaseUuidsInTestSuite, tempTestCasesInTestSuite.TestCaseUuid)
+	if fullTestSuiteMessage.TestCasesInTestSuite != nil {
+		for _, tempTestCasesInTestSuite := range fullTestSuiteMessage.TestCasesInTestSuite.TestCasesInTestSuite {
+			testCaseUuidsInTestSuite = append(testCaseUuidsInTestSuite, tempTestCasesInTestSuite.TestCaseUuid)
+		}
 	}
 
 	var testInstructionsInTestSuite *[]*fenixTestCaseBuilderServerGrpcApi.MatureTestInstructionsMessage
@@ -234,15 +236,18 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestSuite(
 		return returnMessage
 	}
 
-	// Save the Users TestData for the TestSuite
-	returnMessage, err = fenixCloudDBObject.saveTestDataForTestSuite(
-		txn,
-		fullTestSuiteMessage,
-		fullTestSuiteMessage.GetUserIdentification().GetGCPAuthenticatedUser())
+	/*
+		// Save the Users TestData for the TestSuite
+		returnMessage, err = fenixCloudDBObject.saveTestDataForTestSuite(
+			txn,
+			fullTestSuiteMessage,
+			fullTestSuiteMessage.GetUserIdentification().GetGCPAuthenticatedUser())
 
-	if err != nil {
-		return returnMessage
-	}
+		if err != nil {
+			return returnMessage
+		}
+
+	*/
 
 	doCommitNotRoleBack = true
 
@@ -273,63 +278,68 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) extractAllDomainsWithinTestS
 	var existsInDomainsMap bool
 	tempDomainsMap = make(map[string]string)
 
-	// Loop TestInstructions for each TestCase
-	for _, tempMatureTestInstructionsPerTestCase := range *testInstructionsInTestSuite {
+	if testInstructionsInTestSuite != nil {
 
-		// Loop TestInstructions in TestCase
-		for _, tempMatureTestInstruction := range tempMatureTestInstructionsPerTestCase.GetMatureTestInstructions() {
+		// Loop TestInstructions for each TestCase
+		for _, tempMatureTestInstructionsPerTestCase := range *testInstructionsInTestSuite {
 
-			var tempDomainsWithinTestCase domainForTestCaseOrTestSuiteStruct
-			tempDomainsWithinTestCase = domainForTestCaseOrTestSuiteStruct{
-				domainUuid: tempMatureTestInstruction.GetBasicTestInstructionInformation().GetNonEditableInformation().
-					GetDomainUuid(),
-				domainName: tempMatureTestInstruction.GetBasicTestInstructionInformation().GetNonEditableInformation().
-					GetDomainName(),
-			}
+			// Loop TestInstructions in TestCase
+			for _, tempMatureTestInstruction := range tempMatureTestInstructionsPerTestCase.GetMatureTestInstructions() {
 
-			// Check if the Domain already exists in 'tempDomainsMap'
-			_, existsInDomainsMap = tempDomainsMap[tempDomainsWithinTestCase.domainUuid]
+				var tempDomainsWithinTestCase domainForTestCaseOrTestSuiteStruct
+				tempDomainsWithinTestCase = domainForTestCaseOrTestSuiteStruct{
+					domainUuid: tempMatureTestInstruction.GetBasicTestInstructionInformation().GetNonEditableInformation().
+						GetDomainUuid(),
+					domainName: tempMatureTestInstruction.GetBasicTestInstructionInformation().GetNonEditableInformation().
+						GetDomainName(),
+				}
 
-			// Only store the Domain is missing in map
-			if existsInDomainsMap == false {
+				// Check if the Domain already exists in 'tempDomainsMap'
+				_, existsInDomainsMap = tempDomainsMap[tempDomainsWithinTestCase.domainUuid]
 
-				// Add to Map
-				tempDomainsMap[tempDomainsWithinTestCase.domainUuid] = tempDomainsWithinTestCase.domainUuid
+				// Only store the Domain is missing in map
+				if existsInDomainsMap == false {
 
-				// Add Domain to slice of alla Domains within TestSuite
-				allDomainsWithinTestSuite = append(allDomainsWithinTestSuite, tempDomainsWithinTestCase)
+					// Add to Map
+					tempDomainsMap[tempDomainsWithinTestCase.domainUuid] = tempDomainsWithinTestCase.domainUuid
+
+					// Add Domain to slice of alla Domains within TestSuite
+					allDomainsWithinTestSuite = append(allDomainsWithinTestSuite, tempDomainsWithinTestCase)
+				}
 			}
 		}
 	}
 
+	if testInstructionContainersInTestSuite != nil {
 
-	// Loop TestInstructionContainers for each TestCase
-	for _, tempMatureTestInstructionContainersPerTestCase := range *testInstructionContainersInTestSuite {
+		// Loop TestInstructionContainers for each TestCase
+		for _, tempMatureTestInstructionContainersPerTestCase := range *testInstructionContainersInTestSuite {
 
-		// Loop TestInstructionContainers in TestCase
-		for _, tempMatureTestInstructionContainer := range tempMatureTestInstructionContainersPerTestCase.GetMatureTestInstructionContainers() {
+			// Loop TestInstructionContainers in TestCase
+			for _, tempMatureTestInstructionContainer := range tempMatureTestInstructionContainersPerTestCase.GetMatureTestInstructionContainers() {
 
+				// Extract the Domain for each TestInstructionContainer
+				var tempDomainsWithinTestCase domainForTestCaseOrTestSuiteStruct
+				tempDomainsWithinTestCase = domainForTestCaseOrTestSuiteStruct{
+					domainUuid: tempMatureTestInstructionContainer.GetBasicTestInstructionContainerInformation().
+						GetNonEditableInformation().GetDomainUuid(),
+					domainName: tempMatureTestInstructionContainer.GetBasicTestInstructionContainerInformation().
+						GetNonEditableInformation().GetDomainName(),
+				}
 
-	// Extract the Domain for each TestInstructionContainer
-		var tempDomainsWithinTestCase domainForTestCaseOrTestSuiteStruct
-		tempDomainsWithinTestCase = domainForTestCaseOrTestSuiteStruct{
-			domainUuid: tempMatureTestInstructionContainer.GetBasicTestInstructionContainerInformation().
-				GetNonEditableInformation().GetDomainUuid(),
-			domainName: tempMatureTestInstructionContainer.GetBasicTestInstructionContainerInformation().
-				GetNonEditableInformation().GetDomainName(),
-		}
+				// Check if the Domain already exists in 'tempDomainsMap'
+				_, existsInDomainsMap = tempDomainsMap[tempDomainsWithinTestCase.domainUuid]
 
-		// Check if the Domain already exists in 'tempDomainsMap'
-		_, existsInDomainsMap = tempDomainsMap[tempDomainsWithinTestCase.domainUuid]
+				// Only store the Domain is missing in map
+				if existsInDomainsMap == false {
 
-		// Only store the Domain is missing in map
-		if existsInDomainsMap == false {
+					// Add to Map
+					tempDomainsMap[tempDomainsWithinTestCase.domainUuid] = tempDomainsWithinTestCase.domainUuid
 
-			// Add to Map
-			tempDomainsMap[tempDomainsWithinTestCase.domainUuid] = tempDomainsWithinTestCase.domainUuid
-
-			// Add Domain to slice of alla Domains within TestSuite
-			allDomainsWithinTestSuite = append(allDomainsWithinTestSuite, tempDomainsWithinTestCase)
+					// Add Domain to slice of alla Domains within TestSuite
+					allDomainsWithinTestSuite = append(allDomainsWithinTestSuite, tempDomainsWithinTestCase)
+				}
+			}
 		}
 	}
 
@@ -493,13 +503,29 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 
 	tempTestSuiteIsDeleted := false
 
+	// Initiate 'TestCasesInTestSuite' if nil
+	if fullTestSuiteMessage.GetTestCasesInTestSuite() == nil {
+		fullTestSuiteMessage.TestCasesInTestSuite = &fenixTestCaseBuilderServerGrpcApi.TestCasesInTestSuiteMessage{}
+	}
 	tempTestCasesInTestSuiteAsJsonb := protojson.Format(fullTestSuiteMessage.GetTestCasesInTestSuite())
 	// TestSuitePreviewAsJsonb - below
+
+	// Initiate 'TestSuiteMetaData' if nil
+	if fullTestSuiteMessage.GetTestSuiteMetaData() == nil {
+		fullTestSuiteMessage.TestSuiteMetaData = &fenixTestCaseBuilderServerGrpcApi.UserSpecifiedTestSuiteMetaDataMessage{}
+	}
 	tempTestSuiteMetaDataAsJsonb := protojson.Format(fullTestSuiteMessage.GetTestSuiteMetaData())
 
-	// finish Preview-structure to be saved
-	fullTestSuiteMessage.TestSuitePreview.TestSuitePreview.TestSuiteVersion = strconv.Itoa(int(nexTestSuiteVersion))
-	fullTestSuiteMessage.TestSuitePreview.TestSuitePreview.LastSavedTimeStamp = insertTimeStamp
+	// Initiate 'TestSuitePreview' if nil
+	if fullTestSuiteMessage.GetTestSuitePreview() == nil {
+		fullTestSuiteMessage.TestSuitePreview = &fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewMessage{}
+
+	} else {
+
+		// finish Preview-structure to be saved
+		fullTestSuiteMessage.TestSuitePreview.TestSuitePreview.TestSuiteVersion = strconv.Itoa(int(nexTestSuiteVersion))
+		fullTestSuiteMessage.TestSuitePreview.TestSuitePreview.LastSavedTimeStamp = insertTimeStamp
+	}
 	tempTestSuitePreviewAsJsonb := protojson.Format(fullTestSuiteMessage.GetTestSuitePreview())
 
 	var dataRowToBeInsertedMultiType []interface{}
@@ -572,7 +598,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 		"\"TestSuiteVersion\", \"TestSuiteHash\", " +
 		"\"CanListAndViewTestSuiteAuthorizationLevelOwnedByDomain\", " +
 		"\"CanListAndViewTestSuiteAuthorizationLevelHavingTiAndTicWith\", " +
-		"\"InsertTimeStamp\", \"InsertedByUserIdOnComputer\", \"InsertedByGCPAuthenticatedUser\" " +
+		"\"InsertTimeStamp\", \"InsertedByUserIdOnComputer\", \"InsertedByGCPAuthenticatedUser\", " +
 		"\"TestSuiteIsDeleted\", " +
 		" \"TestCasesInTestSuite\", \"TestSuitePreview\", \"TestSuiteMetaData\") "
 	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
