@@ -46,8 +46,16 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuiteCommitOrRol
 // PrepareSaveFullTestCasePrepareSaveFullTestSuite
 // Do initial preparations to be able to save the TestSuite
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestSuite(
-	fullTestSuiteMessage *fenixTestCaseBuilderServerGrpcApi.FullTestSuiteMessage) (
+	gRPCTestSuiteMessage *fenixTestCaseBuilderServerGrpcApi.SaveFullTestSuiteMessageRequest) (
 	returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse) {
+
+	// Extract full TestSuiteMessage
+	var fullTestSuiteMessage *fenixTestCaseBuilderServerGrpcApi.FullTestSuiteMessage
+	fullTestSuiteMessage = gRPCTestSuiteMessage.GetTestSuite()
+
+	// Extract UserIdentification
+	var userIdentification *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage
+	userIdentification = gRPCTestSuiteMessage.GetUserIdentification()
 
 	// Begin SQL Transaction
 	txn, err := fenixSyncShared.DbPool.Begin(context.Background())
@@ -144,7 +152,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestSuite(
 	// Load Users all Domains
 	var usersDomainsAndAuthorizations []DomainAndAuthorizationsStruct
 	usersDomainsAndAuthorizations, err = fenixCloudDBObject.concatenateUsersDomainsAndDomainOpenToEveryOneToUse(
-		txn, fullTestSuiteMessage.GetUserIdentification().GetGCPAuthenticatedUser())
+		txn, userIdentification.GetGCPAuthenticatedUser())
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
 			"id":    "f27bf395-e3fb-4106-b84a-9d46bc377e81",
@@ -230,7 +238,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestSuite(
 
 	// Save the TestSuite
 	returnMessage, err = fenixCloudDBObject.saveFullTestSuite(
-		txn, fullTestSuiteMessage, authorizationValueForOwnerDomain, authorizationValueForAllDomainsInTestSuite)
+		txn, gRPCTestSuiteMessage, authorizationValueForOwnerDomain, authorizationValueForAllDomainsInTestSuite)
 
 	if err != nil {
 		return returnMessage
@@ -434,11 +442,19 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyThatUserIsAllowedToSav
 // Save the full TestSuite to CloudDB
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 	dbTransaction pgx.Tx,
-	fullTestSuiteMessage *fenixTestCaseBuilderServerGrpcApi.FullTestSuiteMessage,
+	gRPCTestSuiteMessage *fenixTestCaseBuilderServerGrpcApi.SaveFullTestSuiteMessageRequest,
 	authorizationValueForOwnerDomain int64,
 	authorizationValueForAllDomainsInTestSuite int64) (
 	returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse,
 	err error) {
+
+	// Extract full TestSuiteMessage
+	var fullTestSuiteMessage *fenixTestCaseBuilderServerGrpcApi.FullTestSuiteMessage
+	fullTestSuiteMessage = gRPCTestSuiteMessage.GetTestSuite()
+
+	// Extract UserIdentification
+	var userIdentification *fenixTestCaseBuilderServerGrpcApi.UserIdentificationMessage
+	userIdentification = gRPCTestSuiteMessage.GetUserIdentification()
 
 	nexTestSuiteVersion, err := fenixCloudDBObject.getNexTestSuiteVersion(fullTestSuiteMessage.GetTestSuiteBasicInformation().GetTestSuiteUuid())
 	if err != nil {
@@ -498,8 +514,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 	// CanListAndViewTestSuiteAuthorizationLevelOwnedByDomain
 	// CanListAndViewTestSuiteAuthorizationLevelHavingTiAndTicWith
 	insertTimeStamp := shared_code.GenerateDatetimeTimeStampForDB()
-	tempInsertedByUserIdOnComputer := fullTestSuiteMessage.GetUserIdentification().GetUserIdOnComputer()
-	tempInsertedByGCPAuthenticatedUser := fullTestSuiteMessage.GetUserIdentification().GetGCPAuthenticatedUser()
+	tempInsertedByUserIdOnComputer := userIdentification.GetUserIdOnComputer()
+	tempInsertedByGCPAuthenticatedUser := userIdentification.GetGCPAuthenticatedUser()
 
 	tempTestSuiteIsDeleted := false
 
