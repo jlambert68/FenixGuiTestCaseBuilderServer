@@ -12,7 +12,7 @@ import (
 // TestSuite GUI use this gRPC-api to save a full TestSuite with all its data
 func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) SaveFullTestSuite(
 	ctx context.Context,
-	fullTestSuiteMessage *fenixTestCaseBuilderServerGrpcApi.FullTestSuiteMessage) (
+	fullTestSuiteMessage *fenixTestCaseBuilderServerGrpcApi.SaveFullTestSuiteMessageRequest) (
 	*fenixTestCaseBuilderServerGrpcApi.AckNackResponse, error) {
 
 	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{

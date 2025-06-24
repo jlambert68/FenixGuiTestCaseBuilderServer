@@ -149,39 +149,6 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadFullTestSuite(
 		return responseMessage
 	}
 
-	// Load Users TestData
-	err = fenixCloudDBObject.loadUsersTestDataForTestSuite(
-		txn,
-		gCPAuthenticatedUser,
-		fullTestSuiteMessage)
-
-	// Error when retrieving Users TestData
-	if err != nil {
-		// Set Error codes to return message
-		var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
-		var errorCode fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
-
-		errorCode = fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM
-		errorCodes = append(errorCodes, errorCode)
-
-		// Create response message
-		var ackNackResponse *fenixTestCaseBuilderServerGrpcApi.AckNackResponse
-		ackNackResponse = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-			AckNack:    false,
-			Comments:   "Problem when Loading Users Testdata from database",
-			ErrorCodes: errorCodes,
-			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
-				CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
-		}
-
-		responseMessage = &fenixTestCaseBuilderServerGrpcApi.GetDetailedTestSuiteResponse{
-			AckNackResponse:   ackNackResponse,
-			DetailedTestSuite: nil,
-		}
-
-		return responseMessage
-	}
-
 	// Create response message
 	var ackNackResponse *fenixTestCaseBuilderServerGrpcApi.AckNackResponse
 	ackNackResponse = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
@@ -297,7 +264,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 	sqlToExecute = sqlToExecute + "SELECT TS.\"DomainUuid\", TS.\"DomainName\", TS.\"TestSuiteUuid\", TS.\"TestSuiteName\", " +
 		"TS.\"TestSuiteVersion\", TS.\"TestSuiteHash\", TS.\"DeleteTimestamp\"" +
 		"TS.\"InsertTimeStamp\", TS.\"InsertedByUserIdOnComputer\", TS.\"InsertedByGCPAuthenticatedUser\", " +
-		"TS.\"TestCasesInTestSuite\", TS.\"TestSuitePreview\", TS.\"TestSuiteMetaData\" "
+		"TS.\"TestCasesInTestSuite\", TS.\"TestSuitePreview\", TS.\"TestSuiteMetaData\", \"TestSuiteTestData\" "
 
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestSuites\" TS "
 	sqlToExecute = sqlToExecute + fmt.Sprintf("WHERE TS.\"TestSuiteUuid\" = '%s' ", testSuiteUuidToLoad)
@@ -354,14 +321,17 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 		tempTestCasesInTestSuiteAsJson     string
 		tempTestSuitePreviewAsJson         string
 		tempTestSuiteMetaDataAsJson        string
+		tempTestSuiteTestDataAsJson        string
 
 		tempTestCasesInTestSuiteAsByteArray []byte
 		tempTestSuitePreviewAsByteArray     []byte
 		tempTestSuiteMetaDataAsByteArray    []byte
+		tempTestSuiteTestDataAsByteArray    []byte
 
 		tempTestCasesInTestSuiteAsGrpc fenixTestCaseBuilderServerGrpcApi.TestCasesInTestSuiteMessage
 		tempTestSuitePreviewAsGrpc     fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewMessage
 		tempTestSuiteMetaDataAsGrpc    fenixTestCaseBuilderServerGrpcApi.UserSpecifiedTestSuiteMetaDataMessage
+		tempTestSuiteTestDataAsGrpc    fenixTestCaseBuilderServerGrpcApi.UsersChosenTestDataForTestSuiteMessage
 	)
 
 	// Extract data from DB result set
@@ -381,6 +351,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 			&tempTestCasesInTestSuiteAsJson,
 			&tempTestSuitePreviewAsJson,
 			&tempTestSuiteMetaDataAsJson,
+			&tempTestSuiteTestDataAsJson,
 		)
 
 		if err != nil {
@@ -398,6 +369,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 		tempTestCasesInTestSuiteAsByteArray = []byte(tempTestCasesInTestSuiteAsJson)
 		tempTestSuitePreviewAsByteArray = []byte(tempTestSuitePreviewAsJson)
 		tempTestSuiteMetaDataAsByteArray = []byte(tempTestSuiteMetaDataAsJson)
+		tempTestSuiteTestDataAsByteArray = []byte(tempTestSuiteTestDataAsJson)
 
 		// Convert json-byte-arrays into proto-messages
 		err = protojson.Unmarshal(tempTestCasesInTestSuiteAsByteArray, &tempTestCasesInTestSuiteAsGrpc)
@@ -430,6 +402,16 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 			return nil, err
 		}
 
+		err = protojson.Unmarshal(tempTestSuiteTestDataAsByteArray, &tempTestSuiteTestDataAsGrpc)
+		if err != nil {
+			common_config.Logger.WithFields(logrus.Fields{
+				"Id":    "ef74050a-d52b-4282-a520-32f9ca1ceecf",
+				"Error": err,
+			}).Error("Something went wrong when converting 'tempTestSuiteTestDataAsByteArray' into proto-message")
+
+			return nil, err
+		}
+
 		// Add the different parts into full TestSuite-message
 		fullTestSuiteMessage = &fenixTestCaseBuilderServerGrpcApi.FullTestSuiteMessage{
 			TestSuiteBasicInformation: &fenixTestCaseBuilderServerGrpcApi.TestSuiteBasicInformationMessage{
@@ -440,13 +422,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 				TestSuiteName:        tempTestSuiteName,
 				TestSuiteDescription: tempTestSuiteName,
 			},
-			TestSuiteTestData:    nil,
+
+			TestSuiteTestData:    &tempTestSuiteTestDataAsGrpc,
 			TestSuitePreview:     &tempTestSuitePreviewAsGrpc,
 			TestSuiteMetaData:    &tempTestSuiteMetaDataAsGrpc,
 			TestCasesInTestSuite: &tempTestCasesInTestSuiteAsGrpc,
-			DeletedDate:          d,
-			SupportedTestSuiteDataToBeStoredAsJsonString: "",
-			MessageHash: "",
+			DeletedDate:          tempDeleteTimestamp,
+			MessageHash:          tempTestSuiteHash,
 		}
 
 	}
@@ -454,100 +436,3 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 	return fullTestSuiteMessage, err
 
 }
-
-/*
-// Load Users saved TestData for a specific TestCase
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadUsersTestDataForTestCase(
-	dbTransaction pgx.Tx,
-	gCPAuthenticatedUser string,
-	fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestCaseMessage) (
-	err error) {
-
-	testCaseUuid := fullTestCaseMessage.GetTestCaseBasicInformation().GetBasicTestCaseInformation().GetNonEditableInformation().TestCaseUuid
-	testCaseVersion := fullTestCaseMessage.GetTestCaseBasicInformation().GetBasicTestCaseInformation().GetNonEditableInformation().TestCaseVersion
-
-	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "SELECT utdftc.\"TestData\" "
-	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"UsersTestDataForTestCase\" utdftc "
-	sqlToExecute = sqlToExecute + fmt.Sprintf("WHERE utdftc.\"TestCaseUuid\" = '%s' ", testCaseUuid)
-	sqlToExecute = sqlToExecute + "AND "
-	sqlToExecute = sqlToExecute + fmt.Sprintf("utdftc.\"TestCaseVersion\" = %d ", testCaseVersion)
-	sqlToExecute = sqlToExecute + "AND "
-	sqlToExecute = sqlToExecute + fmt.Sprintf("utdftc.\"GcpAuthenticatedUser\" = '%s' ", gCPAuthenticatedUser)
-	sqlToExecute = sqlToExecute + "; "
-
-	// Log SQL to be executed if Environment variable is true
-	if common_config.LogAllSQLs == true {
-		common_config.Logger.WithFields(logrus.Fields{
-			"Id":           "2ddf3a3a-98e1-4dc4-91b7-3fe7b7da34eb",
-			"sqlToExecute": sqlToExecute,
-		}).Debug("SQL to be executed within 'loadFullTestCase'")
-	}
-
-	// Query DB
-	var ctx context.Context
-	ctx, timeOutCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer timeOutCancel()
-
-	rows, err := dbTransaction.Query(ctx, sqlToExecute)
-	defer rows.Close()
-
-	if err != nil {
-		common_config.Logger.WithFields(logrus.Fields{
-			"Id":           "a09022fe-e880-45f8-ba70-5c893a97e38e",
-			"Error":        err,
-			"sqlToExecute": sqlToExecute,
-		}).Error("Something went wrong when executing SQL")
-
-		return err
-	}
-
-	var (
-		tempTestDataAsString    string
-		tempTestDataAsByteArray []byte
-	)
-
-	// Extract data from DB result set
-	for rows.Next() {
-
-		err = rows.Scan(
-			&tempTestDataAsString,
-		)
-
-		if err != nil {
-
-			common_config.Logger.WithFields(logrus.Fields{
-				"Id":           "c562fc51-20a9-4d5e-aa04-7653469dd399",
-				"Error":        err,
-				"sqlToExecute": sqlToExecute,
-			}).Error("Something went wrong when processing result from database")
-
-			return err
-		}
-
-		// Convert json-strings into byte-arrays
-		tempTestDataAsByteArray = []byte(tempTestDataAsString)
-
-		// Convert json-byte-arrays into proto-messages
-		var testData fenixTestCaseBuilderServerGrpcApi.UsersChosenTestDataForTestCaseMessage
-		err = protojson.Unmarshal(tempTestDataAsByteArray, &testData)
-		if err != nil {
-			common_config.Logger.WithFields(logrus.Fields{
-				"Id":    "a0378d91-3d7f-4de9-ae4b-79f5b709cb39",
-				"Error": err,
-			}).Error("Something went wrong when converting 'tempTestDataAsByteArray' into proto-message")
-
-			return err
-		}
-
-		// Store TestData into full TestCase-message
-		fullTestCaseMessage.TestCaseTestData = &testData
-
-	}
-
-	return err
-
-}
-
-
-*/

@@ -532,6 +532,12 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 	}
 	tempTestSuiteMetaDataAsJsonb := protojson.Format(fullTestSuiteMessage.GetTestSuiteMetaData())
 
+	// Initiate 'TestSuiteTestData' if nil
+	if fullTestSuiteMessage.GetTestSuiteTestData() == nil {
+		fullTestSuiteMessage.TestSuiteTestData = &fenixTestCaseBuilderServerGrpcApi.UsersChosenTestDataForTestSuiteMessage{}
+	}
+	tempTestSuiteTestDataAsJsonb := protojson.Format(fullTestSuiteMessage.GetTestSuiteTestData())
+
 	// Initiate 'TestSuitePreview' if nil
 	if fullTestSuiteMessage.GetTestSuitePreview() == nil {
 		fullTestSuiteMessage.TestSuitePreview = &fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewMessage{}
@@ -573,6 +579,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestCasesInTestSuiteAsJsonb)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestSuitePreviewAsJsonb)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestSuiteMetaDataAsJsonb)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestSuiteTestDataAsJsonb)
 
 	dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
 
@@ -616,7 +623,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 		"\"CanListAndViewTestSuiteAuthorizationLevelHavingTiAndTicWith\", " +
 		"\"InsertTimeStamp\", \"InsertedByUserIdOnComputer\", \"InsertedByGCPAuthenticatedUser\", " +
 		"\"TestSuiteIsDeleted\", " +
-		" \"TestCasesInTestSuite\", \"TestSuitePreview\", \"TestSuiteMetaData\") "
+		" \"TestCasesInTestSuite\", \"TestSuitePreview\", \"TestSuiteMetaData\", \"TestSuiteTestData\") "
 	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
 	sqlToExecute = sqlToExecute + ";"
 

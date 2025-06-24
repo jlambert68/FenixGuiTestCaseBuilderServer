@@ -46,7 +46,9 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	}).Info("Starting Backend gRPC Server")
 
 	registerFenixTestCaseBuilderServerGrpcServicesServer = grpc.NewServer()
-	fenixGuiTestCaseBuilderServerGrpcApi.RegisterFenixTestCaseBuilderServerGrpcServicesServer(registerFenixTestCaseBuilderServerGrpcServicesServer, &fenixTestCaseBuilderServerGrpcServicesServerStruct{})
+	fenixGuiTestCaseBuilderServerGrpcApi.RegisterFenixTestCaseBuilderServerGrpcServicesServer(
+		registerFenixTestCaseBuilderServerGrpcServicesServer,
+		&fenixTestCaseBuilderServerGrpcServicesServerStruct{})
 	fenixGuiTestCaseBuilderServerGrpcApi.RegisterFenixTestCaseBuilderServerGrpcWorkerServicesServer(
 		registerFenixTestCaseBuilderServerGrpcServicesServer,
 		&fenixTestCaseBuilderServerGrpcWorkerServicesServerStruct{})
@@ -57,7 +59,8 @@ func (fenixGuiTestCaseBuilderServerObject *fenixGuiTestCaseBuilderServerObjectSt
 	fenixGuiTestCaseBuilderServerObject.Logger.WithFields(logrus.Fields{
 		"Id":                                 "e843ece9-b707-4c60-b1d8-14464305e68f",
 		"common_config.FenixGuiServerPort: ": common_config.FenixGuiServerPort,
-	}).Info("registerFenixTestCaseBuilderServerGrpcServicesServer for TestInstruction Backend Server started")
+	}).Info("registerFenixTestCaseBuilderServerGrpcServicesServer for " +
+		"TestInstruction Backend Server started")
 	registerFenixTestCaseBuilderServerGrpcServicesServer.Serve(lis)
 	//}()
 
