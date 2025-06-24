@@ -261,24 +261,25 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 	sqlToExecute = sqlToExecute + "ORDER BY \"TestSuiteUuid\", \"UniqueCounter\" DESC "
 	sqlToExecute = sqlToExecute + ") "
 
-	sqlToExecute = sqlToExecute + "SELECT TS.\"DomainUuid\", TS.\"DomainName\", TS.\"TestSuiteUuid\", TS.\"TestSuiteName\", " +
-		"TS.\"TestSuiteVersion\", TS.\"TestSuiteHash\", TS.\"DeleteTimestamp\"" +
+	sqlToExecute = sqlToExecute + "SELECT TS.\"DomainUuid\", da.\"domain_name\", TS.\"TestSuiteUuid\", TS.\"TestSuiteName\", " +
+		"TS.\"TestSuiteVersion\", TS.\"TestSuiteHash\", TS.\"DeleteTimestamp\", " +
 		"TS.\"InsertTimeStamp\", TS.\"InsertedByUserIdOnComputer\", TS.\"InsertedByGCPAuthenticatedUser\", " +
 		"TS.\"TestCasesInTestSuite\", TS.\"TestSuitePreview\", TS.\"TestSuiteMetaData\", \"TestSuiteTestData\" "
 
-	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestSuites\" TS "
+	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestSuites\" TS, \"FenixDomainAdministration\".\"domains\" da  "
 	sqlToExecute = sqlToExecute + fmt.Sprintf("WHERE TS.\"TestSuiteUuid\" = '%s' ", testSuiteUuidToLoad)
 	sqlToExecute = sqlToExecute + "AND "
 	sqlToExecute = sqlToExecute + "(TS.\"CanListAndViewTestSuiteAuthorizationLevelOwnedByDomain\" & " +
-		tempCanListAndViewTestSuiteOwnedByThisDomainAsString + ")"
-	sqlToExecute = sqlToExecute + "= TS.\"CanListAndViewTestCaseAuthorizationLevelOwnedByDomain\" "
+		tempCanListAndViewTestSuiteOwnedByThisDomainAsString + ") "
+	sqlToExecute = sqlToExecute + "= TS.\"CanListAndViewTestSuiteAuthorizationLevelOwnedByDomain\" "
 	sqlToExecute = sqlToExecute + "AND "
 	sqlToExecute = sqlToExecute + "(TS.\"CanListAndViewTestSuiteAuthorizationLevelHavingTiAndTicWith\" & " +
 		tempCanListAndViewTestSuiteHavingTIandTICfromThisDomainAsString + ")"
 	sqlToExecute = sqlToExecute + "= TS.\"CanListAndViewTestSuiteAuthorizationLevelHavingTiAndTicWith\" "
 	sqlToExecute = sqlToExecute + "AND "
 	sqlToExecute = sqlToExecute + "TS.\"UniqueCounter\" IN (SELECT * FROM uniquecounters) AND "
-	sqlToExecute = sqlToExecute + "TS.\"TestSuiteIsDeleted\" = false "
+	sqlToExecute = sqlToExecute + "TS.\"TestSuiteIsDeleted\" = false AND "
+	sqlToExecute = sqlToExecute + "TS.\"DomainUuid\" = da.\"domain_uuid\" "
 	sqlToExecute = sqlToExecute + "; "
 
 	// Log SQL to be executed if Environment variable is true
@@ -314,14 +315,17 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 		tempTestSuiteName                  string
 		tempTestSuiteVersion               int
 		tempTestSuiteHash                  string
-		tempDeleteTimestamp                string
-		tempInsertTimeStampAsString        string
+		tempDeleteTimestampAsString        string
+		tempUpdatedByAndWhenAsString       string
 		tempInsertedByUserIdOnComputer     string
 		tempInsertedByGCPAuthenticatedUser string
 		tempTestCasesInTestSuiteAsJson     string
 		tempTestSuitePreviewAsJson         string
 		tempTestSuiteMetaDataAsJson        string
 		tempTestSuiteTestDataAsJson        string
+
+		tempDeleteTimestampAsTimeStamp  time.Time
+		tempUpdatedByAndWhenAsTimeStamp time.Time
 
 		tempTestCasesInTestSuiteAsByteArray []byte
 		tempTestSuitePreviewAsByteArray     []byte
@@ -344,8 +348,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 			&tempTestSuiteName,
 			&tempTestSuiteVersion,
 			&tempTestSuiteHash,
-			&tempDeleteTimestamp,
-			&tempInsertTimeStampAsString,
+			&tempDeleteTimestampAsTimeStamp,
+			&tempUpdatedByAndWhenAsTimeStamp,
 			&tempInsertedByUserIdOnComputer,
 			&tempInsertedByGCPAuthenticatedUser,
 			&tempTestCasesInTestSuiteAsJson,
@@ -364,6 +368,19 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 
 			return nil, err
 		}
+
+		// Format Dates
+		// Format The Delete Date into a string
+		tempDeleteTimestampAsString = tempDeleteTimestampAsTimeStamp.Format("2006-01-02")
+
+		// When the TestCase is not deleted then it uses a Delete date far away in the future. If so then clear the Date sent to TesterGui
+
+		if tempDeleteTimestampAsString == testSuiteNotDeletedDate {
+			tempDeleteTimestampAsString = ""
+		}
+
+		// Format Insert date
+		tempUpdatedByAndWhenAsString = tempUpdatedByAndWhenAsTimeStamp.String()
 
 		// Convert json-strings into byte-arrays
 		tempTestCasesInTestSuiteAsByteArray = []byte(tempTestCasesInTestSuiteAsJson)
@@ -427,8 +444,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 			TestSuitePreview:     &tempTestSuitePreviewAsGrpc,
 			TestSuiteMetaData:    &tempTestSuiteMetaDataAsGrpc,
 			TestCasesInTestSuite: &tempTestCasesInTestSuiteAsGrpc,
-			DeletedDate:          tempDeleteTimestamp,
-			MessageHash:          tempTestSuiteHash,
+			DeletedDate:          tempDeleteTimestampAsString,
+			UpdatedByAndWhen: &fenixTestCaseBuilderServerGrpcApi.UpdatedByAndWhenMessage{
+				UserIdOnComputer:     tempInsertedByUserIdOnComputer,
+				GCPAuthenticatedUser: tempInsertedByGCPAuthenticatedUser,
+				UpdateTimeStamp:      tempUpdatedByAndWhenAsString,
+			},
+			MessageHash: tempTestSuiteHash,
 		}
 
 	}
