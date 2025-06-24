@@ -3,6 +3,7 @@ package CloudDbProcessing
 import (
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/jackc/pgx/v4"
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
@@ -121,7 +122,37 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadFullTestSuite(
 		return responseMessage
 	}
 
-	// TestCase
+	// Add information about who first created the TestSuite
+	err = fenixCloudDBObject.addTestSuiteCreator(txn, testSuiteUuidToLoad, fullTestSuiteMessage)
+
+	// Error when retrieving TestSuite creator
+	if err != nil {
+		// Set Error codes to return message
+		var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+		var errorCode fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+
+		errorCode = fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM
+		errorCodes = append(errorCodes, errorCode)
+
+		// Create response message
+		var ackNackResponse *fenixTestCaseBuilderServerGrpcApi.AckNackResponse
+		ackNackResponse = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+			AckNack:    false,
+			Comments:   "Problem when Loading from database",
+			ErrorCodes: errorCodes,
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
+				CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
+		}
+
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.GetDetailedTestSuiteResponse{
+			AckNackResponse:   ackNackResponse,
+			DetailedTestSuite: nil,
+		}
+
+		return responseMessage
+	}
+
+	// TestSuite
 	if fullTestSuiteMessage == nil {
 
 		// Set Error codes to return message
@@ -166,15 +197,6 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadFullTestSuite(
 
 	return responseMessage
 }
-
-/*
-SELECT TC."TestCaseBasicInformationAsJsonb", TC."TestInstructionsAsJsonb", "TestInstructionContainersAsJsonb"
-FROM "FenixBuilder"."TestCases" TC
-WHERE TC."TestCaseUuid" = '1f969ca4-e279-431a-b588-491f6f62d41e'
-ORDER BY TC."TestCaseVersion" DESC
-LIMIT 1;
-
-*/
 
 // Load the TestSuite with all its data
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
@@ -456,5 +478,107 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 	}
 
 	return fullTestSuiteMessage, err
+
+}
+
+// Add who created the TestSuite and when it was created
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) addTestSuiteCreator(
+	dbTransaction pgx.Tx,
+	testSuiteUuidToLoad string,
+	fullTestSuiteMessage *fenixTestCaseBuilderServerGrpcApi.FullTestSuiteMessage) (
+	err error) {
+
+	sqlToExecute := ""
+	sqlToExecute = sqlToExecute + "SELECT \"InsertTimeStamp\", \"InsertedByUserIdOnComputer\", \"InsertedByGCPAuthenticatedUser\" "
+	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestSuites\" "
+	sqlToExecute = sqlToExecute + fmt.Sprintf("WHERE \"TestSuiteUuid\" = '%s' ", testSuiteUuidToLoad)
+	sqlToExecute = sqlToExecute + "ORDER BY \"UniqueCounter\" ASC "
+	sqlToExecute = sqlToExecute + "LIMIT 1 "
+	sqlToExecute = sqlToExecute + "; "
+
+	// Log SQL to be executed if Environment variable is true
+	if common_config.LogAllSQLs == true {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "e195cf4d-d9fc-444b-bfe8-65c4a666bfd5",
+			"sqlToExecute": sqlToExecute,
+		}).Debug("SQL to be executed within 'addTestSuiteCreator'")
+	}
+
+	// Query DB
+	var ctx context.Context
+	ctx, timeOutCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer timeOutCancel()
+
+	rows, err := dbTransaction.Query(ctx, sqlToExecute)
+	defer rows.Close()
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "95382e00-59e0-4082-be16-fe56bee992d0",
+			"Error":        err,
+			"sqlToExecute": sqlToExecute,
+		}).Error("Something went wrong when executing SQL")
+
+		return err
+	}
+
+	var (
+		tempInsertTimeStampAsString    string
+		InsertedByUserIdOnComputer     string
+		InsertedByGCPAuthenticatedUser string
+
+		tempInsertTimeStampAsTimeStamp time.Time
+
+		numberOfRows int
+	)
+
+	// Extract data from DB result set
+	for rows.Next() {
+
+		err = rows.Scan(
+			&tempInsertTimeStampAsTimeStamp,
+			&InsertedByUserIdOnComputer,
+			&InsertedByGCPAuthenticatedUser,
+		)
+
+		if err != nil {
+
+			common_config.Logger.WithFields(logrus.Fields{
+				"Id":           "1f5d50c8-d35a-4d87-be33-80f7e64f7a93",
+				"Error":        err,
+				"sqlToExecute": sqlToExecute,
+			}).Error("Something went wrong when processing result from database")
+
+			return err
+		}
+
+		// Format Dates
+		// Format Insert date
+		tempInsertTimeStampAsString = tempInsertTimeStampAsTimeStamp.String()
+
+		// increase number of rows
+		numberOfRows = numberOfRows + 1
+	}
+
+	if numberOfRows != 1 {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "d1987560-3ea1-4081-baba-c9e3fc699553",
+			"Error":        err,
+			"sqlToExecute": sqlToExecute,
+			"numberOfRows": numberOfRows,
+		}).Error("Number of rows expected to be one, but was not.")
+
+		err = errors.New("number of rows expected to be one, but was not")
+
+		return err
+
+	}
+
+	// Update Created information
+	fullTestSuiteMessage.UpdatedByAndWhen.CreatedByComputerLogin = InsertedByUserIdOnComputer
+	fullTestSuiteMessage.UpdatedByAndWhen.CreatedByGcpLogin = InsertedByGCPAuthenticatedUser
+	fullTestSuiteMessage.UpdatedByAndWhen.CreatedDate = tempInsertTimeStampAsString
+
+	return err
 
 }
