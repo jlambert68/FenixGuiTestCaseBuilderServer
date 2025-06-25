@@ -516,6 +516,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 	insertTimeStamp := shared_code.GenerateDatetimeTimeStampForDB()
 	tempInsertedByUserIdOnComputer := userIdentification.GetUserIdOnComputer()
 	tempInsertedByGCPAuthenticatedUser := userIdentification.GetGCPAuthenticatedUser()
+	tempTestSuiteType := fullTestSuiteMessage.GetTestSuiteType().GetTestSuiteType()
+	tempTestSuiteTypeName := fullTestSuiteMessage.GetTestSuiteType().GetTestSuiteTypeName()
 
 	tempTestSuiteIsDeleted := false
 
@@ -581,6 +583,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestSuiteMetaDataAsJsonb)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestSuiteTestDataAsJsonb)
 
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestSuiteType)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestSuiteTypeName)
+
 	dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
 
 	/*
@@ -623,7 +628,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 		"\"CanListAndViewTestSuiteAuthorizationLevelHavingTiAndTicWith\", " +
 		"\"InsertTimeStamp\", \"InsertedByUserIdOnComputer\", \"InsertedByGCPAuthenticatedUser\", " +
 		"\"TestSuiteIsDeleted\", " +
-		" \"TestCasesInTestSuite\", \"TestSuitePreview\", \"TestSuiteMetaData\", \"TestSuiteTestData\") "
+		" \"TestCasesInTestSuite\", \"TestSuitePreview\", \"TestSuiteMetaData\", \"TestSuiteTestData\", " +
+		"\"TestSuiteType\", \"TestSuiteTypeName\") "
 	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
 	sqlToExecute = sqlToExecute + ";"
 

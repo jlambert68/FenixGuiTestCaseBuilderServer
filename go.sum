@@ -110,8 +110,8 @@ github.com/jackc/puddle v0.0.0-20190608224051-11cab39313c9/go.mod h1:m4B5Dj62Y0f
 github.com/jackc/puddle v1.1.3/go.mod h1:m4B5Dj62Y0fbyuIc15OsIqK0+JU8nkqQjsgx7dvjSWk=
 github.com/jackc/puddle v1.3.0 h1:eHK/5clGOatcjX3oWGBO/MpxpbHzSwud5EWTSCI+MX0=
 github.com/jackc/puddle v1.3.0/go.mod h1:m4B5Dj62Y0fbyuIc15OsIqK0+JU8nkqQjsgx7dvjSWk=
-github.com/jlambert68/FenixGrpcApi v0.0.0-20250624121249-bde5047f61a8 h1:REizM18RScu5pAl1WkUie2gcgzKkjX7sAhqK2PsOpnc=
-github.com/jlambert68/FenixGrpcApi v0.0.0-20250624121249-bde5047f61a8/go.mod h1:61pmjruYe5pxBSzZEO3YZ+ena1LUoySrkZp9orT9Jj8=
+github.com/jlambert68/FenixGrpcApi v0.0.0-20250625124727-1ff64112f058 h1:xy7ofBE/wJ2mheAbEecmcE2jkocATU+Ioc1KLJzcAqA=
+github.com/jlambert68/FenixGrpcApi v0.0.0-20250625124727-1ff64112f058/go.mod h1:61pmjruYe5pxBSzZEO3YZ+ena1LUoySrkZp9orT9Jj8=
 github.com/jlambert68/FenixStandardTestInstructionAdmin v0.0.0-20241025085754-ced7ee5586a6 h1:LEOf2u+WBhHA5eRWDY9iQRZFyfmk0xnH3sejeFyZAAg=
 github.com/jlambert68/FenixStandardTestInstructionAdmin v0.0.0-20241025085754-ced7ee5586a6/go.mod h1:YXqKiSSQqM37n2BJtzjgqeTPpO7H7UYVYCCUpx9KeIo=
 github.com/jlambert68/FenixSyncShared v0.0.0-20240911064419-da3d922610cb h1:lyXuGpWnF2z5r1P8SbL9RmRjv5rFtzbl3GmdYSz/dGs=
