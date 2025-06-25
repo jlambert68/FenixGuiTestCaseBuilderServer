@@ -284,7 +284,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 	sqlToExecute = sqlToExecute + ") "
 
 	sqlToExecute = sqlToExecute + "SELECT TS.\"DomainUuid\", da.\"domain_name\", TS.\"TestSuiteUuid\", TS.\"TestSuiteName\", " +
-		"TS.\"TestSuiteVersion\", TS.\"TestSuiteHash\", TS.\"DeleteTimestamp\", " +
+		"TS.\"TestSuiteVersion\", TS.\"TestSuiteDescription\", TS.\"TestSuiteHash\", TS.\"DeleteTimestamp\", " +
 		"TS.\"InsertTimeStamp\", TS.\"InsertedByUserIdOnComputer\", TS.\"InsertedByGCPAuthenticatedUser\", " +
 		"TS.\"TestCasesInTestSuite\", TS.\"TestSuitePreview\", TS.\"TestSuiteMetaData\", \"TestSuiteTestData\" "
 
@@ -335,6 +335,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 		tempDomainName                     string
 		tempTestSuiteUuid                  string
 		tempTestSuiteName                  string
+		tempTestSuiteDescription           string
 		tempTestSuiteVersion               int
 		tempTestSuiteHash                  string
 		tempDeleteTimestampAsString        string
@@ -369,6 +370,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 			&tempTestSuiteUuid,
 			&tempTestSuiteName,
 			&tempTestSuiteVersion,
+			&tempTestSuiteDescription,
 			&tempTestSuiteHash,
 			&tempDeleteTimestampAsTimeStamp,
 			&tempUpdatedByAndWhenAsTimeStamp,
