@@ -3,6 +3,7 @@ package CloudDbProcessing
 import (
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/jackc/pgx/v4"
@@ -286,7 +287,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 	sqlToExecute = sqlToExecute + "SELECT TS.\"DomainUuid\", da.\"domain_name\", TS.\"TestSuiteUuid\", TS.\"TestSuiteName\", " +
 		"TS.\"TestSuiteVersion\", TS.\"TestSuiteDescription\", TS.\"TestSuiteExecutionEnvironment\", TS.\"TestSuiteHash\", TS.\"DeleteTimestamp\", " +
 		"TS.\"InsertTimeStamp\", TS.\"InsertedByUserIdOnComputer\", TS.\"InsertedByGCPAuthenticatedUser\", " +
-		"TS.\"TestCasesInTestSuite\", TS.\"TestSuitePreview\", TS.\"TestSuiteMetaData\", \"TestSuiteTestData\" "
+		"TS.\"TestCasesInTestSuite\", TS.\"TestSuitePreview\", TS.\"TestSuiteMetaData\", TS.\"TestSuiteTestData\", " +
+		"TS.\"TestSuiteType\", TS.\"TestSuiteTypeName\", TS.\"TestSuiteImplementedFunctions\" "
 
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestSuites\" TS, \"FenixDomainAdministration\".\"domains\" da  "
 	sqlToExecute = sqlToExecute + fmt.Sprintf("WHERE TS.\"TestSuiteUuid\" = '%s' ", testSuiteUuidToLoad)
@@ -331,35 +333,40 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 	}
 
 	var (
-		tempDomainUuid                     string
-		tempDomainName                     string
-		tempTestSuiteUuid                  string
-		tempTestSuiteName                  string
-		tempTestSuiteDescription           string
-		tempTestSuiteExecutionEnvironment  string
-		tempTestSuiteVersion               int
-		tempTestSuiteHash                  string
-		tempDeleteTimestampAsString        string
-		tempUpdatedByAndWhenAsString       string
-		tempInsertedByUserIdOnComputer     string
-		tempInsertedByGCPAuthenticatedUser string
-		tempTestCasesInTestSuiteAsJson     string
-		tempTestSuitePreviewAsJson         string
-		tempTestSuiteMetaDataAsJson        string
-		tempTestSuiteTestDataAsJson        string
+		tempDomainUuid                          string
+		tempDomainName                          string
+		tempTestSuiteUuid                       string
+		tempTestSuiteName                       string
+		tempTestSuiteDescription                string
+		tempTestSuiteExecutionEnvironment       string
+		tempTestSuiteVersion                    int
+		tempTestSuiteHash                       string
+		tempDeleteTimestampAsString             string
+		tempUpdatedByAndWhenAsString            string
+		tempInsertedByUserIdOnComputer          string
+		tempInsertedByGCPAuthenticatedUser      string
+		tempTestCasesInTestSuiteAsJson          string
+		tempTestSuitePreviewAsJson              string
+		tempTestSuiteMetaDataAsJson             string
+		tempTestSuiteTestDataAsJson             string
+		tempTestSuiteType                       int
+		tempTestSuiteTypeName                   string
+		tempTestSuiteImplementedFunctionsAsJson string
 
 		tempDeleteTimestampAsTimeStamp  time.Time
 		tempUpdatedByAndWhenAsTimeStamp time.Time
 
-		tempTestCasesInTestSuiteAsByteArray []byte
-		tempTestSuitePreviewAsByteArray     []byte
-		tempTestSuiteMetaDataAsByteArray    []byte
-		tempTestSuiteTestDataAsByteArray    []byte
+		tempTestCasesInTestSuiteAsByteArray          []byte
+		tempTestSuitePreviewAsByteArray              []byte
+		tempTestSuiteMetaDataAsByteArray             []byte
+		tempTestSuiteTestDataAsByteArray             []byte
+		tempTestSuiteImplementedFunctionsAsByteArray []byte
 
-		tempTestCasesInTestSuiteAsGrpc fenixTestCaseBuilderServerGrpcApi.TestCasesInTestSuiteMessage
-		tempTestSuitePreviewAsGrpc     fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewMessage
-		tempTestSuiteMetaDataAsGrpc    fenixTestCaseBuilderServerGrpcApi.UserSpecifiedTestSuiteMetaDataMessage
-		tempTestSuiteTestDataAsGrpc    fenixTestCaseBuilderServerGrpcApi.UsersChosenTestDataForTestSuiteMessage
+		tempTestCasesInTestSuiteAsGrpc          fenixTestCaseBuilderServerGrpcApi.TestCasesInTestSuiteMessage
+		tempTestSuitePreviewAsGrpc              fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewMessage
+		tempTestSuiteMetaDataAsGrpc             fenixTestCaseBuilderServerGrpcApi.UserSpecifiedTestSuiteMetaDataMessage
+		tempTestSuiteTestDataAsGrpc             fenixTestCaseBuilderServerGrpcApi.UsersChosenTestDataForTestSuiteMessage
+		tempTestSuiteImplementedFunctionsAsGrpc map[int32]bool
 	)
 
 	// Extract data from DB result set
@@ -370,18 +377,25 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 			&tempDomainName,
 			&tempTestSuiteUuid,
 			&tempTestSuiteName,
+
 			&tempTestSuiteVersion,
 			&tempTestSuiteDescription,
 			&tempTestSuiteExecutionEnvironment,
 			&tempTestSuiteHash,
 			&tempDeleteTimestampAsTimeStamp,
+
 			&tempUpdatedByAndWhenAsTimeStamp,
 			&tempInsertedByUserIdOnComputer,
 			&tempInsertedByGCPAuthenticatedUser,
+
 			&tempTestCasesInTestSuiteAsJson,
 			&tempTestSuitePreviewAsJson,
 			&tempTestSuiteMetaDataAsJson,
 			&tempTestSuiteTestDataAsJson,
+
+			&tempTestSuiteType,
+			&tempTestSuiteTypeName,
+			&tempTestSuiteImplementedFunctionsAsJson,
 		)
 
 		if err != nil {
@@ -413,6 +427,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 		tempTestSuitePreviewAsByteArray = []byte(tempTestSuitePreviewAsJson)
 		tempTestSuiteMetaDataAsByteArray = []byte(tempTestSuiteMetaDataAsJson)
 		tempTestSuiteTestDataAsByteArray = []byte(tempTestSuiteTestDataAsJson)
+		tempTestSuiteImplementedFunctionsAsByteArray = []byte(tempTestSuiteImplementedFunctionsAsJson)
 
 		// Convert json-byte-arrays into proto-messages
 		err = protojson.Unmarshal(tempTestCasesInTestSuiteAsByteArray, &tempTestCasesInTestSuiteAsGrpc)
@@ -455,6 +470,17 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 			return nil, err
 		}
 
+		tempTestSuiteImplementedFunctionsAsGrpc = make(map[int32]bool)
+		err = json.Unmarshal(tempTestSuiteImplementedFunctionsAsByteArray, &tempTestSuiteImplementedFunctionsAsGrpc)
+		if err != nil {
+			common_config.Logger.WithFields(logrus.Fields{
+				"Id":    "2a737639-2fbc-470b-80bc-c09972c6768d",
+				"Error": err,
+			}).Error("Something went wrong when converting 'tempTestSuiteImplementedFunctionsAsByteArray' into proto-message")
+
+			return nil, err
+		}
+
 		// Add the different parts into full TestSuite-message
 		fullTestSuiteMessage = &fenixTestCaseBuilderServerGrpcApi.FullTestSuiteMessage{
 			TestSuiteBasicInformation: &fenixTestCaseBuilderServerGrpcApi.TestSuiteBasicInformationMessage{
@@ -466,7 +492,6 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 				TestSuiteDescription:          tempTestSuiteName,
 				TestSuiteExecutionEnvironment: tempTestSuiteExecutionEnvironment,
 			},
-
 			TestSuiteTestData:    &tempTestSuiteTestDataAsGrpc,
 			TestSuitePreview:     &tempTestSuitePreviewAsGrpc,
 			TestSuiteMetaData:    &tempTestSuiteMetaDataAsGrpc,
@@ -477,7 +502,12 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 				GCPAuthenticatedUser: tempInsertedByGCPAuthenticatedUser,
 				UpdateTimeStamp:      tempUpdatedByAndWhenAsString,
 			},
-			MessageHash: tempTestSuiteHash,
+			TestSuiteType: &fenixTestCaseBuilderServerGrpcApi.TestSuiteTypeMessage{
+				TestSuiteType:     fenixTestCaseBuilderServerGrpcApi.TestSuiteTypeEnum(tempTestSuiteType),
+				TestSuiteTypeName: tempTestSuiteTypeName,
+			},
+			TestSuiteImplementedFunctionsMap: tempTestSuiteImplementedFunctionsAsGrpc,
+			MessageHash:                      tempTestSuiteHash,
 		}
 
 	}

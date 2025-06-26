@@ -3,6 +3,7 @@ package CloudDbProcessing
 import (
 	"FenixGuiTestCaseBuilderServer/common_config"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/shared_code"
 
@@ -554,6 +555,38 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 	}
 	tempTestSuitePreviewAsJsonb := protojson.Format(fullTestSuiteMessage.GetTestSuitePreview())
 
+	// Initiate 'TestSuiteImplementedFunctionsMap' if nil
+	if fullTestSuiteMessage.GetTestSuiteImplementedFunctionsMap() == nil {
+		fullTestSuiteMessage.TestSuiteImplementedFunctionsMap = make(map[int32]bool)
+	}
+	tempTestSuiteImplementedFunctionsAsByteArray, err := json.Marshal(fullTestSuiteMessage.GetTestSuiteImplementedFunctionsMap())
+	if err != nil {
+
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id": "16aba916-ff1b-4ab7-ba49-07cae7cbc20c",
+			"fullTestSuiteMessage.GetTestSuiteImplementedFunctionsMap()": fullTestSuiteMessage.GetTestSuiteImplementedFunctionsMap(),
+		}).Error("Problem generating json-byte-array from 'TestSuiteImplementedFunctionsMap'")
+
+		// Set Error codes to return message
+		var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+		var errorCode fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+
+		errorCode = fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM
+		errorCodes = append(errorCodes, errorCode)
+
+		// Create Return message
+		returnMessage = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+			AckNack:    false,
+			Comments:   "Problem when Saving TestCase to database",
+			ErrorCodes: errorCodes,
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
+				CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
+		}
+
+		return returnMessage, err
+	}
+	tempTestSuiteImplementedFunctionsAsJsonb := string(tempTestSuiteImplementedFunctionsAsByteArray)
+
 	var dataRowToBeInsertedMultiType []interface{}
 	var dataRowsToBeInsertedMultiType [][]interface{}
 
@@ -590,6 +623,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestSuiteDescription)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestSuiteExecutionEnvironment)
+
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestSuiteImplementedFunctionsAsJsonb)
 
 	dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
 
@@ -634,7 +669,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 		"\"InsertTimeStamp\", \"InsertedByUserIdOnComputer\", \"InsertedByGCPAuthenticatedUser\", " +
 		"\"TestSuiteIsDeleted\", " +
 		" \"TestCasesInTestSuite\", \"TestSuitePreview\", \"TestSuiteMetaData\", \"TestSuiteTestData\", " +
-		"\"TestSuiteType\", \"TestSuiteTypeName\", \"TestSuiteDescription\", \"TestSuiteExecutionEnvironment\") "
+		"\"TestSuiteType\", \"TestSuiteTypeName\", \"TestSuiteDescription\", \"TestSuiteExecutionEnvironment\", " +
+		"\"TestSuiteImplementedFunctions\") "
 	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
 	sqlToExecute = sqlToExecute + ";"
 
