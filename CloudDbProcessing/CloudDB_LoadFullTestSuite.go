@@ -489,7 +489,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 				TestSuiteUuid:                 tempTestSuiteUuid,
 				TestSuiteVersion:              uint32(tempTestSuiteVersion),
 				TestSuiteName:                 tempTestSuiteName,
-				TestSuiteDescription:          tempTestSuiteName,
+				TestSuiteDescription:          tempTestSuiteDescription,
 				TestSuiteExecutionEnvironment: tempTestSuiteExecutionEnvironment,
 			},
 			TestSuiteTestData:    &tempTestSuiteTestDataAsGrpc,
