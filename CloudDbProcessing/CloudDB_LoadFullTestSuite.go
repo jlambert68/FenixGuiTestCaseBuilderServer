@@ -284,7 +284,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 	sqlToExecute = sqlToExecute + ") "
 
 	sqlToExecute = sqlToExecute + "SELECT TS.\"DomainUuid\", da.\"domain_name\", TS.\"TestSuiteUuid\", TS.\"TestSuiteName\", " +
-		"TS.\"TestSuiteVersion\", TS.\"TestSuiteDescription\", TS.\"TestSuiteHash\", TS.\"DeleteTimestamp\", " +
+		"TS.\"TestSuiteVersion\", TS.\"TestSuiteDescription\", TS.\"TestSuiteExecutionEnvironment\", TS.\"TestSuiteHash\", TS.\"DeleteTimestamp\", " +
 		"TS.\"InsertTimeStamp\", TS.\"InsertedByUserIdOnComputer\", TS.\"InsertedByGCPAuthenticatedUser\", " +
 		"TS.\"TestCasesInTestSuite\", TS.\"TestSuitePreview\", TS.\"TestSuiteMetaData\", \"TestSuiteTestData\" "
 
@@ -336,6 +336,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 		tempTestSuiteUuid                  string
 		tempTestSuiteName                  string
 		tempTestSuiteDescription           string
+		tempTestSuiteExecutionEnvironment  string
 		tempTestSuiteVersion               int
 		tempTestSuiteHash                  string
 		tempDeleteTimestampAsString        string
@@ -371,6 +372,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 			&tempTestSuiteName,
 			&tempTestSuiteVersion,
 			&tempTestSuiteDescription,
+			&tempTestSuiteExecutionEnvironment,
 			&tempTestSuiteHash,
 			&tempDeleteTimestampAsTimeStamp,
 			&tempUpdatedByAndWhenAsTimeStamp,
@@ -456,12 +458,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 		// Add the different parts into full TestSuite-message
 		fullTestSuiteMessage = &fenixTestCaseBuilderServerGrpcApi.FullTestSuiteMessage{
 			TestSuiteBasicInformation: &fenixTestCaseBuilderServerGrpcApi.TestSuiteBasicInformationMessage{
-				DomainUuid:           tempDomainUuid,
-				DomainName:           tempDomainName,
-				TestSuiteUuid:        tempTestSuiteUuid,
-				TestSuiteVersion:     uint32(tempTestSuiteVersion),
-				TestSuiteName:        tempTestSuiteName,
-				TestSuiteDescription: tempTestSuiteName,
+				DomainUuid:                    tempDomainUuid,
+				DomainName:                    tempDomainName,
+				TestSuiteUuid:                 tempTestSuiteUuid,
+				TestSuiteVersion:              uint32(tempTestSuiteVersion),
+				TestSuiteName:                 tempTestSuiteName,
+				TestSuiteDescription:          tempTestSuiteName,
+				TestSuiteExecutionEnvironment: tempTestSuiteExecutionEnvironment,
 			},
 
 			TestSuiteTestData:    &tempTestSuiteTestDataAsGrpc,

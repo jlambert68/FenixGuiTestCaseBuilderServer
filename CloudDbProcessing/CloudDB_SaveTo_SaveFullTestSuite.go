@@ -519,6 +519,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 	tempTestSuiteType := fullTestSuiteMessage.GetTestSuiteType().GetTestSuiteType()
 	tempTestSuiteTypeName := fullTestSuiteMessage.GetTestSuiteType().GetTestSuiteTypeName()
 	tempTestSuiteDescription := fullTestSuiteMessage.GetTestSuiteBasicInformation().GetTestSuiteDescription()
+	tempTestSuiteExecutionEnvironment := fullTestSuiteMessage.GetTestSuiteBasicInformation().GetTestSuiteExecutionEnvironment()
 
 	tempTestSuiteIsDeleted := false
 
@@ -588,6 +589,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, fmt.Sprintf("%s", tempTestSuiteTypeName))
 
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestSuiteDescription)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestSuiteExecutionEnvironment)
 
 	dataRowsToBeInsertedMultiType = append(dataRowsToBeInsertedMultiType, dataRowToBeInsertedMultiType)
 
@@ -632,7 +634,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 		"\"InsertTimeStamp\", \"InsertedByUserIdOnComputer\", \"InsertedByGCPAuthenticatedUser\", " +
 		"\"TestSuiteIsDeleted\", " +
 		" \"TestCasesInTestSuite\", \"TestSuitePreview\", \"TestSuiteMetaData\", \"TestSuiteTestData\", " +
-		"\"TestSuiteType\", \"TestSuiteTypeName\", \"TestSuiteDescription\") "
+		"\"TestSuiteType\", \"TestSuiteTypeName\", \"TestSuiteDescription\", \"TestSuiteExecutionEnvironment\") "
 	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
 	sqlToExecute = sqlToExecute + ";"
 
