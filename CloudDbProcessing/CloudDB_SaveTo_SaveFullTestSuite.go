@@ -265,14 +265,14 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestSuite(
 
 // Extract Domain that Owns the TestSuite
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) extractOwnerDomainFromTestSuite(
-	fullTestCaseMessage *fenixTestCaseBuilderServerGrpcApi.FullTestSuiteMessage) (
+	fullTestSuiteMessage *fenixTestCaseBuilderServerGrpcApi.FullTestSuiteMessage) (
 	ownerDomainForTestSuite domainForTestCaseOrTestSuiteStruct) {
 
 	// Extract the Owner Domain Uuid
-	ownerDomainForTestSuite.domainUuid = fullTestCaseMessage.GetTestSuiteBasicInformation().GetDomainUuid()
+	ownerDomainForTestSuite.domainUuid = fullTestSuiteMessage.GetTestSuiteBasicInformation().GetDomainUuid()
 
 	// Extract the Owner Domain Name
-	ownerDomainForTestSuite.domainName = fullTestCaseMessage.GetTestSuiteBasicInformation().GetDomainName()
+	ownerDomainForTestSuite.domainName = fullTestSuiteMessage.GetTestSuiteBasicInformation().GetDomainName()
 
 	return ownerDomainForTestSuite
 }
