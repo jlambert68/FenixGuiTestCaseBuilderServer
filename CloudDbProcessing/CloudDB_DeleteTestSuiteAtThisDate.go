@@ -206,7 +206,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) performDeleteTestSuite(
 	sqlToExecute = sqlToExecute + "UPDATE \"FenixBuilder\".\"TestSuites\" "
 	sqlToExecute = sqlToExecute + fmt.Sprintf("SET \"DeleteTimestamp\" = '%s', ", deleteTestSuiteAtThisDateRequest.
 		GetDeleteThisTestSuiteAtThisDate().GetDeletedDate())
-	sqlToExecute = sqlToExecute + fmt.Sprintf("\"DeleteTimeStamp\" = '%s', ", tempTimestampToBeUsed)
+	sqlToExecute = sqlToExecute + fmt.Sprintf("\"DeletedInsertedTimeStamp\" = '%s', ", tempTimestampToBeUsed)
 	sqlToExecute = sqlToExecute + fmt.Sprintf("\"DeletedByGCPAuthenticatedUser\" = '%s', ", deleteTestSuiteAtThisDateRequest.
 		GetUserIdentification().GetGCPAuthenticatedUser())
 	sqlToExecute = sqlToExecute + fmt.Sprintf("\"TestSuiteIsDeleted\" = %s ", "true ")

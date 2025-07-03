@@ -302,7 +302,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadFullTestSuite(
 	sqlToExecute = sqlToExecute + "= TS.\"CanListAndViewTestSuiteAuthorizationLevelHavingTiAndTicWith\" "
 	sqlToExecute = sqlToExecute + "AND "
 	sqlToExecute = sqlToExecute + "TS.\"UniqueCounter\" IN (SELECT * FROM uniquecounters) AND "
-	sqlToExecute = sqlToExecute + "TS.\"TestSuiteIsDeleted\" = false AND "
+	sqlToExecute = sqlToExecute + "TS.\"DeleteTimestamp\" > now() AND "
 	sqlToExecute = sqlToExecute + "TS.\"DomainUuid\" = da.\"domain_uuid\" "
 	sqlToExecute = sqlToExecute + "; "
 

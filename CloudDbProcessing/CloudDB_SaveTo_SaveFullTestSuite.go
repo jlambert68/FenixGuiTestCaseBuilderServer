@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/shared_code"
+	"strings"
 
 	"strconv"
 	"time"
@@ -523,6 +524,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 	tempTestSuiteExecutionEnvironment := fullTestSuiteMessage.GetTestSuiteBasicInformation().GetTestSuiteExecutionEnvironment()
 
 	tempTestSuiteIsDeleted := false
+	tempTestSuiteDeletedInsertTimeStamp := "NULL"
+	// TODO fixa så delete i framtiden kan leva vidare när man spara ny versionen så ska Delete-date i framtiden kopieras vidare
 
 	// Initiate 'TestCasesInTestSuite' if nil
 	if fullTestSuiteMessage.GetTestCasesInTestSuite() == nil {
@@ -612,6 +615,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempInsertedByGCPAuthenticatedUser)
 
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestSuiteIsDeleted)
+	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestSuiteDeletedInsertTimeStamp)
 
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestCasesInTestSuiteAsJsonb)
 	dataRowToBeInsertedMultiType = append(dataRowToBeInsertedMultiType, tempTestSuitePreviewAsJsonb)
@@ -660,6 +664,11 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 
 	*/
 
+	// A quick fix to be able to use NULL for TimeStamp
+	var sqlValuesToInsert string
+	sqlValuesToInsert = fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
+	sqlValuesToInsert = strings.ReplaceAll(sqlValuesToInsert, "'NULL'", "NULL")
+
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "INSERT INTO \"FenixBuilder\".\"TestSuites\" "
 	sqlToExecute = sqlToExecute + "(\"DomainUuid\", \"DomainName\", \"TestSuiteUuid\", \"TestSuiteName\", " +
@@ -667,11 +676,11 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 		"\"CanListAndViewTestSuiteAuthorizationLevelOwnedByDomain\", " +
 		"\"CanListAndViewTestSuiteAuthorizationLevelHavingTiAndTicWith\", " +
 		"\"InsertTimeStamp\", \"InsertedByUserIdOnComputer\", \"InsertedByGCPAuthenticatedUser\", " +
-		"\"TestSuiteIsDeleted\", " +
+		"\"TestSuiteIsDeleted\", \"DeletedInsertedTimeStamp\", " +
 		" \"TestCasesInTestSuite\", \"TestSuitePreview\", \"TestSuiteMetaData\", \"TestSuiteTestData\", " +
 		"\"TestSuiteType\", \"TestSuiteTypeName\", \"TestSuiteDescription\", \"TestSuiteExecutionEnvironment\", " +
 		"\"TestSuiteImplementedFunctions\") "
-	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLInsertValues(dataRowsToBeInsertedMultiType)
+	sqlToExecute = sqlToExecute + sqlValuesToInsert
 	sqlToExecute = sqlToExecute + ";"
 
 	// Execute Query CloudDB
@@ -682,6 +691,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 		common_config.Logger.WithFields(logrus.Fields{
 			"Id":           "7867cae8-2869-4898-be0b-bcc3ba4570e2",
 			"sqlToExecute": sqlToExecute,
+			"err":          err.Error(),
 		}).Error("Problem when Saving TestSuite to database")
 
 		// Set Error codes to return message
@@ -736,14 +746,14 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadTestCasesTIAndTICBelongi
 
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "WITH uniquecounters AS ( "
-	sqlToExecute = sqlToExecute + "SELECT Distinct ON (\"TestCaseUuid\")  \"UniqueCounter "
-	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases "
+	sqlToExecute = sqlToExecute + "SELECT Distinct ON (\"TestCaseUuid\")  \"UniqueCounter\" "
+	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" "
 	sqlToExecute = sqlToExecute + "WHERE \"TestCaseUuid\" IN " + fenixCloudDBObject.generateSQLINArray(testCasesUuid) + " "
 	sqlToExecute = sqlToExecute + "ORDER BY \"TestCaseUuid\", \"UniqueCounter\" DESC "
 	sqlToExecute = sqlToExecute + ") "
 	sqlToExecute = sqlToExecute + "SELECT t.\"TestInstructionsAsJsonb\", t.\"TestInstructionContainersAsJsonb\" "
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" t "
-	sqlToExecute = sqlToExecute + "WHERE t.\"UniqueCounter\" IN (SELECT * FROM uniquecounters); "
+	sqlToExecute = sqlToExecute + "WHERE t.\"UniqueCounter\" IN (SELECT * FROM uniquecounters) "
 	sqlToExecute = sqlToExecute + "; "
 
 	// Log SQL to be executed if Environment variable is true
