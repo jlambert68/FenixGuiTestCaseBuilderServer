@@ -32,20 +32,20 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuiteCommitOrRol
 		dbTransaction.Commit(context.Background())
 
 		common_config.Logger.WithFields(logrus.Fields{
-			"id": "44efb853-20b0-4341-be64-bd8bf4897275",
+			"id": "5a680f7c-9960-48d4-99b6-8fc0228b2fd8",
 		}).Debug("Doing Commit for SQL  in 'saveFullTestSuiteCommitOrRoleBack'")
 
 	} else {
 		dbTransaction.Rollback(context.Background())
 
 		common_config.Logger.WithFields(logrus.Fields{
-			"id": "9161f901-615a-4623-b161-9cbd99a7ffd6",
+			"id": "3b5d95a1-6c35-45f4-add9-6860ffd3ceb0",
 		}).Info("Doing Rollback for SQL  in 'saveFullTestSuiteCommitOrRoleBack'")
 
 	}
 }
 
-// PrepareSaveFullTestCasePrepareSaveFullTestSuite
+// PrepareSaveFullTestSuite
 // Do initial preparations to be able to save the TestSuite
 func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestSuite(
 	gRPCTestSuiteMessage *fenixTestCaseBuilderServerGrpcApi.SaveFullTestSuiteMessageRequest) (
@@ -64,7 +64,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestSuite(
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"id":    "de9f81f1-c076-4bd3-8f3d-c951fd99bf38",
+			"id":    "b7270c79-7a71-41ae-b2b8-ae0a0f45904c",
 			"error": err,
 		}).Error("Problem to do 'DbPool.Begin'  in 'prepareSaveFullTestSuite'")
 
@@ -99,11 +99,11 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestSuite(
 		&txn,
 		&doCommitNotRoleBack)
 
-	// Extract Domain that Owns the TestCase
-	var ownerDomainForTestCase domainForTestCaseOrTestSuiteStruct
-	ownerDomainForTestCase = fenixCloudDBObject.extractOwnerDomainFromTestSuite(fullTestSuiteMessage)
+	// Extract Domain that Owns the TestSuite
+	var ownerDomainForTestSuite domainForTestCaseOrTestSuiteStruct
+	ownerDomainForTestSuite = fenixCloudDBObject.extractOwnerDomainFromTestSuite(fullTestSuiteMessage)
 
-	// Extract all TestCaseUuid from TestSuite
+	// Extract all TestCaseUuid's from TestSuite
 	var testCaseUuidsInTestSuite []string
 	if fullTestSuiteMessage.TestCasesInTestSuite != nil {
 		for _, tempTestCasesInTestSuite := range fullTestSuiteMessage.TestCasesInTestSuite.TestCasesInTestSuite {
@@ -120,7 +120,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestSuite(
 
 		if err != nil {
 			common_config.Logger.WithFields(logrus.Fields{
-				"id":    "979adb86-c8b9-44ba-8cd0-82059fd8d7c3",
+				"id":    "d5ec1a39-b6ab-4691-8c69-e73bff0dd28e",
 				"error": err,
 			}).Error("Got some problem when loading TestInstructions and TestInstructionContainers from TestSuite")
 
@@ -157,7 +157,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestSuite(
 		txn, userIdentification.GetGCPAuthenticatedUser())
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"id":    "f27bf395-e3fb-4106-b84a-9d46bc377e81",
+			"id":    "59eb5990-3067-4b11-b38b-a854a6cc22b1",
 			"error": err,
 		}).Error("Got some problem when loading Users Domains")
 
@@ -186,10 +186,10 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestSuite(
 	var authorizationValueForAllDomainsInTestSuite int64
 	userIsAllowedToSaveTestSuite, authorizationValueForOwnerDomain,
 		authorizationValueForAllDomainsInTestSuite, err = fenixCloudDBObject.verifyThatUserIsAllowedToSaveTestSuite(
-		txn, ownerDomainForTestCase, allDomainsWithinTestCase, usersDomainsAndAuthorizations)
+		txn, ownerDomainForTestSuite, allDomainsWithinTestCase, usersDomainsAndAuthorizations)
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"id":    "c307dbf4-c2c8-4012-966f-7e70f077810d",
+			"id":    "5509decd-a0e9-4d4c-a954-38f0c72a4c41",
 			"error": err,
 		}).Error("Some technical database problem when trying to verify if user is allowed to save TestSuite")
 
@@ -215,7 +215,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestSuite(
 	// User is not allowed to save TestSuite
 	if userIsAllowedToSaveTestSuite == false {
 		common_config.Logger.WithFields(logrus.Fields{
-			"id":    "3ec4fb53-63a9-4c06-85bd-f6f0ba16cb20",
+			"id":    "41aaf01e-4f4c-4d76-8b39-541ae6cf3b39",
 			"error": err,
 		}).Error("User is not allowed to save TestSuite in database")
 
@@ -238,9 +238,42 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestSuite(
 		return returnMessage
 	}
 
+	// Load PreViews for all TestCases in TestSuite
+	var tempTestCasesPreview []*fenixTestCaseBuilderServerGrpcApi.TestCasePreviewMessage
+	tempTestCasesPreview, err = fenixCloudDBObject.loadTestCasesPreviewForTestSuite(txn, testCaseUuidsInTestSuite)
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"id":    "734a3f81-cc80-4393-880a-95c3eaad6863",
+			"error": err,
+		}).Error("Got some problem when loading TestCasesPreView from database")
+
+		// Set Error codes to return message
+		var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+		var errorCode fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+
+		errorCode = fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM
+		errorCodes = append(errorCodes, errorCode)
+
+		// Create Return message
+		returnMessage = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+			AckNack:    false,
+			Comments:   "Got some problem when loading TestCasesPreView from database",
+			ErrorCodes: errorCodes,
+			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
+				CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
+		}
+
+		return returnMessage
+	}
+
 	// Save the TestSuite
 	returnMessage, err = fenixCloudDBObject.saveFullTestSuite(
-		txn, gRPCTestSuiteMessage, authorizationValueForOwnerDomain, authorizationValueForAllDomainsInTestSuite)
+		txn,
+		gRPCTestSuiteMessage,
+		authorizationValueForOwnerDomain,
+		authorizationValueForAllDomainsInTestSuite,
+		tempTestCasesPreview)
 
 	if err != nil {
 		return returnMessage
@@ -373,7 +406,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyThatUserIsAllowedToSav
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id":                      "cdcab7ce-11e8-467a-b23e-16c8fad5bfa1",
+			"Id":                      "7c585333-5f74-4d82-8083-9335d10e4b39",
 			"Error":                   err,
 			"ownerDomainForTestSuite": ownerDomainForTestSuite,
 		}).Error("Couldn't load Authorization vale based on Owner Domain")
@@ -390,7 +423,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) verifyThatUserIsAllowedToSav
 		dbTransaction, allDomainsWithinTestSuite)
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id":                        "7b192bbf-286b-42e5-acdc-41adf57c48e6",
+			"Id":                        "c11f3d87-8ef5-46d1-aa82-c9a28d462ec8",
 			"Error":                     err,
 			"allDomainsWithinTestSuite": allDomainsWithinTestSuite,
 		}).Error("Couldn't load Authorization vale based on Owner Domain")
@@ -446,7 +479,8 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 	dbTransaction pgx.Tx,
 	gRPCTestSuiteMessage *fenixTestCaseBuilderServerGrpcApi.SaveFullTestSuiteMessageRequest,
 	authorizationValueForOwnerDomain int64,
-	authorizationValueForAllDomainsInTestSuite int64) (
+	authorizationValueForAllDomainsInTestSuite int64,
+	tempTestCasesPreview []*fenixTestCaseBuilderServerGrpcApi.TestCasePreviewMessage) (
 	returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse,
 	err error) {
 
@@ -552,10 +586,132 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 
 	} else {
 
+		var tempTestSuiteStructureObjects []*fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewStructureMessage_TestSuiteStructureObjectMessage
+		var tempSelectedTestSuiteMetaDataValuesMap map[string]*fenixTestCaseBuilderServerGrpcApi.
+			TestSuitePreviewStructureMessage_SelectedTestSuiteMetaDataValueMessage
+		tempSelectedTestSuiteMetaDataValuesMap = make(map[string]*fenixTestCaseBuilderServerGrpcApi.
+			TestSuitePreviewStructureMessage_SelectedTestSuiteMetaDataValueMessage)
+
+		var tempTestSuitePreview *fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewMessage
+		tempTestSuitePreview = &fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewMessage{
+			TestSuitePreview: &fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewStructureMessage{
+				TestSuiteName:                      tempTestSuiteName,
+				DomainThatOwnTheTestSuite:          tempDomainUuid,
+				TestSuiteDescription:               fullTestSuiteMessage.GetTestSuiteBasicInformation().GetTestSuiteDescription(),
+				TestSuiteStructureObjects:          tempTestSuiteStructureObjects,
+				TestSuiteUuid:                      tempTestSuiteUuid,
+				TestSuiteVersion:                   strconv.Itoa(int(nexTestSuiteVersion)),
+				LastSavedByUserOnComputer:          tempInsertedByUserIdOnComputer,
+				LastSavedByUserGCPAuthorization:    tempInsertedByGCPAuthenticatedUser,
+				LastSavedTimeStamp:                 insertTimeStamp,
+				SelectedTestSuiteMetaDataValuesMap: tempSelectedTestSuiteMetaDataValuesMap,
+			},
+			TestSuitePreviewHash: "",
+		}
+
+		// Generate 'SelectedTestSuiteMetaDataValuesMap'
+		for _, tempMetaDataGroupMessagePtr := range fullTestSuiteMessage.TestSuiteMetaData.MetaDataGroupsMap {
+
+			// Get the 'MetaDataGroupMessage' from ptr
+			tempMetaDataGroupMessage := *tempMetaDataGroupMessagePtr
+
+			// Loop 'MetaDataInGroupMap'
+			for SelectedTestSuiteMetaDataValuesMap, tempMetaDataInGroupMessagePtr := range tempMetaDataGroupMessage.MetaDataInGroupMap {
+
+				switch tempMetaDataInGroupMessagePtr.GetSelectType() {
+
+				case fenixTestCaseBuilderServerGrpcApi.MetaDataSelectTypeEnum_MetaDataSelectType_SingleSelect:
+
+					// Create 'SelectedTestSuiteMetaDataValueMessage' to be stored in Map
+					var tempSelectedTestSuiteMetaDataValueMessage *fenixTestCaseBuilderServerGrpcApi.
+						TestSuitePreviewStructureMessage_SelectedTestSuiteMetaDataValueMessage
+
+					tempSelectedTestSuiteMetaDataValueMessage = &fenixTestCaseBuilderServerGrpcApi.
+						TestSuitePreviewStructureMessage_SelectedTestSuiteMetaDataValueMessage{
+						OwnerDomainUuid:   tempSelectedTestSuiteMetaDataValueMessage.GetOwnerDomainUuid(),
+						OwnerDomainName:   tempSelectedTestSuiteMetaDataValueMessage.GetOwnerDomainName(),
+						MetaDataGroupName: tempMetaDataInGroupMessagePtr.GetMetaDataGroupName(),
+						MetaDataName:      tempMetaDataInGroupMessagePtr.GetMetaDataName(),
+						MetaDataNameValue: tempMetaDataInGroupMessagePtr.GetSelectedMetaDataValueForSingleSelect(),
+						SelectType:        tempSelectedTestSuiteMetaDataValueMessage.GetSelectType(),
+						IsMandatory:       tempSelectedTestSuiteMetaDataValueMessage.GetIsMandatory(),
+					}
+
+					// Add value to map
+					tempSelectedTestSuiteMetaDataValuesMap[SelectedTestSuiteMetaDataValuesMap] = tempSelectedTestSuiteMetaDataValueMessage
+
+				case fenixTestCaseBuilderServerGrpcApi.MetaDataSelectTypeEnum_MetaDataSelectType_MultiSelect:
+
+					// Loop all selected values and add to map
+					for _, tempSelectedMetaDataValue := range tempMetaDataInGroupMessagePtr.GetSelectedMetaDataValuesForMultiSelect() {
+
+						// Create 'SelectedTestSuiteMetaDataValueMessage' to be stored in Map
+						var tempSelectedTestSuiteMetaDataValueMessage *fenixTestCaseBuilderServerGrpcApi.
+							TestSuitePreviewStructureMessage_SelectedTestSuiteMetaDataValueMessage
+
+						tempSelectedTestSuiteMetaDataValueMessage = &fenixTestCaseBuilderServerGrpcApi.
+							TestSuitePreviewStructureMessage_SelectedTestSuiteMetaDataValueMessage{
+							OwnerDomainUuid:   tempSelectedTestSuiteMetaDataValueMessage.GetOwnerDomainUuid(),
+							OwnerDomainName:   tempSelectedTestSuiteMetaDataValueMessage.GetOwnerDomainName(),
+							MetaDataGroupName: tempMetaDataInGroupMessagePtr.GetMetaDataGroupName(),
+							MetaDataName:      tempMetaDataInGroupMessagePtr.GetMetaDataName(),
+							MetaDataNameValue: tempSelectedMetaDataValue,
+							SelectType:        tempSelectedTestSuiteMetaDataValueMessage.GetSelectType(),
+							IsMandatory:       tempSelectedTestSuiteMetaDataValueMessage.GetIsMandatory(),
+						}
+
+						// Add value to map
+						tempSelectedTestSuiteMetaDataValuesMap[SelectedTestSuiteMetaDataValuesMap] = tempSelectedTestSuiteMetaDataValueMessage
+
+					}
+
+				default:
+					common_config.Logger.WithFields(logrus.Fields{
+						"Id":                   "6972f543-5fba-414e-b9d2-079a374d0f48",
+						"fullTestSuiteMessage": fullTestSuiteMessage,
+						"tempMetaDataInGroupMessagePtr.GetSelectType()": tempMetaDataInGroupMessagePtr.GetSelectType(),
+					}).Error("Unknown SelectType in 'MetaDataInGroupMap'")
+
+					// Set Error codes to return message
+					var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+					var errorCode fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+
+					errorCode = fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM
+					errorCodes = append(errorCodes, errorCode)
+
+					// Create Return message
+					returnMessage = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+						AckNack:    false,
+						Comments:   "Problem when Saving TestSuite to database",
+						ErrorCodes: errorCodes,
+						ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
+							CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
+					}
+
+					return returnMessage, err
+
+				}
+			}
+		}
+
+		// Add 'tempSelectedTestSuiteMetaDataValuesMap' to 'tempTestSuitePreview'
+		tempTestSuitePreview.TestSuitePreview.SelectedTestSuiteMetaDataValuesMap = tempSelectedTestSuiteMetaDataValuesMap
+
+		// Calculate 'TestSuitePreviewHash'
+		var tempTestSuitePreviewHash string
+		tempJson := protojson.Format(tempTestSuitePreview)
+		tempTestSuitePreviewHash = common_config.HashSingleValue(tempJson)
+
+		tempTestSuitePreview.TestSuitePreviewHash = tempTestSuitePreviewHash
+
 		// finish Preview-structure to be saved
-		fullTestSuiteMessage.TestSuitePreview.TestSuitePreview.TestSuiteVersion = strconv.Itoa(int(nexTestSuiteVersion))
-		fullTestSuiteMessage.TestSuitePreview.TestSuitePreview.LastSavedTimeStamp = insertTimeStamp
+
+		// Add TestCases Preview-object to TestSuite
+		fullTestSuiteMessage.TestSuitePreview = tempTestSuitePreview
+
 	}
+
+	// Generate json from gRCP-object
 	tempTestSuitePreviewAsJsonb := protojson.Format(fullTestSuiteMessage.GetTestSuitePreview())
 
 	// Initiate 'TestSuiteImplementedFunctionsMap' if nil
@@ -566,7 +722,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 	if err != nil {
 
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id": "16aba916-ff1b-4ab7-ba49-07cae7cbc20c",
+			"Id": "4b297436-3ce2-4c58-93a6-d70cb7da13c6",
 			"fullTestSuiteMessage.GetTestSuiteImplementedFunctionsMap()": fullTestSuiteMessage.GetTestSuiteImplementedFunctionsMap(),
 		}).Error("Problem generating json-byte-array from 'TestSuiteImplementedFunctionsMap'")
 
@@ -689,7 +845,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 	if err != nil {
 
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id":           "7867cae8-2869-4898-be0b-bcc3ba4570e2",
+			"Id":           "7d960b15-a49b-408b-9f6c-f8bb19af1d4e",
 			"sqlToExecute": sqlToExecute,
 			"err":          err.Error(),
 		}).Error("Problem when Saving TestSuite to database")
@@ -715,7 +871,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 
 	// Log response from CloudDB
 	common_config.Logger.WithFields(logrus.Fields{
-		"Id":                       "e44546c3-922c-4d9b-a1e4-94bb655825d9",
+		"Id":                       "900b2c42-3c6e-4afa-8605-35e0e07b4e12",
 		"comandTag.Insert()":       comandTag.Insert(),
 		"comandTag.Delete()":       comandTag.Delete(),
 		"comandTag.Select()":       comandTag.Select(),
@@ -759,7 +915,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadTestCasesTIAndTICBelongi
 	// Log SQL to be executed if Environment variable is true
 	if common_config.LogAllSQLs == true {
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id":           "2ddf3a3a-98e1-4dc4-91b7-3fe7b7da34eb",
+			"Id":           "5c36b6c4-84bf-4b3a-a851-28bc03106496",
 			"sqlToExecute": sqlToExecute,
 		}).Debug("SQL to be executed within 'loadFullTestCase'")
 	}
@@ -774,7 +930,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadTestCasesTIAndTICBelongi
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id":           "0dee732b-15dc-4b6c-99e8-b555cceb82a2",
+			"Id":           "2e2176c5-fc44-412c-a0d3-b8c6298179ac",
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
 		}).Error("Something went wrong when executing SQL")
@@ -802,7 +958,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadTestCasesTIAndTICBelongi
 		if err != nil {
 
 			common_config.Logger.WithFields(logrus.Fields{
-				"Id":           "c562fc51-20a9-4d5e-aa04-7653469dd399",
+				"Id":           "fdb86499-bbc6-427e-96df-768e79cfb443",
 				"Error":        err,
 				"sqlToExecute": sqlToExecute,
 			}).Error("Something went wrong when processing result from database")
@@ -819,7 +975,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadTestCasesTIAndTICBelongi
 		err = protojson.Unmarshal(tempTestInstructionsAsByteArray, &tempTestInstructions)
 		if err != nil {
 			common_config.Logger.WithFields(logrus.Fields{
-				"Id":    "3055f791-3b56-4458-a778-eb71226a94b8",
+				"Id":    "bba83c43-226b-472f-85d2-41623186b99b",
 				"Error": err,
 			}).Error("Something went wrong when converting 'tempTestInstructionsAsByteArray' into proto-message")
 
@@ -831,7 +987,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadTestCasesTIAndTICBelongi
 		err = protojson.Unmarshal(tempTestInstructionContainersAsByteArray, &tempTestInstructionContainers)
 		if err != nil {
 			common_config.Logger.WithFields(logrus.Fields{
-				"Id":    "37d5c732-ed9a-4cea-aa46-c8a12a0f076b",
+				"Id":    "9ef87c74-b39c-4ef7-b968-afc2dc6d79eb",
 				"Error": err,
 			}).Error("Something went wrong when converting 'tempTestInstructionContainersAsByteArray' into proto-message")
 
@@ -847,5 +1003,98 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadTestCasesTIAndTICBelongi
 	}
 
 	return &allTestInstructions, &allTestInstructionContainers, err
+
+}
+
+// Load TestCase's-Preview for TestSuites
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadTestCasesPreviewForTestSuite(
+	dbTransaction pgx.Tx,
+	testCaseUuids []string) (
+	tempTestCasesPreview []*fenixTestCaseBuilderServerGrpcApi.TestCasePreviewMessage,
+	err error) {
+
+	sqlToExecute := ""
+	sqlToExecute = sqlToExecute + "SELECT DISTINCT ON (tc.\"TestCaseUuid\") " +
+		"tc.\"TestCaseUuid\", tc.\"TestCaseVersion\", tc.\"TestCasePreview\" "
+	sqlToExecute = sqlToExecute + "FROM   \"FenixBuilder\".\"TestCases\" t "
+	sqlToExecute = sqlToExecute + "WHERE tc.\"TestCaseUuid\" IN  "
+	sqlToExecute = sqlToExecute + common_config.GenerateSQLINArray(testCaseUuids) + " "
+	sqlToExecute = sqlToExecute + "ORDER  BY tc.\"TestCaseUuid\", tc.\"TestCaseVersion\" DESC "
+	sqlToExecute = sqlToExecute + "; "
+
+	// Log SQL to be executed if Environment variable is true
+	if common_config.LogAllSQLs == true {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "fbb9a0b4-ec7c-4674-a97c-0e3047a976de",
+			"sqlToExecute": sqlToExecute,
+		}).Debug("SQL to be executed within 'listTestCasesThatCanBeEdited'")
+	}
+
+	// Query DB
+	var ctx context.Context
+	ctx, timeOutCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer timeOutCancel()
+
+	rows, err := dbTransaction.Query(ctx, sqlToExecute)
+	defer rows.Close()
+
+	if err != nil {
+		common_config.Logger.WithFields(logrus.Fields{
+			"Id":           "4ad9875a-4dce-4ae1-b318-e10fc08803c8",
+			"Error":        err,
+			"sqlToExecute": sqlToExecute,
+		}).Error("Something went wrong when executing SQL")
+
+		return nil, err
+	}
+
+	var (
+		tempTestCaseUuid               string
+		tempTestCaseVersion            int
+		tempTestCasePreviewAsString    string
+		tempTestCasePreviewAsByteArray []byte
+	)
+
+	// Extract data from DB result set
+	for rows.Next() {
+
+		var tempTestCasePreview fenixTestCaseBuilderServerGrpcApi.TestCasePreviewMessage
+
+		err = rows.Scan(
+			&tempTestCaseUuid,
+			&tempTestCaseVersion,
+		)
+
+		if err != nil {
+
+			common_config.Logger.WithFields(logrus.Fields{
+				"Id":           "d61ef5bb-f6e2-4571-86a1-6a4383e640c4",
+				"Error":        err,
+				"sqlToExecute": sqlToExecute,
+			}).Error("Something went wrong when processing result from database")
+
+			return nil, err
+		}
+
+		// Convert json-string into byte-array
+		tempTestCasePreviewAsByteArray = []byte(tempTestCasePreviewAsString)
+
+		// Convert json-byte-arrays into proto-messages
+		err = protojson.Unmarshal(tempTestCasePreviewAsByteArray, &tempTestCasePreview)
+		if err != nil {
+			common_config.Logger.WithFields(logrus.Fields{
+				"Id":    "8e4e83a1-a8d1-41ae-9c5f-f7091ece8b15",
+				"Error": err,
+			}).Error("Something went wrong when converting 'tempTestCasePreviewAsByteArray' into proto-message")
+
+			return nil, err
+		}
+
+		// Add to slice of TestCases
+		tempTestCasesPreview = append(tempTestCasesPreview, &tempTestCasePreview)
+
+	}
+
+	return tempTestCasesPreview, err
 
 }
