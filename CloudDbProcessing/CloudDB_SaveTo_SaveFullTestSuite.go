@@ -580,47 +580,66 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 	}
 	tempTestSuiteTestDataAsJsonb := protojson.Format(fullTestSuiteMessage.GetTestSuiteTestData())
 
-	// Initiate 'TestSuitePreview' if nil
-	if fullTestSuiteMessage.GetTestSuitePreview() == nil {
-		fullTestSuiteMessage.TestSuitePreview = &fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewMessage{}
+	// Create the 'TestSuitePreview'
+	var tempSelectedTestSuiteMetaDataValuesMap map[string]*fenixTestCaseBuilderServerGrpcApi.
+		TestSuitePreviewStructureMessage_SelectedTestSuiteMetaDataValueMessage
+	tempSelectedTestSuiteMetaDataValuesMap = make(map[string]*fenixTestCaseBuilderServerGrpcApi.
+		TestSuitePreviewStructureMessage_SelectedTestSuiteMetaDataValueMessage)
 
-	} else {
+	var tempTestSuitePreview *fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewMessage
+	tempTestSuitePreview = &fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewMessage{
+		TestSuitePreview: &fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewStructureMessage{
+			TestSuiteUuid:                 tempTestSuiteUuid,
+			TestSuiteName:                 tempTestSuiteName,
+			TestSuiteVersion:              strconv.Itoa(int(nexTestSuiteVersion)),
+			DomainUuidThatOwnTheTestSuite: tempDomainUuid,
+			DomainNameThatOwnTheTestSuite: tempDomainName,
+			TestSuiteDescription:          fullTestSuiteMessage.GetTestSuiteBasicInformation().GetTestSuiteDescription(),
+			TestSuiteStructureObjects: &fenixTestCaseBuilderServerGrpcApi.
+				TestSuitePreviewStructureMessage_TestSuiteStructureObjectMessage{TestCasePreViews: tempTestCasesPreview},
+			LastSavedByUserOnComputer:          tempInsertedByUserIdOnComputer,
+			LastSavedByUserGCPAuthorization:    tempInsertedByGCPAuthenticatedUser,
+			LastSavedTimeStamp:                 insertTimeStamp,
+			SelectedTestSuiteMetaDataValuesMap: tempSelectedTestSuiteMetaDataValuesMap,
+		},
+		TestSuitePreviewHash: "",
+	}
 
-		var tempTestSuiteStructureObjects []*fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewStructureMessage_TestSuiteStructureObjectMessage
-		var tempSelectedTestSuiteMetaDataValuesMap map[string]*fenixTestCaseBuilderServerGrpcApi.
-			TestSuitePreviewStructureMessage_SelectedTestSuiteMetaDataValueMessage
-		tempSelectedTestSuiteMetaDataValuesMap = make(map[string]*fenixTestCaseBuilderServerGrpcApi.
-			TestSuitePreviewStructureMessage_SelectedTestSuiteMetaDataValueMessage)
+	// Generate 'SelectedTestSuiteMetaDataValuesMap'
+	for _, tempMetaDataGroupMessagePtr := range fullTestSuiteMessage.TestSuiteMetaData.MetaDataGroupsMap {
 
-		var tempTestSuitePreview *fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewMessage
-		tempTestSuitePreview = &fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewMessage{
-			TestSuitePreview: &fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewStructureMessage{
-				TestSuiteName:                      tempTestSuiteName,
-				DomainThatOwnTheTestSuite:          tempDomainUuid,
-				TestSuiteDescription:               fullTestSuiteMessage.GetTestSuiteBasicInformation().GetTestSuiteDescription(),
-				TestSuiteStructureObjects:          tempTestSuiteStructureObjects,
-				TestSuiteUuid:                      tempTestSuiteUuid,
-				TestSuiteVersion:                   strconv.Itoa(int(nexTestSuiteVersion)),
-				LastSavedByUserOnComputer:          tempInsertedByUserIdOnComputer,
-				LastSavedByUserGCPAuthorization:    tempInsertedByGCPAuthenticatedUser,
-				LastSavedTimeStamp:                 insertTimeStamp,
-				SelectedTestSuiteMetaDataValuesMap: tempSelectedTestSuiteMetaDataValuesMap,
-			},
-			TestSuitePreviewHash: "",
-		}
+		// Get the 'MetaDataGroupMessage' from ptr
+		tempMetaDataGroupMessage := *tempMetaDataGroupMessagePtr
 
-		// Generate 'SelectedTestSuiteMetaDataValuesMap'
-		for _, tempMetaDataGroupMessagePtr := range fullTestSuiteMessage.TestSuiteMetaData.MetaDataGroupsMap {
+		// Loop 'MetaDataInGroupMap'
+		for SelectedTestSuiteMetaDataValuesMap, tempMetaDataInGroupMessagePtr := range tempMetaDataGroupMessage.MetaDataInGroupMap {
 
-			// Get the 'MetaDataGroupMessage' from ptr
-			tempMetaDataGroupMessage := *tempMetaDataGroupMessagePtr
+			switch tempMetaDataInGroupMessagePtr.GetSelectType() {
 
-			// Loop 'MetaDataInGroupMap'
-			for SelectedTestSuiteMetaDataValuesMap, tempMetaDataInGroupMessagePtr := range tempMetaDataGroupMessage.MetaDataInGroupMap {
+			case fenixTestCaseBuilderServerGrpcApi.MetaDataSelectTypeEnum_MetaDataSelectType_SingleSelect:
 
-				switch tempMetaDataInGroupMessagePtr.GetSelectType() {
+				// Create 'SelectedTestSuiteMetaDataValueMessage' to be stored in Map
+				var tempSelectedTestSuiteMetaDataValueMessage *fenixTestCaseBuilderServerGrpcApi.
+					TestSuitePreviewStructureMessage_SelectedTestSuiteMetaDataValueMessage
 
-				case fenixTestCaseBuilderServerGrpcApi.MetaDataSelectTypeEnum_MetaDataSelectType_SingleSelect:
+				tempSelectedTestSuiteMetaDataValueMessage = &fenixTestCaseBuilderServerGrpcApi.
+					TestSuitePreviewStructureMessage_SelectedTestSuiteMetaDataValueMessage{
+					OwnerDomainUuid:   tempSelectedTestSuiteMetaDataValueMessage.GetOwnerDomainUuid(),
+					OwnerDomainName:   tempSelectedTestSuiteMetaDataValueMessage.GetOwnerDomainName(),
+					MetaDataGroupName: tempMetaDataInGroupMessagePtr.GetMetaDataGroupName(),
+					MetaDataName:      tempMetaDataInGroupMessagePtr.GetMetaDataName(),
+					MetaDataNameValue: tempMetaDataInGroupMessagePtr.GetSelectedMetaDataValueForSingleSelect(),
+					SelectType:        tempSelectedTestSuiteMetaDataValueMessage.GetSelectType(),
+					IsMandatory:       tempSelectedTestSuiteMetaDataValueMessage.GetIsMandatory(),
+				}
+
+				// Add value to map
+				tempSelectedTestSuiteMetaDataValuesMap[SelectedTestSuiteMetaDataValuesMap] = tempSelectedTestSuiteMetaDataValueMessage
+
+			case fenixTestCaseBuilderServerGrpcApi.MetaDataSelectTypeEnum_MetaDataSelectType_MultiSelect:
+
+				// Loop all selected values and add to map
+				for _, tempSelectedMetaDataValue := range tempMetaDataInGroupMessagePtr.GetSelectedMetaDataValuesForMultiSelect() {
 
 					// Create 'SelectedTestSuiteMetaDataValueMessage' to be stored in Map
 					var tempSelectedTestSuiteMetaDataValueMessage *fenixTestCaseBuilderServerGrpcApi.
@@ -632,7 +651,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 						OwnerDomainName:   tempSelectedTestSuiteMetaDataValueMessage.GetOwnerDomainName(),
 						MetaDataGroupName: tempMetaDataInGroupMessagePtr.GetMetaDataGroupName(),
 						MetaDataName:      tempMetaDataInGroupMessagePtr.GetMetaDataName(),
-						MetaDataNameValue: tempMetaDataInGroupMessagePtr.GetSelectedMetaDataValueForSingleSelect(),
+						MetaDataNameValue: tempSelectedMetaDataValue,
 						SelectType:        tempSelectedTestSuiteMetaDataValueMessage.GetSelectType(),
 						IsMandatory:       tempSelectedTestSuiteMetaDataValueMessage.GetIsMandatory(),
 					}
@@ -640,76 +659,51 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 					// Add value to map
 					tempSelectedTestSuiteMetaDataValuesMap[SelectedTestSuiteMetaDataValuesMap] = tempSelectedTestSuiteMetaDataValueMessage
 
-				case fenixTestCaseBuilderServerGrpcApi.MetaDataSelectTypeEnum_MetaDataSelectType_MultiSelect:
-
-					// Loop all selected values and add to map
-					for _, tempSelectedMetaDataValue := range tempMetaDataInGroupMessagePtr.GetSelectedMetaDataValuesForMultiSelect() {
-
-						// Create 'SelectedTestSuiteMetaDataValueMessage' to be stored in Map
-						var tempSelectedTestSuiteMetaDataValueMessage *fenixTestCaseBuilderServerGrpcApi.
-							TestSuitePreviewStructureMessage_SelectedTestSuiteMetaDataValueMessage
-
-						tempSelectedTestSuiteMetaDataValueMessage = &fenixTestCaseBuilderServerGrpcApi.
-							TestSuitePreviewStructureMessage_SelectedTestSuiteMetaDataValueMessage{
-							OwnerDomainUuid:   tempSelectedTestSuiteMetaDataValueMessage.GetOwnerDomainUuid(),
-							OwnerDomainName:   tempSelectedTestSuiteMetaDataValueMessage.GetOwnerDomainName(),
-							MetaDataGroupName: tempMetaDataInGroupMessagePtr.GetMetaDataGroupName(),
-							MetaDataName:      tempMetaDataInGroupMessagePtr.GetMetaDataName(),
-							MetaDataNameValue: tempSelectedMetaDataValue,
-							SelectType:        tempSelectedTestSuiteMetaDataValueMessage.GetSelectType(),
-							IsMandatory:       tempSelectedTestSuiteMetaDataValueMessage.GetIsMandatory(),
-						}
-
-						// Add value to map
-						tempSelectedTestSuiteMetaDataValuesMap[SelectedTestSuiteMetaDataValuesMap] = tempSelectedTestSuiteMetaDataValueMessage
-
-					}
-
-				default:
-					common_config.Logger.WithFields(logrus.Fields{
-						"Id":                   "6972f543-5fba-414e-b9d2-079a374d0f48",
-						"fullTestSuiteMessage": fullTestSuiteMessage,
-						"tempMetaDataInGroupMessagePtr.GetSelectType()": tempMetaDataInGroupMessagePtr.GetSelectType(),
-					}).Error("Unknown SelectType in 'MetaDataInGroupMap'")
-
-					// Set Error codes to return message
-					var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
-					var errorCode fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
-
-					errorCode = fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM
-					errorCodes = append(errorCodes, errorCode)
-
-					// Create Return message
-					returnMessage = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-						AckNack:    false,
-						Comments:   "Problem when Saving TestSuite to database",
-						ErrorCodes: errorCodes,
-						ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
-							CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
-					}
-
-					return returnMessage, err
-
 				}
+
+			default:
+				common_config.Logger.WithFields(logrus.Fields{
+					"Id":                   "6972f543-5fba-414e-b9d2-079a374d0f48",
+					"fullTestSuiteMessage": fullTestSuiteMessage,
+					"tempMetaDataInGroupMessagePtr.GetSelectType()": tempMetaDataInGroupMessagePtr.GetSelectType(),
+				}).Error("Unknown SelectType in 'MetaDataInGroupMap'")
+
+				// Set Error codes to return message
+				var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+				var errorCode fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+
+				errorCode = fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM
+				errorCodes = append(errorCodes, errorCode)
+
+				// Create Return message
+				returnMessage = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+					AckNack:    false,
+					Comments:   "Problem when Saving TestSuite to database",
+					ErrorCodes: errorCodes,
+					ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
+						CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
+				}
+
+				return returnMessage, err
+
 			}
 		}
-
-		// Add 'tempSelectedTestSuiteMetaDataValuesMap' to 'tempTestSuitePreview'
-		tempTestSuitePreview.TestSuitePreview.SelectedTestSuiteMetaDataValuesMap = tempSelectedTestSuiteMetaDataValuesMap
-
-		// Calculate 'TestSuitePreviewHash'
-		var tempTestSuitePreviewHash string
-		tempJson := protojson.Format(tempTestSuitePreview)
-		tempTestSuitePreviewHash = common_config.HashSingleValue(tempJson)
-
-		tempTestSuitePreview.TestSuitePreviewHash = tempTestSuitePreviewHash
-
-		// finish Preview-structure to be saved
-
-		// Add TestCases Preview-object to TestSuite
-		fullTestSuiteMessage.TestSuitePreview = tempTestSuitePreview
-
 	}
+
+	// Add 'tempSelectedTestSuiteMetaDataValuesMap' to 'tempTestSuitePreview'
+	tempTestSuitePreview.TestSuitePreview.SelectedTestSuiteMetaDataValuesMap = tempSelectedTestSuiteMetaDataValuesMap
+
+	// Calculate 'TestSuitePreviewHash'
+	var tempTestSuitePreviewHash string
+	tempJson := protojson.Format(tempTestSuitePreview)
+	tempTestSuitePreviewHash = common_config.HashSingleValue(tempJson)
+
+	tempTestSuitePreview.TestSuitePreviewHash = tempTestSuitePreviewHash
+
+	// finish Preview-structure to be saved
+
+	// Add TestCases Preview-object to TestSuite
+	fullTestSuiteMessage.TestSuitePreview = tempTestSuitePreview
 
 	// Generate json from gRCP-object
 	tempTestSuitePreviewAsJsonb := protojson.Format(fullTestSuiteMessage.GetTestSuitePreview())
@@ -1016,7 +1010,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadTestCasesPreviewForTestS
 	sqlToExecute := ""
 	sqlToExecute = sqlToExecute + "SELECT DISTINCT ON (tc.\"TestCaseUuid\") " +
 		"tc.\"TestCaseUuid\", tc.\"TestCaseVersion\", tc.\"TestCasePreview\" "
-	sqlToExecute = sqlToExecute + "FROM   \"FenixBuilder\".\"TestCases\" t "
+	sqlToExecute = sqlToExecute + "FROM   \"FenixBuilder\".\"TestCases\" tc "
 	sqlToExecute = sqlToExecute + "WHERE tc.\"TestCaseUuid\" IN  "
 	sqlToExecute = sqlToExecute + common_config.GenerateSQLINArray(testCaseUuids) + " "
 	sqlToExecute = sqlToExecute + "ORDER  BY tc.\"TestCaseUuid\", tc.\"TestCaseVersion\" DESC "
@@ -1063,6 +1057,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadTestCasesPreviewForTestS
 		err = rows.Scan(
 			&tempTestCaseUuid,
 			&tempTestCaseVersion,
+			&tempTestCasePreviewAsString,
 		)
 
 		if err != nil {
