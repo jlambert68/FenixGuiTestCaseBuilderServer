@@ -8,28 +8,27 @@ import (
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"strconv"
 	"time"
 )
 
-// PrepareListTestCasesThatCanBeEdited
-// List all TestCases from Database that the user can edit
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestCasesThatCanBeEdited(
+// PrepareListTestSuitesThatCanBeEdited
+// List all TestSuites from Database that the user can edit
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestSuitesThatCanBeEdited(
 	gCPAuthenticatedUser string,
-	testCaseUpdatedMinTimeStamp time.Time,
-	testCaseExecutionUpdatedMinTimeStamp time.Time) (
-	responseMessage *fenixTestCaseBuilderServerGrpcApi.ListTestCasesThatCanBeEditedResponseMessage) {
+	testSuiteUpdatedMinTimeStamp time.Time,
+	testSuiteExecutionUpdatedMinTimeStamp time.Time) (
+	responseMessage *fenixTestCaseBuilderServerGrpcApi.ListTestSuitesResponseMessage) {
 
 	// Begin SQL Transaction
 	txn, err := fenixSyncShared.DbPool.Begin(context.Background())
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"id":    "8d53b5a9-c7c8-4058-87b1-57f5ca5d503b",
+			"id":    "e19adf43-69f5-4b12-a975-d95a2a351d11",
 			"error": err,
-		}).Error("Problem to do 'DbPool.Begin'  in 'PrepareListTestCasesThatCanBeEdited'")
+		}).Error("Problem to do 'DbPool.Begin'  in 'PrepareListTestSuitesThatCanBeEdited'")
 
 		// Set Error codes to return message
 		var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
@@ -47,9 +46,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestCasesThatCanB
 			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		}
 
-		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ListTestCasesThatCanBeEditedResponseMessage{
-			AckNackResponse:                ackNackResponse,
-			TestCasesThatCanBeEditedByUser: nil,
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ListTestSuitesResponseMessage{
+			AckNackResponse:           ackNackResponse,
+			BasicTestSuiteInformation: nil,
 		}
 
 		return responseMessage
@@ -64,7 +63,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestCasesThatCanB
 	// If user doesn't have access to any domains then exit with warning in log
 	if len(domainAndAuthorizations) == 0 {
 		common_config.Logger.WithFields(logrus.Fields{
-			"id":                   "e4c6807b-1b78-4d20-b219-7d47b030dea3",
+			"id":                   "71af59dc-68d9-41c7-80c8-e0eae1ddede4",
 			"gCPAuthenticatedUser": gCPAuthenticatedUser,
 		}).Warning("User doesn't have access to any domains")
 
@@ -77,21 +76,21 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestCasesThatCanB
 			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		}
 
-		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ListTestCasesThatCanBeEditedResponseMessage{
-			AckNackResponse:                ackNackResponse,
-			TestCasesThatCanBeEditedByUser: nil,
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ListTestSuitesResponseMessage{
+			AckNackResponse:           ackNackResponse,
+			BasicTestSuiteInformation: nil,
 		}
 
 		return responseMessage
 
 	}
 
-	// Load the TestCases
-	var testCasesThatCanBeEditedResponse []*fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
-	testCasesThatCanBeEditedResponse, err = fenixCloudDBObject.listTestCasesThatCanBeEdited(
+	// Load the TestSuites
+	var testSuitesThatCanBeEditedResponse []*fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage
+	testSuitesThatCanBeEditedResponse, err = fenixCloudDBObject.listTestSuitesThatCanBeEdited(
 		txn,
 		domainAndAuthorizations,
-		testCaseUpdatedMinTimeStamp)
+		testSuiteUpdatedMinTimeStamp)
 
 	// Error when retrieving TestCase
 	if err != nil {
@@ -111,16 +110,16 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestCasesThatCanB
 			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		}
 
-		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ListTestCasesThatCanBeEditedResponseMessage{
-			AckNackResponse:                ackNackResponse,
-			TestCasesThatCanBeEditedByUser: nil,
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ListTestSuitesResponseMessage{
+			AckNackResponse:           ackNackResponse,
+			BasicTestSuiteInformation: nil,
 		}
 
 		return responseMessage
 	}
 
-	// TestCase
-	if testCasesThatCanBeEditedResponse == nil {
+	// No TestSuites
+	if testSuitesThatCanBeEditedResponse == nil {
 
 		// Set Error codes to return message
 		var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
@@ -133,35 +132,35 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestCasesThatCanB
 		var ackNackResponse *fenixTestCaseBuilderServerGrpcApi.AckNackResponse
 		ackNackResponse = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
 			AckNack:                      false,
-			Comments:                     "TestCase couldn't be found in Database or the user doesn't have access to the TestCase",
+			Comments:                     "TestSuites couldn't be found in Database or the user doesn't have access to the TestSuites",
 			ErrorCodes:                   errorCodes,
 			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		}
 
-		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ListTestCasesThatCanBeEditedResponseMessage{
-			AckNackResponse:                ackNackResponse,
-			TestCasesThatCanBeEditedByUser: nil,
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ListTestSuitesResponseMessage{
+			AckNackResponse:           ackNackResponse,
+			BasicTestSuiteInformation: nil,
 		}
 
 		return responseMessage
 	}
 
-	// Create a slice with all TestCaseUuid to be used for finding execution status
-	var testCaseUuidSlice []string
+	// Create a slice with all TestSuiteUuid to be used for finding execution status
+	var testSuiteUuidSlice []string
 
-	for _, tempTestCase := range testCasesThatCanBeEditedResponse {
-		testCaseUuidSlice = append(testCaseUuidSlice, tempTestCase.TestCaseUuid)
+	for _, tempTestSuite := range testSuitesThatCanBeEditedResponse {
+		testSuiteUuidSlice = append(testSuiteUuidSlice, tempTestSuite.NonEditableInformation.GetTestSuiteUuid())
 	}
 
-	// Load the latest Execution Status for TestCase
-	var testCasesLatestExecutionStatusMap map[string]*fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
-	testCasesLatestExecutionStatusMap = make(map[string]*fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage)
-	testCasesLatestExecutionStatusMap, err = fenixCloudDBObject.loadLatestExecutionStatusForTestCases(
+	// Load the latest Execution Status for TestSuites
+	var testSuitesLatestExecutionStatusMap map[string]*fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage
+	testSuitesLatestExecutionStatusMap = make(map[string]*fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage)
+	testSuitesLatestExecutionStatusMap, err = fenixCloudDBObject.loadLatestExecutionStatusForTestSuites(
 		txn,
-		testCaseUuidSlice,
-		testCaseExecutionUpdatedMinTimeStamp)
+		testSuiteUuidSlice,
+		testSuiteExecutionUpdatedMinTimeStamp)
 
-	// Error when retrieving TestCaseExecution-status
+	// Error when retrieving TestSuiteExecution-status
 	if err != nil {
 		// Set Error codes to return message
 		var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
@@ -180,20 +179,20 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestCasesThatCanB
 				common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		}
 
-		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ListTestCasesThatCanBeEditedResponseMessage{
-			AckNackResponse:                ackNackResponse,
-			TestCasesThatCanBeEditedByUser: nil,
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ListTestSuitesResponseMessage{
+			AckNackResponse:           ackNackResponse,
+			BasicTestSuiteInformation: nil,
 		}
 
 		return responseMessage
 	}
 
 	// Load the latest OK Execution Status for TestCase
-	var testCasesLatestFinishedOkExecutionStatusMap map[string]*fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
-	testCasesLatestFinishedOkExecutionStatusMap = make(map[string]*fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage)
-	testCasesLatestFinishedOkExecutionStatusMap, err = fenixCloudDBObject.loadLatestFinishedOkExecutionStatusForTestCases(
+	var testSuitesLatestFinishedOkExecutionStatusMap map[string]*fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage
+	testSuitesLatestFinishedOkExecutionStatusMap = make(map[string]*fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage)
+	testSuitesLatestFinishedOkExecutionStatusMap, err = fenixCloudDBObject.loadLatestFinishedOkExecutionStatusForTestSuites(
 		txn,
-		testCaseUuidSlice)
+		testSuiteUuidSlice)
 
 	// Error when retrieving TestCaseExecution-status
 	if err != nil {
@@ -214,34 +213,34 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestCasesThatCanB
 				common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 		}
 
-		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ListTestCasesThatCanBeEditedResponseMessage{
-			AckNackResponse:                ackNackResponse,
-			TestCasesThatCanBeEditedByUser: nil,
+		responseMessage = &fenixTestCaseBuilderServerGrpcApi.ListTestSuitesResponseMessage{
+			AckNackResponse:           ackNackResponse,
+			BasicTestSuiteInformation: nil,
 		}
 
 		return responseMessage
 	}
 
-	// Merge Execution status into full TestCaseList
+	// Merge Execution status into full TestSuiteList
 	var foundInMap bool
 	var changesAreMade bool
-	for testCaseIndex, temptestCase := range testCasesThatCanBeEditedResponse {
+	for testCaseIndex, tempTestSuite := range testSuitesThatCanBeEditedResponse {
 
 		// Reset 'changesAreMade'
 		changesAreMade = false
 
 		// Latest Execution Status Information
-		var temptestCaseFromStatus *fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
-		temptestCaseFromStatus, foundInMap = testCasesLatestExecutionStatusMap[temptestCase.TestCaseUuid]
+		var tempTestSuiteFromStatus *fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage
+		tempTestSuiteFromStatus, foundInMap = testSuitesLatestExecutionStatusMap[tempTestSuite.NonEditableInformation.GetTestSuiteUuid()]
 
-		// TestCaseExecution-status wasn't found in Map which indicates that there are no executions for the TestCase
+		// TestSuiteExecution-status wasn't found in Map which indicates that there are no executions for the TestSuite
 		if foundInMap == false {
 
 		} else {
 			// Add Latest Status information
-			temptestCase.LatestTestCaseExecutionStatus = temptestCaseFromStatus.LatestTestCaseExecutionStatus
-			temptestCase.LatestTestCaseExecutionStatusInsertTimeStamp = temptestCaseFromStatus.
-				LatestTestCaseExecutionStatusInsertTimeStamp
+			tempTestSuite.LatestTestSuiteExecutionStatus = tempTestSuiteFromStatus.LatestTestSuiteExecutionStatus
+			tempTestSuite.LatestTestSuiteExecutionStatusInsertTimeStamp = tempTestSuiteFromStatus.
+				LatestTestSuiteExecutionStatusInsertTimeStamp
 
 			// Indicate tha changes are done
 			changesAreMade = true
@@ -249,25 +248,25 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestCasesThatCanB
 		}
 
 		// Latest Finished OK Execution Status Information
-		var temptestCaseFromFinishedStatus *fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
-		temptestCaseFromFinishedStatus, foundInMap = testCasesLatestFinishedOkExecutionStatusMap[temptestCase.TestCaseUuid]
+		var tempTestSuiteFromFinishedStatus *fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage
+		tempTestSuiteFromFinishedStatus, foundInMap = testSuitesLatestFinishedOkExecutionStatusMap[tempTestSuite.NonEditableInformation.GetTestSuiteUuid()]
 
-		// TestCaseExecution-status wasn't found in Map which indicates that there are no Finished OK executions for the TestCase
+		// TestCaseExecution-status wasn't found in Map which indicates that there are no Finished OK executions for the TestSuite
 		if foundInMap == false {
 
 		} else {
 			// Add Latest Finished OK Status information
-			temptestCase.LatestFinishedOkTestCaseExecutionStatusInsertTimeStamp = temptestCaseFromFinishedStatus.
-				LatestTestCaseExecutionStatusInsertTimeStamp
+			tempTestSuite.LatestFinishedOkTestSuiteExecutionStatusInsertTimeStamp = tempTestSuiteFromFinishedStatus.
+				LatestTestSuiteExecutionStatusInsertTimeStamp
 
 			// Indicate tha changes are done
 			changesAreMade = true
 
 		}
 
-		// Save back the TestCase into the Slice when changes are done
+		// Save back the TestSuite into the Slice when changes are done
 		if changesAreMade == true {
-			testCasesThatCanBeEditedResponse[testCaseIndex] = temptestCase
+			testSuitesThatCanBeEditedResponse[testCaseIndex] = tempTestSuite
 		}
 
 	}
@@ -281,20 +280,20 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestCasesThatCanB
 		ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 	}
 
-	responseMessage = &fenixTestCaseBuilderServerGrpcApi.ListTestCasesThatCanBeEditedResponseMessage{
-		AckNackResponse:                ackNackResponse,
-		TestCasesThatCanBeEditedByUser: testCasesThatCanBeEditedResponse,
+	responseMessage = &fenixTestCaseBuilderServerGrpcApi.ListTestSuitesResponseMessage{
+		AckNackResponse:           ackNackResponse,
+		BasicTestSuiteInformation: testSuitesThatCanBeEditedResponse,
 	}
 
 	return responseMessage
 }
 
-// Load all TestCases that the user can edit
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited(
+// Load all TestSuites that the user can edit
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestSuitesThatCanBeEdited(
 	dbTransaction pgx.Tx,
 	domainAndAuthorizations []DomainAndAuthorizationsStruct,
-	testCaseUpdatedMinTimeStamp time.Time) (
-	testCasesThatCanBeEditedByUser []*fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage,
+	testSuiteUpdatedMinTimeStamp time.Time) (
+	testSuitesThatCanBeEditedByUser []*fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage,
 	err error) {
 
 	// Generate a Domains list and Calculate the Authorization requirements
@@ -316,14 +315,14 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 				domainAndAuthorization.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain
 	}
 
-	// Convert Values into string for TestCaseAuthorizationLevelOwnedByDomain
-	var tempCanListAndViewTestCaseOwnedByThisDomainAsString string
-	tempCanListAndViewTestCaseOwnedByThisDomainAsString = strconv.FormatInt(
+	// Convert Values into string for TestSuiteAuthorizationLevelOwnedByDomain
+	var tempCanListAndViewTestSuiteOwnedByThisDomainAsString string
+	tempCanListAndViewTestSuiteOwnedByThisDomainAsString = strconv.FormatInt(
 		tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain, 10)
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id":    "9e68a788-dec3-4473-b9c6-9b752301da41",
+			"Id":    "73b8d307-001f-472e-80b3-1105284e9b6d",
 			"Error": err,
 			"tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain": tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain,
 		}).Error("Couldn't convert into string representation")
@@ -331,14 +330,14 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 		return nil, err
 	}
 
-	// Convert Values into string for TestCaseAuthorizationLevelOwnedByDomain
-	var tempCanListAndViewTestCaseHavingTIandTICfromThisDomainAsString string
-	tempCanListAndViewTestCaseHavingTIandTICfromThisDomainAsString = strconv.FormatInt(
+	// Convert Values into string for TestSuiteAuthorizationLevelOwnedByDomain
+	var tempCanListAndViewTestSuiteHavingTIandTICfromThisDomainAsString string
+	tempCanListAndViewTestSuiteHavingTIandTICfromThisDomainAsString = strconv.FormatInt(
 		tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain, 10)
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id":    "2b2e13cc-b485-4777-9cfa-c271ec05b65f",
+			"Id":    "40cf39b1-6277-4958-8f3d-3e3785db3290",
 			"Error": err,
 			"tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain": tempCalculatedDomainAndAuthorizations.CanListAndViewTestCaseOrTestSuiteHavingTIandTICFromThisDomain,
 		}).Error("Couldn't convert into string representation")
@@ -351,31 +350,31 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 	deleteTimeStampAsString = time.Now().Format("2006-01-02 00:00:00")
 
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "SELECT tc1.\"DomainUuid\", tc1.\"DomainName\", tc1.\"TestCaseUuid\", " +
-		"tc1.\"TestCaseName\", tc1.\"TestCaseVersion\", \"InsertTimeStamp\", \"TestCasePreview\" "
-	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" tc1 "
-	sqlToExecute = sqlToExecute + "WHERE (tc1.\"CanListAndViewTestCaseAuthorizationLevelOwnedByDomain\" & " + tempCanListAndViewTestCaseOwnedByThisDomainAsString + ")"
-	sqlToExecute = sqlToExecute + "= tc1.\"CanListAndViewTestCaseAuthorizationLevelOwnedByDomain\" "
+	sqlToExecute = sqlToExecute + "SELECT ts1.\"DomainUuid\", ts1.\"DomainName\", ts1.\"TestSuiteUuid\", " +
+		"ts1.\"TestSuiteName\", ts1.\"TestSuiteVersion\", ts1.\"InsertTimeStamp\",  ts1.\"TestSuiteExecutionEnvironment\" "
+	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestSuites\" ts1 "
+	sqlToExecute = sqlToExecute + "WHERE (ts1.\"CanListAndViewTestSuiteAuthorizationLevelOwnedByDomain\" & " + tempCanListAndViewTestSuiteOwnedByThisDomainAsString + ")"
+	sqlToExecute = sqlToExecute + "= ts1.\"CanListAndViewTestSuiteAuthorizationLevelOwnedByDomain\" "
 	sqlToExecute = sqlToExecute + "AND "
-	sqlToExecute = sqlToExecute + "(tc1.\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomai\" & " + tempCanListAndViewTestCaseHavingTIandTICfromThisDomainAsString + ")"
-	sqlToExecute = sqlToExecute + "= tc1.\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomai\" "
+	sqlToExecute = sqlToExecute + "(ts1.\"CanListAndViewTestSuiteAuthorizationLevelHavingTiAndTicWith\" & " + tempCanListAndViewTestSuiteHavingTIandTICfromThisDomainAsString + ")"
+	sqlToExecute = sqlToExecute + "= ts1.\"CanListAndViewTestSuiteAuthorizationLevelHavingTiAndTicWith\" "
 	sqlToExecute = sqlToExecute + "AND "
-	sqlToExecute = sqlToExecute + "tc1.\"InsertTimeStamp\" IS NOT NULL " +
-		"AND tc1.\"TestCaseVersion\" = (" +
-		"SELECT MAX(tc2.\"TestCaseVersion\") " +
-		"FROM \"FenixBuilder\".\"TestCases\" tc2 " +
-		"WHERE tc2.\"TestCaseUuid\" = tc1.\"TestCaseUuid\") AND "
-	sqlToExecute = sqlToExecute + "tc1.\"InsertTimeStamp\" > '" +
-		common_config.GenerateDatetimeFromTimeInputForDB(testCaseUpdatedMinTimeStamp) + "' AND "
-	sqlToExecute = sqlToExecute + "tc1.\"DeleteTimestamp\" > '" + deleteTimeStampAsString + "' "
+	sqlToExecute = sqlToExecute + "ts1.\"InsertTimeStamp\" IS NOT NULL AND " +
+		"ts1.\"TestSuiteVersion\" = (" +
+		"SELECT MAX(ts2.\"TestSuiteVersion\") " +
+		"FROM \"FenixBuilder\".\"TestSuites\" ts2 " +
+		"WHERE ts2.\"TestSuiteUuid\" = ts1.\"TestSuiteUuid\") AND "
+	sqlToExecute = sqlToExecute + "ts1.\"InsertTimeStamp\" > '" +
+		common_config.GenerateDatetimeFromTimeInputForDB(testSuiteUpdatedMinTimeStamp) + "' AND "
+	sqlToExecute = sqlToExecute + "ts1.\"DeleteTimestamp\" > '" + deleteTimeStampAsString + "' "
 	sqlToExecute = sqlToExecute + "; "
 
 	// Log SQL to be executed if Environment variable is true
 	if common_config.LogAllSQLs == true {
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id":           "fbb9a0b4-ec7c-4674-a97c-0e3047a976de",
+			"Id":           "446f21ba-22c8-4499-ac38-81118f2c7476",
 			"sqlToExecute": sqlToExecute,
-		}).Debug("SQL to be executed within 'listTestCasesThatCanBeEdited'")
+		}).Debug("SQL to be executed within 'listTestSuitesThatCanBeEdited'")
 	}
 
 	// Query DB
@@ -388,7 +387,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id":           "490b7218-eecf-4cbe-90f7-eab91870f4bb",
+			"Id":           "fe8b2ba0-7960-4639-8a8d-f0f21a2a7826",
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
 		}).Error("Something went wrong when executing SQL")
@@ -397,25 +396,26 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 	}
 
 	var (
-		tempInsertTimeStampAsTimeStamp time.Time
-		tempTestCasePreviewAsString    string
-		tempTestCasePreviewAsByteArray []byte
+		tempDomainUuid                    string
+		tempDomainName                    string
+		tempTestSuiteUuid                 string
+		tempTestSuiteName                 string
+		tempTestSuiteVersion              int
+		tempInsertTimeStampAsTimeStamp    time.Time
+		tempTestSuiteExecutionEnvironment string
 	)
 
 	// Extract data from DB result set
 	for rows.Next() {
 
-		var tempTestCaseThatCanBeEditedByUser fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
-		var tempTestCasePreview fenixTestCaseBuilderServerGrpcApi.TestCasePreviewMessage
-
 		err = rows.Scan(
-			&tempTestCaseThatCanBeEditedByUser.DomainUuid,
-			&tempTestCaseThatCanBeEditedByUser.DomainName,
-			&tempTestCaseThatCanBeEditedByUser.TestCaseUuid,
-			&tempTestCaseThatCanBeEditedByUser.TestCaseName,
-			&tempTestCaseThatCanBeEditedByUser.TestCaseVersion,
+			&tempDomainUuid,
+			&tempDomainName,
+			&tempTestSuiteUuid,
+			&tempTestSuiteName,
+			&tempTestSuiteVersion,
 			&tempInsertTimeStampAsTimeStamp,
-			&tempTestCasePreviewAsString,
+			&tempTestSuiteExecutionEnvironment,
 		)
 
 		if err != nil {
@@ -429,32 +429,33 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 			return nil, err
 		}
 
-		// Convert json-string into byte-array
-		tempTestCasePreviewAsByteArray = []byte(tempTestCasePreviewAsString)
-
-		// Convert json-byte-arrays into proto-messages
-		err = protojson.Unmarshal(tempTestCasePreviewAsByteArray, &tempTestCasePreview)
-		if err != nil {
-			common_config.Logger.WithFields(logrus.Fields{
-				"Id":    "447410d1-ef9c-476c-9d4d-ac0d9d79328d",
-				"Error": err,
-			}).Error("Something went wrong when converting 'tempTestCasePreviewAsByteArray' into proto-message")
-
-			return nil, err
+		// Create 'TestSuiteThatCanBeEditedByUser'-object
+		var tempTestSuiteThatCanBeEditedByUser fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage
+		tempTestSuiteThatCanBeEditedByUser = fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage{
+			NonEditableInformation: &fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage_NonEditableBasicInformationMessage{
+				TestSuiteUuid:                 tempTestSuiteUuid,
+				DomainUuid:                    tempDomainUuid,
+				DomainName:                    tempDomainName,
+				TestSuiteVersion:              uint32(tempTestSuiteVersion),
+				TestSuiteExecutionEnvironment: tempTestSuiteExecutionEnvironment,
+			},
+			EditableInformation: &fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage_EditableBasicInformationMessage{
+				TestSuiteName:        tempTestSuiteName,
+				TestSuiteDescription: "",
+			},
+			LatestTestSuiteExecutionStatus:                          0,
+			LatestTestSuiteExecutionStatusInsertTimeStamp:           nil,
+			LatestFinishedOkTestSuiteExecutionStatusInsertTimeStamp: nil,
+			LastSavedTimeStamp:                                      timestamppb.New(tempInsertTimeStampAsTimeStamp),
+			TestSuitePreview:                                        nil,
 		}
 
-		// Save json into gRPC-message
-		tempTestCaseThatCanBeEditedByUser.TestCasePreview = &tempTestCasePreview
-
-		// Convert DataTime into gRPC-version
-		tempTestCaseThatCanBeEditedByUser.LastSavedTimeStamp = timestamppb.New(tempInsertTimeStampAsTimeStamp)
-
 		// Add to slice of TestCases
-		testCasesThatCanBeEditedByUser = append(testCasesThatCanBeEditedByUser, &tempTestCaseThatCanBeEditedByUser)
+		testSuitesThatCanBeEditedByUser = append(testSuitesThatCanBeEditedByUser, &tempTestSuiteThatCanBeEditedByUser)
 
 	}
 
-	return testCasesThatCanBeEditedByUser, err
+	return testSuitesThatCanBeEditedByUser, err
 
 }
 
@@ -472,35 +473,35 @@ WHERE tce1."TestCaseUuid" IN ('4eebed04-39a9-4ad9-ae67-51c9de984486',  '653a43f7
 
 */
 
-// Load the latest Execution Status for TestCases
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadLatestExecutionStatusForTestCases(
+// Load the latest Execution Status for TestSuites
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadLatestExecutionStatusForTestSuites(
 	dbTransaction pgx.Tx,
-	testCaseUuidSlice []string,
-	testCaseExecutionUpdatedMinTimeStamp time.Time) (
-	testCasesLatestExecutionStatusMap map[string]*fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage,
+	testSuiteUuidSlice []string,
+	testSuiteExecutionUpdatedMinTimeStamp time.Time) (
+	testSuitesLatestExecutionStatusMap map[string]*fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage,
 	err error) {
 
-	testCasesLatestExecutionStatusMap = make(map[string]*fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage)
+	testSuitesLatestExecutionStatusMap = make(map[string]*fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage)
 
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "SELECT tce1.\"TestCaseUuid\", tce1.\"TestCaseVersion\", " +
-		"tce1.\"TestCaseExecutionStatus\", tce1.\"ExecutionStatusUpdateTimeStamp\" "
-	sqlToExecute = sqlToExecute + "FROM \"FenixExecution\".\"TestCasesUnderExecution\" tce1 "
-	sqlToExecute = sqlToExecute + "WHERE tce1.\"TestCaseUuid\" IN "
-	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLINArray(testCaseUuidSlice) + " "
-	sqlToExecute = sqlToExecute + "AND tce1.\"ExecutionStatusUpdateTimeStamp\" = "
-	sqlToExecute = sqlToExecute + "(SELECT MAX(tce2.\"ExecutionStatusUpdateTimeStamp\") "
-	sqlToExecute = sqlToExecute + "FROM \"FenixExecution\".\"TestCasesUnderExecution\" tce2 "
-	sqlToExecute = sqlToExecute + "WHERE tce2.\"TestCaseUuid\" = tce1.\"TestCaseUuid\") AND "
-	sqlToExecute = sqlToExecute + "tce1.\"ExecutionStatusUpdateTimeStamp\" > '" + common_config.GenerateDatetimeFromTimeInputForDB(testCaseExecutionUpdatedMinTimeStamp) + "' "
+	sqlToExecute = sqlToExecute + "SELECT tsefl1.\"TestSuiteUuid\", tsefl1.\"TestSuiteVersion\", " +
+		"tsefl1.\"TestSuiteExecutionStatus\", tsefl1.\"ExecutionStatusUpdateTimeStamp\" "
+	sqlToExecute = sqlToExecute + "FROM \"FenixExecution\".\"TestSuitesExecutionsForListings\" tsefl1 "
+	sqlToExecute = sqlToExecute + "WHERE tsefl1.\"TestSuiteUuid\" IN "
+	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLINArray(testSuiteUuidSlice) + " "
+	sqlToExecute = sqlToExecute + "AND tsefl1.\"ExecutionStatusUpdateTimeStamp\" = "
+	sqlToExecute = sqlToExecute + "(SELECT MAX(tsefl2.\"ExecutionStatusUpdateTimeStamp\") "
+	sqlToExecute = sqlToExecute + "FROM \"FenixExecution\".\"TestSuitesExecutionsForListings\" tsefl2 "
+	sqlToExecute = sqlToExecute + "WHERE tsefl2.\"TestSuiteUuid\" = tsefl1.\"TestSuiteUuid\") AND "
+	sqlToExecute = sqlToExecute + "tsefl1.\"ExecutionStatusUpdateTimeStamp\" > '" + common_config.GenerateDatetimeFromTimeInputForDB(testSuiteExecutionUpdatedMinTimeStamp) + "' "
 	sqlToExecute = sqlToExecute + "; "
 
 	// Log SQL to be executed if Environment variable is true
 	if common_config.LogAllSQLs == true {
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id":           "ff2c0040-4560-4d45-83a6-bad1e18f0f0c",
+			"Id":           "5384a17f-955e-430e-9fa2-1dda17cee590",
 			"sqlToExecute": sqlToExecute,
-		}).Debug("SQL to be executed within 'loadLatestExecutionStatusForTestCases'")
+		}).Debug("SQL to be executed within 'loadLatestExecutionStatusForTestSuites'")
 	}
 
 	// Query DB
@@ -522,25 +523,26 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadLatestExecutionStatusFor
 	}
 
 	var (
-		tempInsertTimeStampAsTimeStamp time.Time
+		tempTestSuiteUuid                  string
+		tempTestSuiteVersion               uint32
+		tempLatestTestSuiteExecutionStatus int32
+		tempInsertTimeStampAsTimeStamp     time.Time
 	)
 
 	// Extract data from DB result set
 	for rows.Next() {
 
-		var tempTestCaseThatCanBeEditedByUser fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
-
 		err = rows.Scan(
-			&tempTestCaseThatCanBeEditedByUser.TestCaseUuid,
-			&tempTestCaseThatCanBeEditedByUser.TestCaseVersion,
-			&tempTestCaseThatCanBeEditedByUser.LatestTestCaseExecutionStatus,
+			&tempTestSuiteUuid,
+			&tempTestSuiteVersion,
+			&tempLatestTestSuiteExecutionStatus,
 			&tempInsertTimeStampAsTimeStamp,
 		)
 
 		if err != nil {
 
 			common_config.Logger.WithFields(logrus.Fields{
-				"Id":           "cc07db8c-a30b-4059-a4c0-2ef72bcb71b0",
+				"Id":           "10f01a37-466e-4840-ad74-879742f20211",
 				"Error":        err,
 				"sqlToExecute": sqlToExecute,
 			}).Error("Something went wrong when processing result from database")
@@ -548,15 +550,30 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadLatestExecutionStatusFor
 			return nil, err
 		}
 
-		// Convert DataTime into gRPC-version
-		tempTestCaseThatCanBeEditedByUser.LatestTestCaseExecutionStatusInsertTimeStamp = timestamppb.New(tempInsertTimeStampAsTimeStamp)
+		// Create the 'tempTestSuiteThatCanBeEditedByUser'object
+		var tempTestSuiteThatCanBeEditedByUser fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage
+		tempTestSuiteThatCanBeEditedByUser = fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage{
+			NonEditableInformation: &fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage_NonEditableBasicInformationMessage{
+				TestSuiteUuid:                 tempTestSuiteUuid,
+				DomainUuid:                    "",
+				DomainName:                    "",
+				TestSuiteVersion:              tempTestSuiteVersion,
+				TestSuiteExecutionEnvironment: "",
+			},
+			EditableInformation:                                     nil,
+			LatestTestSuiteExecutionStatus:                          fenixTestCaseBuilderServerGrpcApi.TestSuiteExecutionStatusEnum(tempLatestTestSuiteExecutionStatus),
+			LatestTestSuiteExecutionStatusInsertTimeStamp:           timestamppb.New(tempInsertTimeStampAsTimeStamp),
+			LatestFinishedOkTestSuiteExecutionStatusInsertTimeStamp: nil,
+			LastSavedTimeStamp:                                      nil,
+			TestSuitePreview:                                        nil,
+		}
 
 		// Add to map of TestCases execution data
-		testCasesLatestExecutionStatusMap[tempTestCaseThatCanBeEditedByUser.TestCaseUuid] = &tempTestCaseThatCanBeEditedByUser
+		testSuitesLatestExecutionStatusMap[tempTestSuiteThatCanBeEditedByUser.NonEditableInformation.TestSuiteUuid] = &tempTestSuiteThatCanBeEditedByUser
 
 	}
 
-	return testCasesLatestExecutionStatusMap, err
+	return testSuitesLatestExecutionStatusMap, err
 
 }
 
@@ -573,34 +590,34 @@ WHERE tce1."TestCaseUuid" IN ('4eebed04-39a9-4ad9-ae67-51c9de984486',  '653a43f7
   );
 */
 
-// Load the latest  Finished Execution Status for TestCases
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadLatestFinishedOkExecutionStatusForTestCases(
+// Load the latest  Finished Execution Status for TestSuites
+func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadLatestFinishedOkExecutionStatusForTestSuites(
 	dbTransaction pgx.Tx,
-	testCaseUuidSlice []string) (
-	testCasesLatestExecutionStatusMap map[string]*fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage,
+	testSuiteUuidSlice []string) (
+	testSuitesLatestExecutionStatusMap map[string]*fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage,
 	err error) {
 
-	testCasesLatestExecutionStatusMap = make(map[string]*fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage)
+	testSuitesLatestExecutionStatusMap = make(map[string]*fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage)
 
 	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "SELECT tce1.\"TestCaseUuid\", tce1.\"TestCaseVersion\", " +
-		"tce1.\"TestCaseExecutionStatus\", tce1.\"ExecutionStatusUpdateTimeStamp\" "
-	sqlToExecute = sqlToExecute + "FROM \"FenixExecution\".\"TestCasesUnderExecution\" tce1 "
-	sqlToExecute = sqlToExecute + "WHERE tce1.\"TestCaseUuid\" IN "
-	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLINArray(testCaseUuidSlice) + " "
-	sqlToExecute = sqlToExecute + "AND tce1.\"ExecutionStatusUpdateTimeStamp\" = "
-	sqlToExecute = sqlToExecute + "(SELECT MAX(tce2.\"ExecutionStatusUpdateTimeStamp\") "
-	sqlToExecute = sqlToExecute + "FROM \"FenixExecution\".\"TestCasesUnderExecution\" tce2 "
-	sqlToExecute = sqlToExecute + "WHERE tce2.\"TestCaseUuid\" = tce1.\"TestCaseUuid\" "
-	sqlToExecute = sqlToExecute + "AND tce2.\"TestCaseExecutionStatus\" IN (5, 6))  "
+	sqlToExecute = sqlToExecute + "SELECT tsefl1.\"TestSuiteUuid\", tsefl1.\"TestSuiteVersion\", " +
+		"tsefl1.\"TestSuiteExecutionStatus\", tsefl1.\"ExecutionStatusUpdateTimeStamp\" "
+	sqlToExecute = sqlToExecute + "FROM \"FenixExecution\".\"TestSuitesExecutionsForListings\" tsefl1 "
+	sqlToExecute = sqlToExecute + "WHERE tsefl1.\"TestSuiteUuid\" IN "
+	sqlToExecute = sqlToExecute + fenixCloudDBObject.generateSQLINArray(testSuiteUuidSlice) + " "
+	sqlToExecute = sqlToExecute + "AND tsefl1.\"ExecutionStatusUpdateTimeStamp\" = "
+	sqlToExecute = sqlToExecute + "(SELECT MAX(tsefl2.\"ExecutionStatusUpdateTimeStamp\") "
+	sqlToExecute = sqlToExecute + "FROM \"FenixExecution\".\"TestSuitesExecutionsForListings\" tsefl2 "
+	sqlToExecute = sqlToExecute + "WHERE tsefl2.\"TestSuiteUuid\" = tsefl1.\"TestSuiteUuid\" AND "
+	sqlToExecute = sqlToExecute + "tsefl2.\"TestSuiteExecutionStatus\" IN (5, 6))  "
 	sqlToExecute = sqlToExecute + "; "
 
 	// Log SQL to be executed if Environment variable is true
 	if common_config.LogAllSQLs == true {
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id":           "4e53e9c5-7dad-431b-a01b-fe92c1c1b94b",
+			"Id":           "431dfb42-6341-4a0a-8585-d3a83fd75724",
 			"sqlToExecute": sqlToExecute,
-		}).Debug("SQL to be executed within 'loadLatestFinishedOkExecutionStatusForTestCases'")
+		}).Debug("SQL to be executed within 'loadLatestFinishedOkExecutionStatusForTestSuites'")
 	}
 
 	// Query DB
@@ -613,7 +630,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadLatestFinishedOkExecutio
 
 	if err != nil {
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id":           "14730d8d-1d10-45c0-81bf-088b01987d05",
+			"Id":           "33a6a5c1-e405-4e4a-a7e8-9f9b1497e284",
 			"Error":        err,
 			"sqlToExecute": sqlToExecute,
 		}).Error("Something went wrong when executing SQL")
@@ -622,25 +639,26 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadLatestFinishedOkExecutio
 	}
 
 	var (
-		tempInsertTimeStampAsTimeStamp time.Time
+		tempTestSuiteUuid                  string
+		tempTestSuiteVersion               uint32
+		tempLatestTestSuiteExecutionStatus int32
+		tempInsertTimeStampAsTimeStamp     time.Time
 	)
 
 	// Extract data from DB result set
 	for rows.Next() {
 
-		var tempTestCaseThatCanBeEditedByUser fenixTestCaseBuilderServerGrpcApi.TestCaseThatCanBeEditedByUserMessage
-
 		err = rows.Scan(
-			&tempTestCaseThatCanBeEditedByUser.TestCaseUuid,
-			&tempTestCaseThatCanBeEditedByUser.TestCaseVersion,
-			&tempTestCaseThatCanBeEditedByUser.LatestTestCaseExecutionStatus,
+			&tempTestSuiteUuid,
+			&tempTestSuiteVersion,
+			&tempLatestTestSuiteExecutionStatus,
 			&tempInsertTimeStampAsTimeStamp,
 		)
 
 		if err != nil {
 
 			common_config.Logger.WithFields(logrus.Fields{
-				"Id":           "4c28b79c-cf64-4127-97c9-30f249526c60",
+				"Id":           "725909f4-0f6b-4410-8e96-c986bbef2972",
 				"Error":        err,
 				"sqlToExecute": sqlToExecute,
 			}).Error("Something went wrong when processing result from database")
@@ -648,14 +666,29 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadLatestFinishedOkExecutio
 			return nil, err
 		}
 
-		// Convert DataTime into gRPC-version
-		tempTestCaseThatCanBeEditedByUser.LatestTestCaseExecutionStatusInsertTimeStamp = timestamppb.New(tempInsertTimeStampAsTimeStamp)
+		// Create the 'tempTestSuiteThatCanBeEditedByUser'-object
+		var tempTestSuiteThatCanBeEditedByUser fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage
+		tempTestSuiteThatCanBeEditedByUser = fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage{
+			NonEditableInformation: &fenixTestCaseBuilderServerGrpcApi.BasicTestSuiteInformationMessage_NonEditableBasicInformationMessage{
+				TestSuiteUuid:                 tempTestSuiteUuid,
+				DomainUuid:                    "",
+				DomainName:                    "",
+				TestSuiteVersion:              tempTestSuiteVersion,
+				TestSuiteExecutionEnvironment: "",
+			},
+			EditableInformation:                                     nil,
+			LatestTestSuiteExecutionStatus:                          fenixTestCaseBuilderServerGrpcApi.TestSuiteExecutionStatusEnum(tempLatestTestSuiteExecutionStatus),
+			LatestTestSuiteExecutionStatusInsertTimeStamp:           nil,
+			LatestFinishedOkTestSuiteExecutionStatusInsertTimeStamp: timestamppb.New(tempInsertTimeStampAsTimeStamp),
+			LastSavedTimeStamp:                                      nil,
+			TestSuitePreview:                                        nil,
+		}
 
 		// Add to map of TestCases execution data
-		testCasesLatestExecutionStatusMap[tempTestCaseThatCanBeEditedByUser.TestCaseUuid] = &tempTestCaseThatCanBeEditedByUser
+		testSuitesLatestExecutionStatusMap[tempTestSuiteThatCanBeEditedByUser.NonEditableInformation.TestSuiteUuid] = &tempTestSuiteThatCanBeEditedByUser
 
 	}
 
-	return testCasesLatestExecutionStatusMap, err
+	return testSuitesLatestExecutionStatusMap, err
 
 }
