@@ -92,7 +92,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareListTestSuitesThatCan
 		domainAndAuthorizations,
 		testSuiteUpdatedMinTimeStamp)
 
-	// Error when retrieving TestCase
+	// Error when retrieving TestSuite
 	if err != nil {
 		// Set Error codes to return message
 		var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
@@ -447,7 +447,24 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestSuitesThatCanBeEdite
 			LatestTestSuiteExecutionStatusInsertTimeStamp:           nil,
 			LatestFinishedOkTestSuiteExecutionStatusInsertTimeStamp: nil,
 			LastSavedTimeStamp:                                      timestamppb.New(tempInsertTimeStampAsTimeStamp),
-			TestSuitePreview:                                        nil,
+			TestSuitePreview: &fenixTestCaseBuilderServerGrpcApi.
+				TestSuitePreviewMessage{
+				TestSuitePreview: &fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewStructureMessage{
+					TestSuiteUuid:                 "",
+					TestSuiteName:                 "",
+					TestSuiteVersion:              "",
+					DomainUuidThatOwnTheTestSuite: "",
+					DomainNameThatOwnTheTestSuite: "",
+					TestSuiteDescription:          "",
+					TestSuiteStructureObjects: &fenixTestCaseBuilderServerGrpcApi.
+						TestSuitePreviewStructureMessage_TestSuiteStructureObjectMessage{},
+					LastSavedByUserOnComputer:          "",
+					LastSavedByUserGCPAuthorization:    "",
+					LastSavedTimeStamp:                 "",
+					SelectedTestSuiteMetaDataValuesMap: nil,
+				},
+				TestSuitePreviewHash: "",
+			},
 		}
 
 		// Add to slice of TestCases

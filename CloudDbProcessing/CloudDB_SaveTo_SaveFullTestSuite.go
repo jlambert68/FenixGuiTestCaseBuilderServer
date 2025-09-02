@@ -1019,7 +1019,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadTestCasesPreviewForTestS
 	// Log SQL to be executed if Environment variable is true
 	if common_config.LogAllSQLs == true {
 		common_config.Logger.WithFields(logrus.Fields{
-			"Id":           "fbb9a0b4-ec7c-4674-a97c-0e3047a976de",
+			"Id":           "5db810f5-2333-471b-b065-1a6fbe331a17",
 			"sqlToExecute": sqlToExecute,
 		}).Debug("SQL to be executed within 'listTestCasesThatCanBeEdited'")
 	}
