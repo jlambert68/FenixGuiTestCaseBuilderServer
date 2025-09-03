@@ -206,13 +206,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadFullTestSuite(
 
 				tempSelectedTestSuiteMetaDataValueMessage = &fenixTestCaseBuilderServerGrpcApi.
 					TestSuitePreviewStructureMessage_SelectedTestSuiteMetaDataValueMessage{
-					OwnerDomainUuid:   tempSelectedTestSuiteMetaDataValueMessage.GetOwnerDomainUuid(),
-					OwnerDomainName:   tempSelectedTestSuiteMetaDataValueMessage.GetOwnerDomainName(),
+					OwnerDomainUuid:   fullTestSuiteMessage.GetTestSuiteBasicInformation().GetDomainUuid(),
+					OwnerDomainName:   fullTestSuiteMessage.GetTestSuiteBasicInformation().GetDomainUuid(),
 					MetaDataGroupName: tempMetaDataInGroupMessagePtr.GetMetaDataGroupName(),
 					MetaDataName:      tempMetaDataInGroupMessagePtr.GetMetaDataName(),
 					MetaDataNameValue: tempMetaDataInGroupMessagePtr.GetSelectedMetaDataValueForSingleSelect(),
-					SelectType:        tempSelectedTestSuiteMetaDataValueMessage.GetSelectType(),
-					IsMandatory:       tempSelectedTestSuiteMetaDataValueMessage.GetIsMandatory(),
+					SelectType:        tempMetaDataInGroupMessagePtr.GetSelectType(),
+					IsMandatory:       tempMetaDataInGroupMessagePtr.GetIsMandatory(),
 				}
 
 				// Add value to map
@@ -229,13 +229,13 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareLoadFullTestSuite(
 
 					tempSelectedTestSuiteMetaDataValueMessage = &fenixTestCaseBuilderServerGrpcApi.
 						TestSuitePreviewStructureMessage_SelectedTestSuiteMetaDataValueMessage{
-						OwnerDomainUuid:   tempSelectedTestSuiteMetaDataValueMessage.GetOwnerDomainUuid(),
-						OwnerDomainName:   tempSelectedTestSuiteMetaDataValueMessage.GetOwnerDomainName(),
+						OwnerDomainUuid:   fullTestSuiteMessage.GetTestSuiteBasicInformation().GetDomainUuid(),
+						OwnerDomainName:   fullTestSuiteMessage.GetTestSuiteBasicInformation().GetDomainUuid(),
 						MetaDataGroupName: tempMetaDataInGroupMessagePtr.GetMetaDataGroupName(),
 						MetaDataName:      tempMetaDataInGroupMessagePtr.GetMetaDataName(),
 						MetaDataNameValue: tempSelectedMetaDataValue,
-						SelectType:        tempSelectedTestSuiteMetaDataValueMessage.GetSelectType(),
-						IsMandatory:       tempSelectedTestSuiteMetaDataValueMessage.GetIsMandatory(),
+						SelectType:        tempMetaDataInGroupMessagePtr.GetSelectType(),
+						IsMandatory:       tempMetaDataInGroupMessagePtr.GetIsMandatory(),
 					}
 
 					// Add value to map

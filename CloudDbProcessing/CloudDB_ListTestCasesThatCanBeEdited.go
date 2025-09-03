@@ -366,7 +366,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 	sqlToExecute = sqlToExecute + "(tc1.\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomai\" & " + tempCanListAndViewTestCaseHavingTIandTICfromThisDomainAsString + ")"
 	sqlToExecute = sqlToExecute + "= tc1.\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomai\" "
 	sqlToExecute = sqlToExecute + "AND "
-	sqlToExecute = sqlToExecute + "tc1.\"InsertTimeStamp\" IS NOT NULL " +
+	sqlToExecute = sqlToExecute + "tc1.\"InsertTimeStamp\" IS NOT NULL AND " +
 		"tc1.\"UniqueCounter\" IN (SELECT * FROM uniquecounters) AND "
 	sqlToExecute = sqlToExecute + "tc1.\"InsertTimeStamp\" > '" +
 		common_config.GenerateDatetimeFromTimeInputForDB(testCaseUpdatedMinTimeStamp) + "' AND "

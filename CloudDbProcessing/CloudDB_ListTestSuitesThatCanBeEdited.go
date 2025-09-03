@@ -410,7 +410,6 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestSuitesThatCanBeEdite
 		tempTestSuiteExecutionEnvironment string
 		tempTestSuitePreviewAsString      string
 		tempTestSuitePreviewAsByteArray   []byte
-		tempTestSuitePreviewAsGrpc        fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewMessage
 	)
 
 	// Extract data from DB result set
@@ -443,6 +442,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestSuitesThatCanBeEdite
 		tempTestSuitePreviewAsByteArray = []byte(tempTestSuitePreviewAsString)
 
 		// Convert json-byte-arrays into proto-messages
+		var tempTestSuitePreviewAsGrpc fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewMessage
 		err = protojson.Unmarshal(tempTestSuitePreviewAsByteArray, &tempTestSuitePreviewAsGrpc)
 		if err != nil {
 			common_config.Logger.WithFields(logrus.Fields{
