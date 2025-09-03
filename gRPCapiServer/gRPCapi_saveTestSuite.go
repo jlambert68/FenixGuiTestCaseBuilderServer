@@ -25,7 +25,8 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) SaveFullTestSuite(
 
 	// Check if Client is using correct proto files version
 	returnMessage := common_config.IsClientUsingCorrectTestDataProtoFileVersion(
-		fullTestSuiteMessage.UserIdentification.UserIdOnComputer, fullTestSuiteMessage.UserIdentification.ProtoFileVersionUsedByClient)
+		fullTestSuiteMessage.UserIdentification.UserIdOnComputer, fullTestSuiteMessage.
+			UserIdentification.ProtoFileVersionUsedByClient)
 	if returnMessage != nil {
 		// Not correct proto-file version is used
 		// Exiting
@@ -45,9 +46,10 @@ func (s *fenixTestCaseBuilderServerGrpcServicesServerStruct) SaveFullTestSuite(
 	}
 
 	return &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-		AckNack:                      true,
-		Comments:                     "",
-		ErrorCodes:                   nil,
-		ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
+		AckNack:    true,
+		Comments:   "",
+		ErrorCodes: nil,
+		ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.CurrentFenixTestCaseBuilderProtoFileVersionEnum(
+			common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
 	}, nil
 }

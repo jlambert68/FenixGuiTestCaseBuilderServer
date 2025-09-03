@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jlambert68/FenixTestInstructionsAdminShared/shared_code"
+	"strconv"
 	"strings"
 
-	"strconv"
 	"time"
 
 	//"database/sql/driver"
@@ -237,35 +237,52 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestSuite(
 
 		return returnMessage
 	}
+	/*
+		// Load who created the TestSuite and when it was created
+		var insertTimeStampAsString string
+		var insertedByUserIdOnComputer string
+		var insertedByGCPAuthenticatedUser string
 
-	// Load PreViews for all TestCases in TestSuite
-	var tempTestCasesPreview []*fenixTestCaseBuilderServerGrpcApi.TestCasePreviewMessage
-	tempTestCasesPreview, err = fenixCloudDBObject.loadTestCasesPreviewForTestSuite(txn, testCaseUuidsInTestSuite)
+		// Check if this is 'version 1' of the TestSuite = No creator from Database
+		if gRPCTestSuiteMessage.GetTestSuite().GetTestSuiteBasicInformation().GetTestSuiteVersion() == 1 {
+			insertTimeStampAsString = ""
+			insertedByUserIdOnComputer = gRPCTestSuiteMessage.GetUserIdentification().GetUserIdOnComputer()
+			insertedByGCPAuthenticatedUser = gRPCTestSuiteMessage.GetUserIdentification().GetGCPAuthenticatedUser()
 
-	if err != nil {
-		common_config.Logger.WithFields(logrus.Fields{
-			"id":    "734a3f81-cc80-4393-880a-95c3eaad6863",
-			"error": err,
-		}).Error("Got some problem when loading TestCasesPreView from database")
+		} else {
 
-		// Set Error codes to return message
-		var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
-		var errorCode fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
 
-		errorCode = fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM
-		errorCodes = append(errorCodes, errorCode)
+			insertTimeStampAsString, insertedByUserIdOnComputer, insertedByGCPAuthenticatedUser, err = fenixCloudDBObject.
+				loadTestSuiteCreator(
+					txn,
+					gRPCTestSuiteMessage.GetTestSuite().GetTestSuiteBasicInformation().GetTestSuiteUuid())
+			if err != nil {
+				common_config.Logger.WithFields(logrus.Fields{
+					"id":    "13350726-da80-42f8-b997-c3af2fb69656",
+					"error": err,
+				}).Error("Got some problem when loading TestSuite Creator")
 
-		// Create Return message
-		returnMessage = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
-			AckNack:    false,
-			Comments:   "Got some problem when loading TestCasesPreView from database",
-			ErrorCodes: errorCodes,
-			ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
-				CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
-		}
+				// Set Error codes to return message
+				var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+				var errorCode fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
 
-		return returnMessage
-	}
+				errorCode = fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM
+				errorCodes = append(errorCodes, errorCode)
+
+				// Create Return message
+				returnMessage = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+					AckNack:    false,
+					Comments:   err.Error(),
+					ErrorCodes: errorCodes,
+					ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
+						CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
+				}
+
+				return returnMessage
+			}
+
+			}
+	*/
 
 	// Save the TestSuite
 	returnMessage, err = fenixCloudDBObject.saveFullTestSuite(
@@ -273,7 +290,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) PrepareSaveFullTestSuite(
 		gRPCTestSuiteMessage,
 		authorizationValueForOwnerDomain,
 		authorizationValueForAllDomainsInTestSuite,
-		tempTestCasesPreview)
+	)
 
 	if err != nil {
 		return returnMessage
@@ -479,8 +496,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 	dbTransaction pgx.Tx,
 	gRPCTestSuiteMessage *fenixTestCaseBuilderServerGrpcApi.SaveFullTestSuiteMessageRequest,
 	authorizationValueForOwnerDomain int64,
-	authorizationValueForAllDomainsInTestSuite int64,
-	tempTestCasesPreview []*fenixTestCaseBuilderServerGrpcApi.TestCasePreviewMessage) (
+	authorizationValueForAllDomainsInTestSuite int64) (
 	returnMessage *fenixTestCaseBuilderServerGrpcApi.AckNackResponse,
 	err error) {
 
@@ -580,30 +596,102 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) saveFullTestSuite(
 	}
 	tempTestSuiteTestDataAsJsonb := protojson.Format(fullTestSuiteMessage.GetTestSuiteTestData())
 
-	// Create the 'TestSuitePreview'
+	// Initiate 'SelectedTestSuiteMetaDataValuesMap'
 	var tempSelectedTestSuiteMetaDataValuesMap map[string]*fenixTestCaseBuilderServerGrpcApi.
 		TestSuitePreviewStructureMessage_SelectedTestSuiteMetaDataValueMessage
 	tempSelectedTestSuiteMetaDataValuesMap = make(map[string]*fenixTestCaseBuilderServerGrpcApi.
 		TestSuitePreviewStructureMessage_SelectedTestSuiteMetaDataValueMessage)
 
+	// Initiate 'TestCasesInTestSuite'
+	var tempTestCasesInTestSuite *fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewStructureMessage_TestCasesInTestSuiteMessage
+	tempTestCasesInTestSuite = &fenixTestCaseBuilderServerGrpcApi.
+		TestSuitePreviewStructureMessage_TestCasesInTestSuiteMessage{TestCasesInTestSuite: nil}
+
+	// Check if this is 'version 1' of the TestSuite = Use Saver as creator
+	var createdTimeStampAsString string
+	var createdByUserIdOnComputer string
+	var createdByGCPAuthenticatedUser string
+
+	if gRPCTestSuiteMessage.GetTestSuite().GetTestSuiteBasicInformation().GetTestSuiteVersion() == 1 {
+		createdTimeStampAsString = insertTimeStamp
+		createdByUserIdOnComputer = gRPCTestSuiteMessage.GetUserIdentification().GetUserIdOnComputer()
+		createdByGCPAuthenticatedUser = gRPCTestSuiteMessage.GetUserIdentification().GetGCPAuthenticatedUser()
+
+	} else {
+		createdTimeStampAsString,
+			createdByUserIdOnComputer,
+			createdByGCPAuthenticatedUser, err = fenixCloudDBObject.loadTestSuiteCreator(
+			dbTransaction,
+			tempTestSuiteUuid)
+
+		if err != nil {
+			// Set Error codes to return message
+			var errorCodes []fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+			var errorCode fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum
+
+			errorCode = fenixTestCaseBuilderServerGrpcApi.ErrorCodesEnum_ERROR_DATABASE_PROBLEM
+			errorCodes = append(errorCodes, errorCode)
+
+			// Create Return message
+			returnMessage = &fenixTestCaseBuilderServerGrpcApi.AckNackResponse{
+				AckNack:    false,
+				Comments:   "Problem when getting next TestSuite creator from database",
+				ErrorCodes: errorCodes,
+				ProtoFileVersionUsedByClient: fenixTestCaseBuilderServerGrpcApi.
+					CurrentFenixTestCaseBuilderProtoFileVersionEnum(common_config.GetHighestFenixGuiBuilderProtoFileVersion()),
+			}
+
+			return returnMessage, err
+		}
+
+	}
+
+	// Create the 'TestSuitePreview'
 	var tempTestSuitePreview *fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewMessage
 	tempTestSuitePreview = &fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewMessage{
 		TestSuitePreview: &fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewStructureMessage{
-			TestSuiteUuid:                 tempTestSuiteUuid,
-			TestSuiteName:                 tempTestSuiteName,
-			TestSuiteVersion:              strconv.Itoa(int(nexTestSuiteVersion)),
-			DomainUuidThatOwnTheTestSuite: tempDomainUuid,
-			DomainNameThatOwnTheTestSuite: tempDomainName,
-			TestSuiteDescription:          fullTestSuiteMessage.GetTestSuiteBasicInformation().GetTestSuiteDescription(),
-			TestSuiteStructureObjects: &fenixTestCaseBuilderServerGrpcApi.
-				TestSuitePreviewStructureMessage_TestSuiteStructureObjectMessage{TestCasePreViews: tempTestCasesPreview},
-			LastSavedByUserOnComputer:          tempInsertedByUserIdOnComputer,
-			LastSavedByUserGCPAuthorization:    tempInsertedByGCPAuthenticatedUser,
-			LastSavedTimeStamp:                 insertTimeStamp,
-			SelectedTestSuiteMetaDataValuesMap: tempSelectedTestSuiteMetaDataValuesMap,
+			TestSuiteUuid:                   tempTestSuiteUuid,
+			TestSuiteName:                   tempTestSuiteName,
+			TestSuiteVersion:                strconv.Itoa(int(nexTestSuiteVersion)),
+			DomainUuidThatOwnTheTestSuite:   tempDomainUuid,
+			DomainNameThatOwnTheTestSuite:   tempDomainName,
+			TestSuiteDescription:            fullTestSuiteMessage.GetTestSuiteBasicInformation().GetTestSuiteDescription(),
+			TestCasesInTestSuite:            tempTestCasesInTestSuite, // See below for content
+			CreatedByGcpLoginUser:           createdByGCPAuthenticatedUser,
+			CreatedByComputerLoginUser:      createdByUserIdOnComputer,
+			CreatedDate:                     createdTimeStampAsString,
+			LastSavedByUserOnComputer:       tempInsertedByUserIdOnComputer,
+			LastSavedByUserGCPAuthorization: tempInsertedByGCPAuthenticatedUser,
+			LastSavedTimeStamp:              insertTimeStamp,
+			TestSuiteType: &fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewStructureMessage_TestSuiteTypeMessage{
+				TestSuiteType: fenixTestCaseBuilderServerGrpcApi.
+					TestSuitePreviewStructureMessage_TestSuiteTypeEnum(fullTestSuiteMessage.GetTestSuiteType().GetTestSuiteType()),
+				TestSuiteTypeName: fullTestSuiteMessage.GetTestSuiteType().GetTestSuiteTypeName(),
+			},
+			SelectedTestSuiteMetaDataValuesMap: tempSelectedTestSuiteMetaDataValuesMap, // See below for content
 		},
-		TestSuitePreviewHash: "",
+		TestSuitePreviewHash: fullTestSuiteMessage.GetMessageHash(),
 	}
+
+	// Generate 'TestCasesInTestSuite'
+	for _, tempTestCaseInTestSuitePtr := range fullTestSuiteMessage.GetTestCasesInTestSuite().GetTestCasesInTestSuite() {
+
+		// Create the new structure for at TestCase in TestSuite
+		var testCasesInTestSuite *fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewStructureMessage_TestCaseInTestSuiteMessage
+		testCasesInTestSuite = &fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewStructureMessage_TestCaseInTestSuiteMessage{
+			DomainUuid:   tempTestCaseInTestSuitePtr.GetDomainUuid(),
+			DomainName:   tempTestCaseInTestSuitePtr.GetDomainName(),
+			TestCaseUuid: tempTestCaseInTestSuitePtr.GetTestCaseUuid(),
+			TestCaseName: tempTestCaseInTestSuitePtr.GetTestCaseName(),
+		}
+
+		// Add TestCase in TestSuite to slice of TestCases
+		tempTestCasesInTestSuite.TestCasesInTestSuite = append(tempTestCasesInTestSuite.TestCasesInTestSuite, testCasesInTestSuite)
+
+	}
+
+	// Add TestCases to TestCase-preview
+	tempTestSuitePreview.TestSuitePreview.TestCasesInTestSuite = tempTestCasesInTestSuite
 
 	// Generate 'SelectedTestSuiteMetaDataValuesMap'
 	for _, tempMetaDataGroupMessagePtr := range fullTestSuiteMessage.TestSuiteMetaData.MetaDataGroupsMap {
@@ -997,99 +1085,5 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadTestCasesTIAndTICBelongi
 	}
 
 	return &allTestInstructions, &allTestInstructionContainers, err
-
-}
-
-// Load TestCase's-Preview for TestSuites
-func (fenixCloudDBObject *FenixCloudDBObjectStruct) loadTestCasesPreviewForTestSuite(
-	dbTransaction pgx.Tx,
-	testCaseUuids []string) (
-	tempTestCasesPreview []*fenixTestCaseBuilderServerGrpcApi.TestCasePreviewMessage,
-	err error) {
-
-	sqlToExecute := ""
-	sqlToExecute = sqlToExecute + "SELECT DISTINCT ON (tc.\"TestCaseUuid\") " +
-		"tc.\"TestCaseUuid\", tc.\"TestCaseVersion\", tc.\"TestCasePreview\" "
-	sqlToExecute = sqlToExecute + "FROM   \"FenixBuilder\".\"TestCases\" tc "
-	sqlToExecute = sqlToExecute + "WHERE tc.\"TestCaseUuid\" IN  "
-	sqlToExecute = sqlToExecute + common_config.GenerateSQLINArray(testCaseUuids) + " "
-	sqlToExecute = sqlToExecute + "ORDER  BY tc.\"TestCaseUuid\", tc.\"TestCaseVersion\" DESC "
-	sqlToExecute = sqlToExecute + "; "
-
-	// Log SQL to be executed if Environment variable is true
-	if common_config.LogAllSQLs == true {
-		common_config.Logger.WithFields(logrus.Fields{
-			"Id":           "5db810f5-2333-471b-b065-1a6fbe331a17",
-			"sqlToExecute": sqlToExecute,
-		}).Debug("SQL to be executed within 'listTestCasesThatCanBeEdited'")
-	}
-
-	// Query DB
-	var ctx context.Context
-	ctx, timeOutCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer timeOutCancel()
-
-	rows, err := dbTransaction.Query(ctx, sqlToExecute)
-	defer rows.Close()
-
-	if err != nil {
-		common_config.Logger.WithFields(logrus.Fields{
-			"Id":           "4ad9875a-4dce-4ae1-b318-e10fc08803c8",
-			"Error":        err,
-			"sqlToExecute": sqlToExecute,
-		}).Error("Something went wrong when executing SQL")
-
-		return nil, err
-	}
-
-	var (
-		tempTestCaseUuid               string
-		tempTestCaseVersion            int
-		tempTestCasePreviewAsString    string
-		tempTestCasePreviewAsByteArray []byte
-	)
-
-	// Extract data from DB result set
-	for rows.Next() {
-
-		var tempTestCasePreview fenixTestCaseBuilderServerGrpcApi.TestCasePreviewMessage
-
-		err = rows.Scan(
-			&tempTestCaseUuid,
-			&tempTestCaseVersion,
-			&tempTestCasePreviewAsString,
-		)
-
-		if err != nil {
-
-			common_config.Logger.WithFields(logrus.Fields{
-				"Id":           "d61ef5bb-f6e2-4571-86a1-6a4383e640c4",
-				"Error":        err,
-				"sqlToExecute": sqlToExecute,
-			}).Error("Something went wrong when processing result from database")
-
-			return nil, err
-		}
-
-		// Convert json-string into byte-array
-		tempTestCasePreviewAsByteArray = []byte(tempTestCasePreviewAsString)
-
-		// Convert json-byte-arrays into proto-messages
-		err = protojson.Unmarshal(tempTestCasePreviewAsByteArray, &tempTestCasePreview)
-		if err != nil {
-			common_config.Logger.WithFields(logrus.Fields{
-				"Id":    "8e4e83a1-a8d1-41ae-9c5f-f7091ece8b15",
-				"Error": err,
-			}).Error("Something went wrong when converting 'tempTestCasePreviewAsByteArray' into proto-message")
-
-			return nil, err
-		}
-
-		// Add to slice of TestCases
-		tempTestCasesPreview = append(tempTestCasesPreview, &tempTestCasePreview)
-
-	}
-
-	return tempTestCasesPreview, err
 
 }

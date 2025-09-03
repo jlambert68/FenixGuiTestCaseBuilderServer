@@ -351,6 +351,12 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 	deleteTimeStampAsString = time.Now().Format("2006-01-02 00:00:00")
 
 	sqlToExecute := ""
+	sqlToExecute = sqlToExecute + "WITH uniquecounters AS ( "
+	sqlToExecute = sqlToExecute + "SELECT Distinct ON (\"TestCaseUuid\")  \"UniqueCounter\" "
+	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" "
+	sqlToExecute = sqlToExecute + "ORDER BY \"TestCaseUuid\", \"UniqueCounter\" DESC "
+	sqlToExecute = sqlToExecute + ") "
+
 	sqlToExecute = sqlToExecute + "SELECT tc1.\"DomainUuid\", tc1.\"DomainName\", tc1.\"TestCaseUuid\", " +
 		"tc1.\"TestCaseName\", tc1.\"TestCaseVersion\", \"InsertTimeStamp\", \"TestCasePreview\" "
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestCases\" tc1 "
@@ -361,10 +367,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestCasesThatCanBeEdited
 	sqlToExecute = sqlToExecute + "= tc1.\"CanListAndViewTestCaseAuthorizationLevelHavingTiAndTicWithDomai\" "
 	sqlToExecute = sqlToExecute + "AND "
 	sqlToExecute = sqlToExecute + "tc1.\"InsertTimeStamp\" IS NOT NULL " +
-		"AND tc1.\"TestCaseVersion\" = (" +
-		"SELECT MAX(tc2.\"TestCaseVersion\") " +
-		"FROM \"FenixBuilder\".\"TestCases\" tc2 " +
-		"WHERE tc2.\"TestCaseUuid\" = tc1.\"TestCaseUuid\") AND "
+		"tc1.\"UniqueCounter\" IN (SELECT * FROM uniquecounters) AND "
 	sqlToExecute = sqlToExecute + "tc1.\"InsertTimeStamp\" > '" +
 		common_config.GenerateDatetimeFromTimeInputForDB(testCaseUpdatedMinTimeStamp) + "' AND "
 	sqlToExecute = sqlToExecute + "tc1.\"DeleteTimestamp\" > '" + deleteTimeStampAsString + "' "

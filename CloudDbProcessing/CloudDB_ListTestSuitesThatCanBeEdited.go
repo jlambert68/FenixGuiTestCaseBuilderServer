@@ -8,6 +8,7 @@ import (
 	fenixTestCaseBuilderServerGrpcApi "github.com/jlambert68/FenixGrpcApi/FenixTestCaseBuilderServer/fenixTestCaseBuilderServerGrpcApi/go_grpc_api"
 	fenixSyncShared "github.com/jlambert68/FenixSyncShared"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"strconv"
 	"time"
@@ -350,8 +351,15 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestSuitesThatCanBeEdite
 	deleteTimeStampAsString = time.Now().Format("2006-01-02 00:00:00")
 
 	sqlToExecute := ""
+	sqlToExecute = sqlToExecute + "WITH uniquecounters AS ( "
+	sqlToExecute = sqlToExecute + "SELECT Distinct ON (\"TestSuiteUuid\")  \"UniqueCounter\" "
+	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestSuites\" "
+	sqlToExecute = sqlToExecute + "ORDER BY \"TestSuiteUuid\", \"UniqueCounter\" DESC "
+	sqlToExecute = sqlToExecute + ") "
+
 	sqlToExecute = sqlToExecute + "SELECT ts1.\"DomainUuid\", ts1.\"DomainName\", ts1.\"TestSuiteUuid\", " +
-		"ts1.\"TestSuiteName\", ts1.\"TestSuiteVersion\", ts1.\"InsertTimeStamp\",  ts1.\"TestSuiteExecutionEnvironment\" "
+		"ts1.\"TestSuiteName\", ts1.\"TestSuiteVersion\", ts1.\"InsertTimeStamp\",  ts1.\"TestSuiteExecutionEnvironment\", " +
+		"ts1.\"TestSuitePreview\" "
 	sqlToExecute = sqlToExecute + "FROM \"FenixBuilder\".\"TestSuites\" ts1 "
 	sqlToExecute = sqlToExecute + "WHERE (ts1.\"CanListAndViewTestSuiteAuthorizationLevelOwnedByDomain\" & " + tempCanListAndViewTestSuiteOwnedByThisDomainAsString + ")"
 	sqlToExecute = sqlToExecute + "= ts1.\"CanListAndViewTestSuiteAuthorizationLevelOwnedByDomain\" "
@@ -360,10 +368,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestSuitesThatCanBeEdite
 	sqlToExecute = sqlToExecute + "= ts1.\"CanListAndViewTestSuiteAuthorizationLevelHavingTiAndTicWith\" "
 	sqlToExecute = sqlToExecute + "AND "
 	sqlToExecute = sqlToExecute + "ts1.\"InsertTimeStamp\" IS NOT NULL AND " +
-		"ts1.\"TestSuiteVersion\" = (" +
-		"SELECT MAX(ts2.\"TestSuiteVersion\") " +
-		"FROM \"FenixBuilder\".\"TestSuites\" ts2 " +
-		"WHERE ts2.\"TestSuiteUuid\" = ts1.\"TestSuiteUuid\") AND "
+		"ts1.\"UniqueCounter\" IN (SELECT * FROM uniquecounters) AND "
 	sqlToExecute = sqlToExecute + "ts1.\"InsertTimeStamp\" > '" +
 		common_config.GenerateDatetimeFromTimeInputForDB(testSuiteUpdatedMinTimeStamp) + "' AND "
 	sqlToExecute = sqlToExecute + "ts1.\"DeleteTimestamp\" > '" + deleteTimeStampAsString + "' "
@@ -403,6 +408,9 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestSuitesThatCanBeEdite
 		tempTestSuiteVersion              int
 		tempInsertTimeStampAsTimeStamp    time.Time
 		tempTestSuiteExecutionEnvironment string
+		tempTestSuitePreviewAsString      string
+		tempTestSuitePreviewAsByteArray   []byte
+		tempTestSuitePreviewAsGrpc        fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewMessage
 	)
 
 	// Extract data from DB result set
@@ -416,6 +424,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestSuitesThatCanBeEdite
 			&tempTestSuiteVersion,
 			&tempInsertTimeStampAsTimeStamp,
 			&tempTestSuiteExecutionEnvironment,
+			&tempTestSuitePreviewAsString,
 		)
 
 		if err != nil {
@@ -425,6 +434,21 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestSuitesThatCanBeEdite
 				"Error":        err,
 				"sqlToExecute": sqlToExecute,
 			}).Error("Something went wrong when processing result from database")
+
+			return nil, err
+		}
+
+		// Convert json-strings into byte-arrays
+
+		tempTestSuitePreviewAsByteArray = []byte(tempTestSuitePreviewAsString)
+
+		// Convert json-byte-arrays into proto-messages
+		err = protojson.Unmarshal(tempTestSuitePreviewAsByteArray, &tempTestSuitePreviewAsGrpc)
+		if err != nil {
+			common_config.Logger.WithFields(logrus.Fields{
+				"Id":    "0ff0794f-68de-4187-8c77-ea37b8fc0701",
+				"Error": err,
+			}).Error("Something went wrong when converting 'tempTestSuitePreviewAsByteArray' into proto-message")
 
 			return nil, err
 		}
@@ -447,24 +471,7 @@ func (fenixCloudDBObject *FenixCloudDBObjectStruct) listTestSuitesThatCanBeEdite
 			LatestTestSuiteExecutionStatusInsertTimeStamp:           nil,
 			LatestFinishedOkTestSuiteExecutionStatusInsertTimeStamp: nil,
 			LastSavedTimeStamp:                                      timestamppb.New(tempInsertTimeStampAsTimeStamp),
-			TestSuitePreview: &fenixTestCaseBuilderServerGrpcApi.
-				TestSuitePreviewMessage{
-				TestSuitePreview: &fenixTestCaseBuilderServerGrpcApi.TestSuitePreviewStructureMessage{
-					TestSuiteUuid:                 "",
-					TestSuiteName:                 "",
-					TestSuiteVersion:              "",
-					DomainUuidThatOwnTheTestSuite: "",
-					DomainNameThatOwnTheTestSuite: "",
-					TestSuiteDescription:          "",
-					TestSuiteStructureObjects: &fenixTestCaseBuilderServerGrpcApi.
-						TestSuitePreviewStructureMessage_TestSuiteStructureObjectMessage{},
-					LastSavedByUserOnComputer:          "",
-					LastSavedByUserGCPAuthorization:    "",
-					LastSavedTimeStamp:                 "",
-					SelectedTestSuiteMetaDataValuesMap: nil,
-				},
-				TestSuitePreviewHash: "",
-			},
+			TestSuitePreview:                                        &tempTestSuitePreviewAsGrpc,
 		}
 
 		// Add to slice of TestCases
